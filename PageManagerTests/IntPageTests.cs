@@ -50,6 +50,22 @@ namespace PageManagerTests
         }
 
         [Test]
+        public void VerifyDoubleSerializeDeserialize()
+        {
+            int[] startArray = new int[] { 1, 2, 3, 4 };
+            int[] secondArray = new int[] { 5, 6 };
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId);
+
+            intPage.Serialize(startArray);
+            int[] content = intPage.Deserialize();
+            Assert.AreEqual(startArray, content);
+
+            intPage.Serialize(secondArray);
+            content = intPage.Deserialize();
+            Assert.AreEqual(secondArray, content);
+        }
+
+        [Test]
         public void VerifyInvalidParams()
         {
             Assert.Throws<ArgumentException>(() => { IntegerOnlyPage intPage = new IntegerOnlyPage(0, DefaultPageId); });
