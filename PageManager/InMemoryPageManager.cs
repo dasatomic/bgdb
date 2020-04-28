@@ -24,6 +24,10 @@ namespace PageManager
             {
                 page = new IntegerOnlyPage(pageSize, pageId);
             }
+            else if (pageType == PageType.DoublePage)
+            {
+                page = new DoubleOnlyPage(pageSize, pageId);
+            }
             else
             {
                 throw new ArgumentException("Unknown page type");
@@ -79,7 +83,7 @@ namespace PageManager
         {
             IPage page = this.GetPage(pageId);
 
-            if (page.PageType() != PageType.IntPage)
+            if (page.PageType() != PageType.DoublePage)
             {
                 throw new InvalidCastException("Can't cast to int page");
             }

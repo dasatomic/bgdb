@@ -43,5 +43,26 @@ namespace PageManagerTests
 
             Assert.AreEqual(items, page2.Deserialize());
         }
+
+        [Test]
+        public void MixedTypePages()
+        {
+            var pageManager = new InMemoryPageManager(DefaultSize);
+
+            var intPage = pageManager.AllocatePageInt();
+            var doublePage = pageManager.AllocatePageDouble();
+
+            Assert.AreEqual(PageType.IntPage, intPage.PageType());
+            Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
+
+            pageManager.SavePage(intPage);
+            pageManager.SavePage(doublePage);
+
+            intPage = pageManager.GetPageInt(intPage.PageId());
+            doublePage = pageManager.GetPageDouble(doublePage.PageId());
+
+            Assert.AreEqual(PageType.IntPage, intPage.PageType());
+            Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
+        }
     }
 }
