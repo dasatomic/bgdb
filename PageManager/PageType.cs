@@ -3,5 +3,6 @@
     public enum PageType
     {
         IntPage,
+        DoublePage,
     }
 }
