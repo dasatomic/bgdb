@@ -4,5 +4,6 @@
     {
         IntPage,
         DoublePage,
+        StringPage,
     }
 }

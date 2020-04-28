@@ -51,18 +51,23 @@ namespace PageManagerTests
 
             var intPage = pageManager.AllocatePageInt();
             var doublePage = pageManager.AllocatePageDouble();
+            var strPage = pageManager.AllocatePageStr();
 
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
+            Assert.AreEqual(PageType.StringPage, strPage.PageType());
 
             pageManager.SavePage(intPage);
             pageManager.SavePage(doublePage);
+            pageManager.SavePage(strPage);
 
             intPage = pageManager.GetPageInt(intPage.PageId());
             doublePage = pageManager.GetPageDouble(doublePage.PageId());
+            strPage = pageManager.GetPageStr(strPage.PageId());
 
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
+            Assert.AreEqual(PageType.StringPage, strPage.PageType());
         }
 
         [Test]

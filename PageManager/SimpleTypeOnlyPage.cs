@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
 namespace PageManager
@@ -22,14 +23,16 @@ namespace PageManager
         protected const uint NumOfRowsPosition = 16;
         protected const uint FirstElementPosition = 20;
 
+        protected virtual uint FooterLenght() => 0;
+
         public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType)
         {
-            if (pageSize < FirstElementPosition + sizeof(double))
+            if (pageSize < FirstElementPosition + (uint)Marshal.SizeOf(default(T)))
             {
                 throw new ArgumentException("Size can't be less than size of int");
             }
 
-            if (pageSize % sizeof(double) != 0)
+            if (pageSize % (uint)Marshal.SizeOf(default(T)) != 0)
             {
                 throw new ArgumentException("Page size needs to be divisible with elem type");
             }
@@ -94,7 +97,7 @@ namespace PageManager
 
         public uint MaxRowCount()
         {
-            return (this.pageSize - FirstElementPosition) / sizeof(double);
+            return (this.pageSize - FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
         }
 
         public abstract T[] Deserialize();
