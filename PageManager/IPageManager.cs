@@ -2,14 +2,12 @@
 
 namespace PageManager
 {
-    public interface IPageManager
+    public interface IPageManager<T>
     {
-        IPage GetPage(long pageId);
-
+        IPage GetPage(ulong pageId);
         void SavePage(IPage page);
-
-        IEnumerable<IPage> GetPages();
-
-        IPage AllocatePage();
+        IPage AllocatePage(PageType pageType);
+        T AllocatePageSerializer();
+        T GetPageSerializer(ulong pageId);
     }
 }

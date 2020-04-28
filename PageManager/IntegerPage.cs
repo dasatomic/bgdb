@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace PageManager
 {
-    public class IntegerOnlyPage : IPage, IPageSerializer<int[]>
+    public class IntegerOnlyPage : IPageSerializer<int[]>
     {
         private readonly uint pageSize;
         private readonly ulong pageId;
