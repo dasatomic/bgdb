@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace PageManager
 {
@@ -60,6 +61,11 @@ namespace PageManager
 
         public void Serialize(int[] items)
         {
+            if (this.MaxRowCount() < items.Length)
+            {
+                throw new SerializationException();
+            }
+
             uint contentPosition = 0;
             foreach (byte pageByte in BitConverter.GetBytes(this.pageId))
             {
@@ -98,6 +104,11 @@ namespace PageManager
         public uint SizeInBytes()
         {
             return this.pageSize;
+        }
+
+        public uint MaxRowCount()
+        {
+            return (this.pageSize - FirstElementPosition) / sizeof(int);
         }
     }
 }

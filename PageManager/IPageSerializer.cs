@@ -4,5 +4,6 @@
     {
         public void Serialize(T items);
         public T Deserialize();
+        public uint MaxRowCount();
     }
 }
