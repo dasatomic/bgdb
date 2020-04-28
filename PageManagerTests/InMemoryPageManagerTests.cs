@@ -64,5 +64,15 @@ namespace PageManagerTests
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
         }
+
+        [Test]
+        public void GetPageOfInvalidType()
+        {
+            var pageManager = new InMemoryPageManager(DefaultSize);
+            var intPage = pageManager.AllocatePageInt();
+            pageManager.SavePage(intPage);
+
+            Assert.Throws<InvalidCastException>(() => { pageManager.GetPageDouble(intPage.PageId()); });
+        }
     }
 }

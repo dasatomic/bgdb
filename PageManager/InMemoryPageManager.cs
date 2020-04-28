@@ -85,7 +85,7 @@ namespace PageManager
 
             if (page.PageType() != PageType.DoublePage)
             {
-                throw new InvalidCastException("Can't cast to int page");
+                throw new InvalidCastException("Can't cast to double page");
             }
 
             return (DoubleOnlyPage)page;
