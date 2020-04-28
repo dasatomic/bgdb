@@ -30,8 +30,8 @@ namespace PageManagerTests
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
 
-            var emptyPage = pageManager.AllocatePageSerializer();
-            var page2 = pageManager.AllocatePageSerializer();
+            var emptyPage = pageManager.AllocatePageInt();
+            var page2 = pageManager.AllocatePageInt();
 
             ulong pageId = page2.PageId();
 
@@ -39,7 +39,7 @@ namespace PageManagerTests
             page2.Serialize(items);
 
             pageManager.SavePage(page2);
-            page2 = pageManager.GetPageSerializer(pageId);
+            page2 = pageManager.GetPageInt(pageId);
 
             Assert.AreEqual(items, page2.Deserialize());
         }

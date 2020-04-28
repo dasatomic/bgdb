@@ -7,7 +7,7 @@ namespace PageManager
         IPage GetPage(ulong pageId);
         void SavePage(IPage page);
         IPage AllocatePage(PageType pageType);
-        T AllocatePageSerializer();
-        T GetPageSerializer(ulong pageId);
+        T AllocatePageSerializer<T>();
+        T GetPageSerializer<T>(ulong pageId);
     }
 }

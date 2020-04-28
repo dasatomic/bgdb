@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PageManager
 {
-    public class InMemoryPageManager : IPageManager<IntegerOnlyPage>
+    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
@@ -51,13 +51,13 @@ namespace PageManager
             // No op. Should release the lock.
         }
 
-        public IntegerOnlyPage AllocatePageSerializer()
+        public IntegerOnlyPage AllocatePageInt()
         {
             IPage page = AllocatePage(PageType.IntPage);
             return (IntegerOnlyPage)page;
         }
 
-        public IntegerOnlyPage GetPageSerializer(ulong pageId)
+        public IntegerOnlyPage GetPageInt(ulong pageId)
         {
             IPage page = this.GetPage(pageId);
 
@@ -67,6 +67,24 @@ namespace PageManager
             }
 
             return (IntegerOnlyPage)page;
+        }
+
+        public DoubleOnlyPage AllocatePageDouble()
+        {
+            IPage page = AllocatePage(PageType.DoublePage);
+            return (DoubleOnlyPage)page;
+        }
+
+        public DoubleOnlyPage GetPageDouble(ulong pageId)
+        {
+            IPage page = this.GetPage(pageId);
+
+            if (page.PageType() != PageType.IntPage)
+            {
+                throw new InvalidCastException("Can't cast to int page");
+            }
+
+            return (DoubleOnlyPage)page;
         }
     }
 }

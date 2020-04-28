@@ -3,6 +3,13 @@ using System.Runtime.Serialization;
 
 namespace PageManager
 {
+    public interface IAllocateIntegerPage
+    {
+        IntegerOnlyPage AllocatePageInt();
+        IntegerOnlyPage GetPageInt(ulong pageId);
+    }
+
+
     public class IntegerOnlyPage : IPageSerializer<int[]>
     {
         private readonly uint pageSize;

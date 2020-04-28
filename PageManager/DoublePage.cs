@@ -3,6 +3,12 @@ using System.Runtime.Serialization;
 
 namespace PageManager
 {
+    public interface IAllocateDoublePage
+    {
+        DoubleOnlyPage AllocatePageDouble();
+        DoubleOnlyPage GetPageDouble(ulong pageId);
+    }
+
     public class DoubleOnlyPage : IPageSerializer<double[]>
     {
         private readonly uint pageSize;
