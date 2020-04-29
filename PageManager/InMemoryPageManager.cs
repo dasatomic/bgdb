@@ -116,7 +116,7 @@ namespace PageManager
 
             if (page.PageType() != PageType.StringPage)
             {
-                throw new InvalidCastException("Can't cast to double page");
+                throw new InvalidCastException("Can't cast to string page");
             }
 
             return (StringOnlyPage)page;
@@ -134,7 +134,7 @@ namespace PageManager
 
             if (page.PageType() != PageType.LongPage)
             {
-                throw new InvalidCastException("Can't cast to double page");
+                throw new InvalidCastException("Can't cast to long page");
             }
 
             return (LongOnlyPage)page;
@@ -152,7 +152,7 @@ namespace PageManager
 
             if (page.PageType() != PageType.MixedPage)
             {
-                throw new InvalidCastException("Can't cast to double page");
+                throw new InvalidCastException("Can't cast to mixed page");
             }
 
             return (MixedPage)page;

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PageManager", "PageManager\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PageManagerTests", "PageManagerTests\PageManagerTests.csproj", "{00599A0C-7CA3-45FF-8757-44248A5565AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataManager", "MetadataManager\MetadataManager.csproj", "{D3C3BE02-BD80-468F-B199-A2E8A3C57061}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{00599A0C-7CA3-45FF-8757-44248A5565AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00599A0C-7CA3-45FF-8757-44248A5565AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00599A0C-7CA3-45FF-8757-44248A5565AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
