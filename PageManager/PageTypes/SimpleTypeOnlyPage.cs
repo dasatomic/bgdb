@@ -101,5 +101,10 @@ namespace PageManager
         }
 
         public abstract T[] Deserialize();
+
+        public bool CanFit(T[] items)
+        {
+            return this.pageSize - FirstElementPosition - this.FooterLenght() >= (uint)Marshal.SizeOf(default(T));
+        }
     }
 }

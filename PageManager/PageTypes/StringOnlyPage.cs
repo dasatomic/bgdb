@@ -143,5 +143,16 @@ namespace PageManager
         {
             return this.pageSize - FirstElementPosition;
         }
+
+        public bool CanFit(char[][] items)
+        {
+            int size = 0;
+            foreach (char[] item in items)
+            {
+                size += item.Length;
+            }
+
+            return this.pageSize - FirstElementPosition  >= size;
+        }
     }
 }

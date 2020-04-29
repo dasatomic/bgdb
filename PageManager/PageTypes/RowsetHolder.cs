@@ -254,5 +254,25 @@ namespace PageManager
                 }
             }
         }
+
+        public static uint CalculateSizeOfRow(ColumnType[] types)
+        {
+            int totalSize = 0;
+
+            foreach (ColumnType type in types)
+            {
+                switch (type)
+                {
+                    case ColumnType.Int: totalSize += sizeof(int); break;
+                    case ColumnType.Double: totalSize += sizeof(double); break;
+                    case ColumnType.StringPointer: totalSize += (int)PagePointerPair.Size; break;
+                    default:
+                        throw new UnexpectedEnumValueException<ColumnType>(type);
+                }
+
+            }
+
+            return (uint)totalSize;
+        }
     }
 }

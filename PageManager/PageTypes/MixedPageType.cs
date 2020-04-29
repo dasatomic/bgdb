@@ -3,8 +3,13 @@ using System.Runtime.Serialization;
 
 namespace PageManager
 {
-    class MixedPage : IPageSerializer<RowsetHolder>
+    public interface IAllocateMixedPage
+    {
+        MixedPage AllocateMixedPage(ColumnType[] columnTypes);
+        MixedPage GetMixedPage(ulong pageId);
+    }
 
+    public class MixedPage : IPageSerializer<RowsetHolder>
     {
         private readonly uint pageSize;
         private readonly ulong pageId;
@@ -25,6 +30,11 @@ namespace PageManager
 
         public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes)
         {
+            if (columnTypes == null || columnTypes.Length == 0)
+            {
+                throw new ArgumentException("Column type definition can't be null or empty");
+            }
+
             this.pageSize = pageSize;
             this.pageId = pageId;
 
@@ -43,7 +53,7 @@ namespace PageManager
         public void Serialize(RowsetHolder items)
         {
             uint neededSize = this.GetSizeNeeded(items);
-            if (this.MaxRowCount() < neededSize)
+            if (!this.CanFit(items))
             {
                 throw new SerializationException();
             }
@@ -76,12 +86,12 @@ namespace PageManager
             SerializeInternal(items);
         }
 
-        private void SerializeInternal(RowsetHolder item)
+        private void SerializeInternal(IRowsetHolder item)
         {
             item.SerializeInto(this.content.AsSpan((int)FirstElementPosition));
         }
 
-        private uint GetSizeNeeded(RowsetHolder items)
+        private uint GetSizeNeeded(IRowsetHolder items)
         {
             return items.StorageSizeInBytes();
         }
@@ -89,13 +99,22 @@ namespace PageManager
         public RowsetHolder Deserialize()
         {
             RowsetHolder rowsetHolder = new RowsetHolder(this.columnTypes);
-            rowsetHolder.Deserialize(this.content.AsSpan((int)FirstElementPosition));
+
+            int elemCount = BitConverter.ToInt32(this.content, (int)FirstElementPosition);
+            int size = (int)(elemCount * RowsetHolder.CalculateSizeOfRow(this.columnTypes) + sizeof(int));
+            rowsetHolder.Deserialize(this.content.AsSpan((int)FirstElementPosition, size));
+
             return rowsetHolder;
         }
 
         public uint MaxRowCount()
         {
-            throw new System.NotImplementedException();
+            return (this.pageSize - FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);
+        }
+
+        public bool CanFit(RowsetHolder items)
+        {
+            return this.pageSize - FirstElementPosition >= items.StorageSizeInBytes();
         }
     }
 }

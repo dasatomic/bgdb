@@ -79,5 +79,28 @@ namespace PageManagerTests
 
             Assert.Throws<InvalidCastException>(() => { pageManager.GetPageDouble(intPage.PageId()); });
         }
+
+        [Test]
+        public void PagesOfMixedType()
+        {
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns);
+
+            var pageManager = new InMemoryPageManager(DefaultSize);
+            MixedPage page = pageManager.AllocateMixedPage(types);
+
+            RowsetHolder holder = new RowsetHolder(types);
+            holder.SetColumns(intColumns, doubleColumns, new PagePointerPair[0][]);
+            page.Serialize(holder);
+
+            pageManager.SavePage(page);
+            page = pageManager.GetMixedPage(page.PageId());
+
+            RowsetHolder holder2 = page.Deserialize();
+
+            Assert.AreEqual(holder2.GetIntColumn(0), intColumns[0]);
+            Assert.AreEqual(holder2.GetIntColumn(1), intColumns[1]);
+            Assert.AreEqual(holder2.GetDoubleColumn(2), doubleColumns[0]);
+            Assert.AreEqual(holder2.GetIntColumn(3), intColumns[2]);
+        }
     }
 }
