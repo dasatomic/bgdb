@@ -8,7 +8,8 @@ namespace PageManagerTests
         public static void GenerateSampleData(
             out ColumnType[] types,
             out int[][] intColumns,
-            out double[][] doubleColumns)
+            out double[][] doubleColumns,
+            out PagePointerPair[][] pagePointerColumns)
         {
             types = new ColumnType[]
             {
@@ -16,10 +17,12 @@ namespace PageManagerTests
                 ColumnType.Int,
                 ColumnType.Double,
                 ColumnType.Int,
+                ColumnType.StringPointer,
             };
 
             int intColumnCount = types.Count(t => t == ColumnType.Int);
             int doubleColumnCount = types.Count(t => t == ColumnType.Double);
+            int pagePointerCount = types.Count(t => t == ColumnType.StringPointer);
 
             const int rowCount = 5;
 
@@ -37,6 +40,18 @@ namespace PageManagerTests
                 for (int j = 0; j < rowCount; j++)
                 {
                     doubleColumns[i][j] = (double)j;
+                }
+            }
+
+            pagePointerColumns = new PagePointerPair[pagePointerCount][];
+            for (int i = 0; i < pagePointerColumns.Length; i++)
+            {
+                pagePointerColumns[i] = new PagePointerPair[rowCount];
+
+                for (int j = 0; j < rowCount; j++)
+                {
+                    pagePointerColumns[i][j].PageId = i;
+                    pagePointerColumns[i][j].OffsetInPage = i;
                 }
             }
         }

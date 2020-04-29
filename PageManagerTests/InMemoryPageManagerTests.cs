@@ -83,13 +83,13 @@ namespace PageManagerTests
         [Test]
         public void PagesOfMixedType()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns);
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out PagePointerPair[][] pagePointerColumns);
 
             var pageManager = new InMemoryPageManager(DefaultSize);
             MixedPage page = pageManager.AllocateMixedPage(types);
 
             RowsetHolder holder = new RowsetHolder(types);
-            holder.SetColumns(intColumns, doubleColumns, new PagePointerPair[0][]);
+            holder.SetColumns(intColumns, doubleColumns, pagePointerColumns);
             page.Serialize(holder);
 
             pageManager.SavePage(page);
