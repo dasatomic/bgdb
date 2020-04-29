@@ -5,5 +5,6 @@
         IntPage,
         DoublePage,
         StringPage,
+        MixedPage,
     }
 }
