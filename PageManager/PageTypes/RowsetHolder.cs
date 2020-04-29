@@ -124,7 +124,7 @@ namespace PageManager
                 }
             }
 
-            return rowsetCount;
+            return (uint)rowCount;
         }
 
         public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerPair[][] pagePointerColumns)
@@ -149,7 +149,7 @@ namespace PageManager
 
         public uint StorageSizeInBytes()
         {
-            return this.rowsetCount * (uint)(PagePointerPair.Size * this.pagePointerColumns.Length +
+            return sizeof(int) + this.rowsetCount * (uint)(PagePointerPair.Size * this.pagePointerColumns.Length +
                 sizeof(int) * this.intColumns.Length +
                 sizeof(double) * this.doubleColumns.Length);
         }
@@ -210,12 +210,12 @@ namespace PageManager
 
         public void Deserialize(ReadOnlySpan<byte> bytes)
         {
+            this.rowsetCount = BitConverter.ToUInt32(bytes);
+
             if (bytes.Length != this.StorageSizeInBytes())
             {
                 throw new InvalidRowsetDefinitionException();
             }
-
-            this.rowsetCount = BitConverter.ToUInt32(bytes);
 
             // TODO: Use memory stream for this.
             int currentPosition = sizeof(int);
