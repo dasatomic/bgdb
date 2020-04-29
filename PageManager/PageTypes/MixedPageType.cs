@@ -78,6 +78,7 @@ namespace PageManager
 
         private void SerializeInternal(RowsetHolder item)
         {
+            item.SerializeInto(this.content.AsSpan((int)FirstElementPosition));
         }
 
         private uint GetSizeNeeded(RowsetHolder items)
@@ -87,7 +88,9 @@ namespace PageManager
 
         public RowsetHolder Deserialize()
         {
-            return null;
+            RowsetHolder rowsetHolder = new RowsetHolder(this.columnTypes);
+            rowsetHolder.Deserialize(this.content.AsSpan((int)FirstElementPosition));
+            return rowsetHolder;
         }
 
         public uint MaxRowCount()

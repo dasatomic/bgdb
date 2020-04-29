@@ -10,7 +10,8 @@ namespace PageManager
         public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerPair[][] pagePointerColumns);
         public uint StorageSizeInBytes();
         public byte[] Serialize();
-        public void Deserialize(byte[] bytes);
+        public void SerializeInto(Span<byte> content);
+        public void Deserialize(ReadOnlySpan<byte> bytes);
         public uint GetRowCount();
     }
 
@@ -153,20 +154,22 @@ namespace PageManager
                 sizeof(double) * this.doubleColumns.Length);
         }
 
-        public byte[] Serialize()
+        public void SerializeInto(Span<byte> content)
         {
-            uint sizeNeeded = StorageSizeInBytes();
+            if (content.Length < this.StorageSizeInBytes())
+            {
+                throw new InvalidRowsetDefinitionException();
+            }
 
-            byte[] content = new byte[sizeNeeded];
-
-            BitConverter.TryWriteBytes(content, this.rowsetCount);
+            bool success = BitConverter.TryWriteBytes(content, this.rowsetCount);
+            System.Diagnostics.Debug.Assert(success);
             int currentPosition = sizeof(int);
 
             foreach (int[] iCol in this.intColumns)
             {
                 foreach (int iVal in iCol)
                 {
-                    bool success = BitConverter.TryWriteBytes(content.AsSpan(currentPosition, sizeof(int)), iVal);
+                    success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(int)), iVal);
                     System.Diagnostics.Debug.Assert(success);
                     currentPosition += sizeof(int);
                 }
@@ -176,7 +179,7 @@ namespace PageManager
             {
                 foreach (double dVal in dCol)
                 {
-                    bool success = BitConverter.TryWriteBytes(content.AsSpan(currentPosition, sizeof(double)), dVal);
+                    success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(double)), dVal);
                     System.Diagnostics.Debug.Assert(success);
                     currentPosition += sizeof(double);
                 }
@@ -186,29 +189,35 @@ namespace PageManager
             {
                 foreach (PagePointerPair ppVal in ppCol)
                 {
-                    bool success = BitConverter.TryWriteBytes(content.AsSpan(currentPosition, sizeof(int)), ppVal.OffsetInPage);
+                    success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(int)), ppVal.OffsetInPage);
                     System.Diagnostics.Debug.Assert(success);
                     currentPosition += sizeof(int);
-                    success = BitConverter.TryWriteBytes(content.AsSpan(currentPosition, sizeof(long)), ppVal.PageId);
+                    success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(long)), ppVal.PageId);
                     System.Diagnostics.Debug.Assert(success);
                     currentPosition += sizeof(long);
                 }
             }
+        }
 
-            System.Diagnostics.Debug.Assert(currentPosition == sizeNeeded);
+        public byte[] Serialize()
+        {
+            uint sizeNeeded = StorageSizeInBytes();
+            byte[] content = new byte[sizeNeeded];
+            SerializeInto(content);
 
             return content;
         }
 
-        public void Deserialize(byte[] bytes)
+        public void Deserialize(ReadOnlySpan<byte> bytes)
         {
             if (bytes.Length != this.StorageSizeInBytes())
             {
                 throw new InvalidRowsetDefinitionException();
             }
 
-            this.rowsetCount = BitConverter.ToUInt32(bytes, 0);
+            this.rowsetCount = BitConverter.ToUInt32(bytes);
 
+            // TODO: Use memory stream for this.
             int currentPosition = sizeof(int);
             for (int i = 0; i < intColumns.Length; i++)
             {
@@ -216,7 +225,7 @@ namespace PageManager
 
                 for (int j = 0; j < rowsetCount; j++)
                 {
-                    intColumns[i][j] = BitConverter.ToInt32(bytes, currentPosition);
+                    intColumns[i][j] = BitConverter.ToInt32(bytes.Slice(currentPosition));
                     currentPosition += sizeof(int);
                 }
             }
@@ -227,7 +236,7 @@ namespace PageManager
 
                 for (int j = 0; j < rowsetCount; j++)
                 {
-                    doubleColumns[i][j] = BitConverter.ToDouble(bytes, currentPosition);
+                    doubleColumns[i][j] = BitConverter.ToDouble(bytes.Slice(currentPosition));
                     currentPosition += sizeof(double);
                 }
             }
@@ -238,9 +247,9 @@ namespace PageManager
 
                 for (int j = 0; j < rowsetCount; j++)
                 {
-                    pagePointerColumns[i][j].OffsetInPage = BitConverter.ToInt32(bytes, currentPosition);
+                    pagePointerColumns[i][j].OffsetInPage = BitConverter.ToInt32(bytes.Slice(currentPosition));
                     currentPosition += sizeof(int);
-                    pagePointerColumns[i][j].PageId = BitConverter.ToInt64(bytes, currentPosition);
+                    pagePointerColumns[i][j].PageId = BitConverter.ToInt64(bytes.Slice(currentPosition));
                     currentPosition += sizeof(long);
                 }
             }
