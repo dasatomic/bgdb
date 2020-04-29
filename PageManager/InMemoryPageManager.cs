@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PageManager
 {
-    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage
+    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
@@ -111,6 +111,24 @@ namespace PageManager
             }
 
             return (StringOnlyPage)page;
+        }
+
+        public LongOnlyPage AllocatePageLong()
+        {
+            IPage page = AllocatePage(PageType.LongPage);
+            return (LongOnlyPage)page;
+        }
+
+        public LongOnlyPage GetPageLong(ulong pageId)
+        {
+            IPage page = this.GetPage(pageId);
+
+            if (page.PageType() != PageType.LongPage)
+            {
+                throw new InvalidCastException("Can't cast to double page");
+            }
+
+            return (LongOnlyPage)page;
         }
     }
 }
