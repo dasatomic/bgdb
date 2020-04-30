@@ -14,19 +14,9 @@ namespace PageManager
         private readonly uint pageSize;
         private readonly ulong pageId;
 
-        // Byte representation:
-        // [0-7] PageId
-        // [8-11] PageSize
-        // [12-15] PageType
         protected byte[] content;
 
         private readonly ColumnType[] columnTypes;
-
-        protected const uint PageIdPosition = 0;
-        protected const uint PageSizePosition = 8;
-        protected const uint PageTypePosition = 12;
-        protected const uint NumOfRowsPosition = 16;
-        protected const uint FirstElementPosition = 20;
 
         public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes)
         {
@@ -88,7 +78,7 @@ namespace PageManager
 
         private void SerializeInternal(IRowsetHolder item)
         {
-            item.SerializeInto(this.content.AsSpan((int)FirstElementPosition));
+            item.SerializeInto(this.content.AsSpan((int)IPage.FirstElementPosition));
         }
 
         private uint GetSizeNeeded(IRowsetHolder items)
@@ -100,21 +90,21 @@ namespace PageManager
         {
             RowsetHolder rowsetHolder = new RowsetHolder(this.columnTypes);
 
-            int elemCount = BitConverter.ToInt32(this.content, (int)FirstElementPosition);
+            int elemCount = BitConverter.ToInt32(this.content, (int)IPage.FirstElementPosition);
             int size = (int)(elemCount * RowsetHolder.CalculateSizeOfRow(this.columnTypes) + sizeof(int));
-            rowsetHolder.Deserialize(this.content.AsSpan((int)FirstElementPosition, size));
+            rowsetHolder.Deserialize(this.content.AsSpan((int)IPage.FirstElementPosition, size));
 
             return rowsetHolder;
         }
 
         public uint MaxRowCount()
         {
-            return (this.pageSize - FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);
+            return (this.pageSize - IPage.FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);
         }
 
         public bool CanFit(RowsetHolder items)
         {
-            return this.pageSize - FirstElementPosition >= items.StorageSizeInBytes();
+            return this.pageSize - IPage.FirstElementPosition >= items.StorageSizeInBytes();
         }
     }
 }

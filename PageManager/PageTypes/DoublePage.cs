@@ -14,12 +14,12 @@ namespace PageManager
 
         public override double[] Deserialize()
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)NumOfRowsPosition, sizeof(int)));
+            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
             double[] elements = new double[numOfElements];
 
             for (int i = 0; i < elements.Length; i++)
             {
-                elements[i] = BitConverter.ToDouble(this.content.AsSpan((int)FirstElementPosition + i * sizeof(double), sizeof(double)));
+                elements[i] = BitConverter.ToDouble(this.content.AsSpan((int)IPage.FirstElementPosition + i * sizeof(double), sizeof(double)));
             }
 
             return elements;
@@ -27,7 +27,7 @@ namespace PageManager
 
         protected override void SerializeInternal(double[] items)
         {
-            uint contentPosition = FirstElementPosition;
+            uint contentPosition = IPage.FirstElementPosition;
             foreach (double elem in items)
             {
                 foreach (byte elemBytes in BitConverter.GetBytes(elem))

@@ -14,12 +14,12 @@ namespace PageManager
 
         public override long[] Deserialize()
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)NumOfRowsPosition, sizeof(int)));
+            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
             long[] elements = new long[numOfElements];
 
             for (int i = 0; i < elements.Length; i++)
             {
-                elements[i] = BitConverter.ToInt64(this.content.AsSpan((int)FirstElementPosition + i * sizeof(long), sizeof(long)));
+                elements[i] = BitConverter.ToInt64(this.content.AsSpan((int)IPage.FirstElementPosition + i * sizeof(long), sizeof(long)));
             }
 
             return elements;
@@ -27,7 +27,7 @@ namespace PageManager
 
         protected override void SerializeInternal(long[] items)
         {
-            uint contentPosition = FirstElementPosition;
+            uint contentPosition = IPage.FirstElementPosition;
             foreach (long elem in items)
             {
                 foreach (byte elemBytes in BitConverter.GetBytes(elem))

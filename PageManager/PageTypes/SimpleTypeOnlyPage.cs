@@ -11,23 +11,13 @@ namespace PageManager
         private readonly ulong pageId;
         private readonly PageType pageType;
 
-        // Byte representation:
-        // [0-7] PageId
-        // [8-11] PageSize
-        // [12-15] PageType
         protected byte[] content;
-
-        protected const uint PageIdPosition = 0;
-        protected const uint PageSizePosition = 8;
-        protected const uint PageTypePosition = 12;
-        protected const uint NumOfRowsPosition = 16;
-        protected const uint FirstElementPosition = 20;
 
         protected virtual uint FooterLenght() => 0;
 
         public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType)
         {
-            if (pageSize < FirstElementPosition + (uint)Marshal.SizeOf(default(T)))
+            if (pageSize < IPage.FirstElementPosition + (uint)Marshal.SizeOf(default(T)))
             {
                 throw new ArgumentException("Size can't be less than size of int");
             }
@@ -97,14 +87,14 @@ namespace PageManager
 
         public uint MaxRowCount()
         {
-            return (this.pageSize - FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
+            return (this.pageSize - IPage.FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
         }
 
         public abstract T[] Deserialize();
 
         public bool CanFit(T[] items)
         {
-            return this.pageSize - FirstElementPosition - this.FooterLenght() >= (uint)Marshal.SizeOf(default(T));
+            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() >= (uint)Marshal.SizeOf(default(T));
         }
     }
 }
