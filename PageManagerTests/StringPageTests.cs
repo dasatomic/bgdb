@@ -8,32 +8,34 @@ namespace PageManagerTests
     {
         private const int DefaultSize = 4096;
         private const int DefaultPageId = 42;
+        private const int DefaultPrevPage = 41;
+        private const int DefaultNextPage = 43;
 
         [Test]
         public void VerifyPageId()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             Assert.AreEqual(42, strPage.PageId());
         }
 
         [Test]
         public void VerifyPageType()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
         }
 
         [Test]
         public void VerifySizeInBytes()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             Assert.AreEqual(4096, strPage.SizeInBytes());
         }
 
         [Test]
         public void VerifyDeserializationEmpty()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             char[][] content = strPage.Deserialize();
             Assert.IsTrue(content.Length == 0);
         }
@@ -47,7 +49,7 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             strPage.Serialize(startArray);
             char[][] content = strPage.Deserialize();
             Assert.AreEqual(startArray, content);
@@ -68,7 +70,7 @@ namespace PageManagerTests
                 "1234".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
             strPage.Serialize(startArray);
             char[][] content = strPage.Deserialize();
@@ -83,7 +85,7 @@ namespace PageManagerTests
         public void VerifySetMoreThanMax()
         {
             Assert.Throws<SerializationException>(() => {
-                StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+                StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
                 char[][] array = new char[DefaultSize / 4][];
                 for (int i = 0; i < array.Length; i++)
@@ -98,7 +100,7 @@ namespace PageManagerTests
         [Test]
         public void VerifySetMax()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
             char[][] array = new char[strPage.MaxRowCount() / 5][];
             for (int i = 0; i < array.Length; i++)

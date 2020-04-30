@@ -12,7 +12,7 @@ namespace PageManager
     {
         private readonly ColumnType[] columnTypes;
 
-        public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes)
+        public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId)
         {
             if (columnTypes == null || columnTypes.Length == 0)
             {
@@ -24,6 +24,8 @@ namespace PageManager
 
             this.content = new byte[pageSize];
             this.columnTypes = columnTypes;
+            this.prevPageId = prevPageId;
+            this.nextPageId = nextPageId;
         }
 
         public override PageType PageType() => PageManager.PageType.MixedPage;

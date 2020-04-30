@@ -11,7 +11,7 @@ namespace PageManager
 
         protected virtual uint FooterLenght() => 0;
 
-        public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType)
+        public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType, ulong prevPageId, ulong nextPageId)
         {
             if (pageSize < IPage.FirstElementPosition + (uint)Marshal.SizeOf(default(T)))
             {
@@ -26,6 +26,8 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
             this.pageType = pageType;
+            this.nextPageId = nextPageId;
+            this.prevPageId = prevPageId;
 
             this.content = new byte[pageSize];
 

@@ -10,7 +10,7 @@ namespace PageManager
 
     public class LongOnlyPage : SimpleTypeOnlyPage<long>
     {
-        public LongOnlyPage(uint pageSize, ulong pageId) : base(pageSize, pageId, PageManager.PageType.LongPage) { }
+        public LongOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.LongPage, prevPageId, nextPageId) { }
 
         public override long[] Deserialize()
         {

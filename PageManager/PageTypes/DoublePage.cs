@@ -10,7 +10,7 @@ namespace PageManager
 
     public class DoubleOnlyPage : SimpleTypeOnlyPage<double>
     {
-        public DoubleOnlyPage(uint pageSize, ulong pageId) : base(pageSize, pageId, PageManager.PageType.DoublePage) { }
+        public DoubleOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.DoublePage, prevPageId, nextPageId) { }
 
         public override double[] Deserialize()
         {

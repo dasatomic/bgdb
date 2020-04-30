@@ -11,7 +11,7 @@ namespace PageManager
 
     public class StringOnlyPage : PageSerializerBase<char[][]>
     {
-        public StringOnlyPage(uint pageSize, ulong pageId)
+        public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId)
         {
             if (pageSize < IPage.FirstElementPosition + sizeof(char) * 2)
             {
@@ -20,6 +20,8 @@ namespace PageManager
 
             this.pageSize = pageSize;
             this.pageId = pageId;
+            this.prevPageId = prevPageId;
+            this.nextPageId = nextPageId;
 
             this.content = new byte[pageSize];
 

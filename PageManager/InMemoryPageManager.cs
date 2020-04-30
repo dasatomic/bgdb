@@ -27,19 +27,19 @@ namespace PageManager
 
             if (pageType == PageType.IntPage)
             {
-                page = new IntegerOnlyPage(pageSize, pageId);
+                page = new IntegerOnlyPage(pageSize, pageId, 0, 0);
             }
             else if (pageType == PageType.DoublePage)
             {
-                page = new DoubleOnlyPage(pageSize, pageId);
+                page = new DoubleOnlyPage(pageSize, pageId, 0, 0);
             }
             else if (pageType == PageType.StringPage)
             {
-                page = new StringOnlyPage(pageSize, pageId);
+                page = new StringOnlyPage(pageSize, pageId, 0, 0);
             }
             else if (pageType == PageType.MixedPage)
             {
-                page = new MixedPage(pageSize, pageId, columnTypes);
+                page = new MixedPage(pageSize, pageId, columnTypes, 0, 0);
             }
             else
             {

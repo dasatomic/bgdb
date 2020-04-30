@@ -10,7 +10,7 @@ namespace PageManager
 
     public class IntegerOnlyPage : SimpleTypeOnlyPage<int>
     {
-        public IntegerOnlyPage(uint pageSize, ulong pageId) : base(pageSize, pageId, PageManager.PageType.IntPage) { }
+        public IntegerOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.IntPage, prevPageId, nextPageId) { }
 
         public override int[] Deserialize()
         {
