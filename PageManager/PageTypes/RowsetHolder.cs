@@ -6,8 +6,9 @@ namespace PageManager
     {
         public int[] GetIntColumn(int columnId);
         public double[] GetDoubleColumn(int columnId);
-        public  PagePointerPair[] GetStringPointerColumn(int columnId);
-        public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerPair[][] pagePointerColumns);
+        public  PagePointerOffsetPair[] GetStringPointerColumn(int columnId);
+        public  long[] GetPagePointerColumn(int columnId);
+        public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns);
         public uint StorageSizeInBytes();
         public byte[] Serialize();
         public void SerializeInto(Span<byte> content);
@@ -18,8 +19,9 @@ namespace PageManager
     public class RowsetHolder : IRowsetHolder
     {
         private int[][] intColumns;
-        private PagePointerPair[][] pagePointerColumns;
+        private PagePointerOffsetPair[][] pagePointerOffsetColumns;
         private double[][] doubleColumns;
+        private long[][] pagePointerColumns;
         private int[] columnIdToTypeIdMappers;
         private uint rowsetCount = 0;
 
@@ -27,6 +29,7 @@ namespace PageManager
         {
             int intCount = 0;
             int doubleCount = 0;
+            int pagePointerOffsetCount = 0;
             int pagePointerCount = 0;
 
             columnIdToTypeIdMappers = new int[columnTypes.Length];
@@ -44,6 +47,10 @@ namespace PageManager
                         doubleCount++;
                         break;
                     case ColumnType.StringPointer:
+                        columnIdToTypeIdMappers[i] = pagePointerOffsetCount;
+                        pagePointerOffsetCount++;
+                        break;
+                    case ColumnType.PagePointer:
                         columnIdToTypeIdMappers[i] = pagePointerCount;
                         pagePointerCount++;
                         break;
@@ -53,8 +60,9 @@ namespace PageManager
             }
 
             this.intColumns = new int[intCount][];
-            this.pagePointerColumns = new PagePointerPair[pagePointerCount][];
+            this.pagePointerOffsetColumns = new PagePointerOffsetPair[pagePointerOffsetCount][];
             this.doubleColumns = new double[doubleCount][];
+            this.pagePointerColumns = new long[pagePointerCount][];
             this.rowsetCount = 0;
         }
 
@@ -70,16 +78,17 @@ namespace PageManager
             return doubleColumns[columnIdToTypeIdMappers[columnId]];
         }
 
-        public PagePointerPair[] GetStringPointerColumn(int columnId)
+        public PagePointerOffsetPair[] GetStringPointerColumn(int columnId)
         {
-            return pagePointerColumns[columnIdToTypeIdMappers[columnId]];
+            return pagePointerOffsetColumns[columnIdToTypeIdMappers[columnId]];
         }
 
-        private uint VerifyColumnValidityAndGetRowCount(int[][] intColumns, double[][] doubleColumns, PagePointerPair[][] pagePointerColumns)
+        private uint VerifyColumnValidityAndGetRowCount(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns)
         {
             if (intColumns.Length != this.intColumns.Length ||
                 doubleColumns.Length != this.doubleColumns.Length ||
-                pagePointerColumns.Length != this.pagePointerColumns.Length)
+                pagePointerColumns.Length != this.pagePointerColumns.Length ||
+                pagePointerOffsetColumns.Length != this.pagePointerOffsetColumns.Length)
             {
                 throw new InvalidRowsetDefinitionException();
             }
@@ -124,16 +133,29 @@ namespace PageManager
                 }
             }
 
+            foreach (var pagePointerOffsetColumn in pagePointerOffsetColumns)
+            {
+                if (rowCount == 0)
+                {
+                    rowCount = pagePointerOffsetColumn.Length;
+                }
+
+                if (pagePointerOffsetColumn.Length != rowCount)
+                {
+                    throw new InvalidRowsetDefinitionException();
+                }
+            }
+
             return (uint)rowCount;
         }
 
-        public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerPair[][] pagePointerColumns)
+        public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns)
         {
-            this.rowsetCount = this.VerifyColumnValidityAndGetRowCount(intColumns, doubleColumns, pagePointerColumns);
+            this.rowsetCount = this.VerifyColumnValidityAndGetRowCount(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
-            for (int i = 0; i < pagePointerColumns.Length; i++)
+            for (int i = 0; i < pagePointerOffsetColumns.Length; i++)
             {
-                this.pagePointerColumns[i] = pagePointerColumns[i];
+                this.pagePointerOffsetColumns[i] = pagePointerOffsetColumns[i];
             }
 
             for (int i = 0; i < intColumns.Length; i++)
@@ -145,13 +167,19 @@ namespace PageManager
             {
                 this.doubleColumns[i] = doubleColumns[i];
             }
+
+            for (int i = 0; i < pagePointerColumns.Length; i++)
+            {
+                this.pagePointerColumns[i] = pagePointerColumns[i];
+            }
         }
 
         public uint StorageSizeInBytes()
         {
-            return sizeof(int) + this.rowsetCount * (uint)(PagePointerPair.Size * this.pagePointerColumns.Length +
+            return sizeof(int) + this.rowsetCount * (uint)(PagePointerOffsetPair.Size * this.pagePointerOffsetColumns.Length +
                 sizeof(int) * this.intColumns.Length +
-                sizeof(double) * this.doubleColumns.Length);
+                sizeof(double) * this.doubleColumns.Length +
+                sizeof(long) * this.pagePointerColumns.Length);
         }
 
         public void SerializeInto(Span<byte> content)
@@ -185,9 +213,19 @@ namespace PageManager
                 }
             }
 
-            foreach (PagePointerPair[] ppCol in this.pagePointerColumns)
+            foreach (long[] lCol in this.pagePointerColumns)
             {
-                foreach (PagePointerPair ppVal in ppCol)
+                foreach (long lVal in lCol)
+                {
+                    success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(long)), lVal);
+                    System.Diagnostics.Debug.Assert(success);
+                    currentPosition += sizeof(long);
+                }
+            }
+
+            foreach (PagePointerOffsetPair[] ppCol in this.pagePointerOffsetColumns)
+            {
+                foreach (PagePointerOffsetPair ppVal in ppCol)
                 {
                     success = BitConverter.TryWriteBytes(content.Slice(currentPosition, sizeof(int)), ppVal.OffsetInPage);
                     System.Diagnostics.Debug.Assert(success);
@@ -243,13 +281,24 @@ namespace PageManager
 
             for (int i = 0; i < pagePointerColumns.Length; i++)
             {
-                pagePointerColumns[i] = new PagePointerPair[this.rowsetCount];
+                pagePointerColumns[i] = new long[this.rowsetCount];
 
                 for (int j = 0; j < rowsetCount; j++)
                 {
-                    pagePointerColumns[i][j].OffsetInPage = BitConverter.ToInt32(bytes.Slice(currentPosition));
+                    pagePointerColumns[i][j] = BitConverter.ToInt64(bytes.Slice(currentPosition));
+                    currentPosition += sizeof(long);
+                }
+            }
+
+            for (int i = 0; i < pagePointerOffsetColumns.Length; i++)
+            {
+                pagePointerOffsetColumns[i] = new PagePointerOffsetPair[this.rowsetCount];
+
+                for (int j = 0; j < rowsetCount; j++)
+                {
+                    pagePointerOffsetColumns[i][j].OffsetInPage = BitConverter.ToInt32(bytes.Slice(currentPosition));
                     currentPosition += sizeof(int);
-                    pagePointerColumns[i][j].PageId = BitConverter.ToInt64(bytes.Slice(currentPosition));
+                    pagePointerOffsetColumns[i][j].PageId = BitConverter.ToInt64(bytes.Slice(currentPosition));
                     currentPosition += sizeof(long);
                 }
             }
@@ -265,14 +314,19 @@ namespace PageManager
                 {
                     case ColumnType.Int: totalSize += sizeof(int); break;
                     case ColumnType.Double: totalSize += sizeof(double); break;
-                    case ColumnType.StringPointer: totalSize += (int)PagePointerPair.Size; break;
+                    case ColumnType.StringPointer: totalSize += (int)PagePointerOffsetPair.Size; break;
+                    case ColumnType.PagePointer: totalSize += sizeof(long); break;
                     default:
                         throw new UnexpectedEnumValueException<ColumnType>(type);
                 }
-
             }
 
             return (uint)totalSize;
+        }
+
+        public long[] GetPagePointerColumn(int columnId)
+        {
+            return pagePointerColumns[columnIdToTypeIdMappers[columnId]];
         }
     }
 }

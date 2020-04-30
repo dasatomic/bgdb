@@ -5,6 +5,7 @@
         Int = 0,
         Double = 1,
         StringPointer = 2,
-        MaxColumnType = 3,
+        PagePointer = 3,
+        MaxColumnType = 4,
     }
 }

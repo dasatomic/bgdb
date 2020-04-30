@@ -9,7 +9,8 @@ namespace PageManagerTests
             out ColumnType[] types,
             out int[][] intColumns,
             out double[][] doubleColumns,
-            out PagePointerPair[][] pagePointerColumns)
+            out long[][] pagePointerColumns,
+            out PagePointerOffsetPair[][] pagePointerOffsetColumns)
         {
             types = new ColumnType[]
             {
@@ -18,11 +19,13 @@ namespace PageManagerTests
                 ColumnType.Double,
                 ColumnType.Int,
                 ColumnType.StringPointer,
+                ColumnType.PagePointer,
             };
 
             int intColumnCount = types.Count(t => t == ColumnType.Int);
             int doubleColumnCount = types.Count(t => t == ColumnType.Double);
-            int pagePointerCount = types.Count(t => t == ColumnType.StringPointer);
+            int pagePointerOffsetCount = types.Count(t => t == ColumnType.StringPointer);
+            int pagePointerCount = types.Count(t => t == ColumnType.PagePointer);
 
             const int rowCount = 5;
 
@@ -43,15 +46,26 @@ namespace PageManagerTests
                 }
             }
 
-            pagePointerColumns = new PagePointerPair[pagePointerCount][];
+            pagePointerColumns = new long[pagePointerCount][];
             for (int i = 0; i < pagePointerColumns.Length; i++)
             {
-                pagePointerColumns[i] = new PagePointerPair[rowCount];
+                pagePointerColumns[i] = new long[rowCount];
 
                 for (int j = 0; j < rowCount; j++)
                 {
-                    pagePointerColumns[i][j].PageId = i;
-                    pagePointerColumns[i][j].OffsetInPage = i;
+                    pagePointerColumns[i][j] = (long)j;
+                }
+            }
+
+            pagePointerOffsetColumns = new PagePointerOffsetPair[pagePointerOffsetCount][];
+            for (int i = 0; i < pagePointerOffsetColumns.Length; i++)
+            {
+                pagePointerOffsetColumns[i] = new PagePointerOffsetPair[rowCount];
+
+                for (int j = 0; j < rowCount; j++)
+                {
+                    pagePointerOffsetColumns[i][j].PageId = i;
+                    pagePointerOffsetColumns[i][j].OffsetInPage = i;
                 }
             }
         }

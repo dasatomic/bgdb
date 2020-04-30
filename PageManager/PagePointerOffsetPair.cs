@@ -1,13 +1,13 @@
 ﻿namespace PageManager
 {
-    public struct PagePointerPair
+    public struct PagePointerOffsetPair
     {
         public const uint Size = sizeof(long) + sizeof(int);
 
         public long PageId;
         public int OffsetInPage;
 
-        public PagePointerPair(long pageId, int offsetInPage)
+        public PagePointerOffsetPair(long pageId, int offsetInPage)
         {
             this.PageId = pageId;
             this.OffsetInPage = offsetInPage;
