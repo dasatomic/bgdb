@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace PageManager
 {
@@ -9,13 +8,8 @@ namespace PageManager
         MixedPage GetMixedPage(ulong pageId);
     }
 
-    public class MixedPage : IPageSerializer<RowsetHolder>
+    public class MixedPage : PageSerializerBase<RowsetHolder>
     {
-        private readonly uint pageSize;
-        private readonly ulong pageId;
-
-        protected byte[] content;
-
         private readonly ColumnType[] columnTypes;
 
         public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes)
@@ -32,61 +26,14 @@ namespace PageManager
             this.columnTypes = columnTypes;
         }
 
-        public byte[] GetContent() => this.content;
+        public override PageType PageType() => PageManager.PageType.MixedPage;
 
-        public ulong PageId() => this.pageId;
-
-        public PageType PageType() => PageManager.PageType.MixedPage;
-
-        public uint SizeInBytes() => this.pageSize;
-
-        public void Serialize(RowsetHolder items)
-        {
-            uint neededSize = this.GetSizeNeeded(items);
-            if (!this.CanFit(items))
-            {
-                throw new SerializationException();
-            }
-
-            uint contentPosition = 0;
-            foreach (byte pageByte in BitConverter.GetBytes(this.pageId))
-            {
-                content[contentPosition] = pageByte;
-                contentPosition++;
-            }
-
-            foreach (byte sizeByte in BitConverter.GetBytes(this.pageSize))
-            {
-                content[contentPosition] = sizeByte;
-                contentPosition++;
-            }
-
-            foreach (byte typeByte in BitConverter.GetBytes((int)PageManager.PageType.MixedPage))
-            {
-                content[contentPosition] = typeByte;
-                contentPosition++;
-            }
-
-            foreach (byte numOfRowsByte in BitConverter.GetBytes(neededSize))
-            {
-                content[contentPosition] = numOfRowsByte;
-                contentPosition++;
-            }
-
-            SerializeInternal(items);
-        }
-
-        private void SerializeInternal(IRowsetHolder item)
+        protected override void SerializeInternal(RowsetHolder item)
         {
             item.SerializeInto(this.content.AsSpan((int)IPage.FirstElementPosition));
         }
 
-        private uint GetSizeNeeded(IRowsetHolder items)
-        {
-            return items.StorageSizeInBytes();
-        }
-
-        public RowsetHolder Deserialize()
+        public override RowsetHolder Deserialize()
         {
             RowsetHolder rowsetHolder = new RowsetHolder(this.columnTypes);
 
@@ -97,14 +44,24 @@ namespace PageManager
             return rowsetHolder;
         }
 
-        public uint MaxRowCount()
+        public override uint MaxRowCount()
         {
             return (this.pageSize - IPage.FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);
         }
 
-        public bool CanFit(RowsetHolder items)
+        public override bool CanFit(RowsetHolder items)
         {
             return this.pageSize - IPage.FirstElementPosition >= items.StorageSizeInBytes();
+        }
+
+        public override uint GetSizeNeeded(RowsetHolder items)
+        {
+            return items.StorageSizeInBytes();
+        }
+
+        protected override uint GetRowCount(RowsetHolder items)
+        {
+            return items.GetRowCount();
         }
     }
 }

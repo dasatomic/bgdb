@@ -28,6 +28,7 @@ namespace PageManager
         protected override void SerializeInternal(double[] items)
         {
             uint contentPosition = IPage.FirstElementPosition;
+
             foreach (double elem in items)
             {
                 foreach (byte elemBytes in BitConverter.GetBytes(elem))

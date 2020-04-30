@@ -9,26 +9,11 @@ namespace PageManager
         StringOnlyPage GetPageStr(ulong pageId);
     }
 
-    public class StringOnlyPage : IPageSerializer<char[][]>
+    public class StringOnlyPage : PageSerializerBase<char[][]>
     {
-        private readonly uint pageSize;
-        private readonly ulong pageId;
-
-        // Byte representation:
-        // [0-7] PageId
-        // [8-11] PageSize
-        // [12-15] PageType
-        protected byte[] content;
-
-        protected const uint PageIdPosition = 0;
-        protected const uint PageSizePosition = 8;
-        protected const uint PageTypePosition = 12;
-        protected const uint NumOfRowsPosition = 16;
-        protected const uint FirstElementPosition = 20;
-
         public StringOnlyPage(uint pageSize, ulong pageId)
         {
-            if (pageSize < FirstElementPosition + sizeof(char) * 2)
+            if (pageSize < IPage.FirstElementPosition + sizeof(char) * 2)
             {
                 throw new ArgumentException("Size can't be less than size of char and null termination");
             }
@@ -41,12 +26,12 @@ namespace PageManager
             Serialize(new char[0][]);
         }
 
-        public char[][] Deserialize()
+        public override char[][] Deserialize()
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)NumOfRowsPosition, sizeof(int)));
+            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
             char[][] elementsToReturn = new char[numOfElements][];
 
-            uint currentPositionInPage = FirstElementPosition;
+            uint currentPositionInPage = IPage.FirstElementPosition;
 
             for (int elemPosition = 0; elemPosition < elementsToReturn.Length; elemPosition++)
             {
@@ -70,15 +55,9 @@ namespace PageManager
             return elementsToReturn;
         }
 
-        public byte[] GetContent() => this.content;
+        public override PageType PageType() => PageManager.PageType.StringPage;
 
-        public ulong PageId() => this.pageId;
-
-        public PageType PageType() => PageManager.PageType.StringPage;
-
-        public uint SizeInBytes() => this.pageSize;
-
-        private uint GetSizeNeeded(char[][] items)
+        public override uint GetSizeNeeded(char[][] items)
         {
             uint byteCount = 0;
             foreach (char[] item in items)
@@ -89,44 +68,9 @@ namespace PageManager
             return byteCount;
         }
 
-        public void Serialize(char[][] items)
+        protected override void SerializeInternal(char[][] items)
         {
-            if (this.MaxRowCount() < this.GetSizeNeeded(items))
-            {
-                throw new SerializationException();
-            }
-
-            uint contentPosition = 0;
-            foreach (byte pageByte in BitConverter.GetBytes(this.pageId))
-            {
-                content[contentPosition] = pageByte;
-                contentPosition++;
-            }
-
-            foreach (byte sizeByte in BitConverter.GetBytes(this.pageSize))
-            {
-                content[contentPosition] = sizeByte;
-                contentPosition++;
-            }
-
-            foreach (byte typeByte in BitConverter.GetBytes((int)PageManager.PageType.StringPage))
-            {
-                content[contentPosition] = typeByte;
-                contentPosition++;
-            }
-
-            foreach (byte numOfRowsByte in BitConverter.GetBytes(items.Length))
-            {
-                content[contentPosition] = numOfRowsByte;
-                contentPosition++;
-            }
-
-            SerializeInternal(items);
-        }
-
-        private void SerializeInternal(char[][] items)
-        {
-            uint contentPosition = FirstElementPosition;
+            uint contentPosition = IPage.FirstElementPosition;
             foreach (char[] elem in items)
             {
                 foreach (byte elemBytes in elem)
@@ -139,12 +83,12 @@ namespace PageManager
             }
         }
 
-        public uint MaxRowCount()
+        public override uint MaxRowCount()
         {
-            return this.pageSize - FirstElementPosition;
+            return this.pageSize - IPage.FirstElementPosition;
         }
 
-        public bool CanFit(char[][] items)
+        public override bool CanFit(char[][] items)
         {
             int size = 0;
             foreach (char[] item in items)
@@ -152,7 +96,12 @@ namespace PageManager
                 size += item.Length;
             }
 
-            return this.pageSize - FirstElementPosition  >= size;
+            return this.pageSize - IPage.FirstElementPosition  >= size;
+        }
+
+        protected override uint GetRowCount(char[][] items)
+        {
+            return (uint)items.Length;
         }
     }
 }

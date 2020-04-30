@@ -30,7 +30,7 @@ namespace PageManagerTests
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
 
-            var emptyPage = pageManager.AllocatePageInt();
+            pageManager.AllocatePageInt();
             var page2 = pageManager.AllocatePageInt();
 
             ulong pageId = page2.PageId();
