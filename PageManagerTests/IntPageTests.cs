@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using PageManager;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace PageManagerTests
@@ -52,6 +53,16 @@ namespace PageManagerTests
         }
 
         [Test]
+        public void VerifyRowCount()
+        {
+            int[] startArray = new int[] { 1, 2, 3, 4 };
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            Assert.AreEqual(0, intPage.RowCount());
+            intPage.Serialize(startArray);
+            Assert.AreEqual(startArray.Length, intPage.RowCount());
+        }
+
+        [Test]
         public void VerifyDoubleSerializeDeserialize()
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
@@ -91,6 +102,20 @@ namespace PageManagerTests
             intPage.Serialize(startArray);
             int[] content = intPage.Deserialize();
             Assert.AreEqual(startArray, content);
+        }
+
+        [Test]
+        public void Merge()
+        {
+            int[] startArray = new int[] { 1, 2, 3, 4 };
+            int[] secondArray = new int[] { 5, 6 };
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+
+            intPage.Serialize(startArray);
+            intPage.Merge(secondArray);
+
+            int[] content = intPage.Deserialize();
+            Assert.AreEqual(startArray.Concat(secondArray).ToArray(), content);
         }
     }
 }

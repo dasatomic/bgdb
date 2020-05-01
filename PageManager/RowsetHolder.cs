@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace PageManager
 {
@@ -14,6 +15,7 @@ namespace PageManager
         public void SerializeInto(Span<byte> content);
         public void Deserialize(ReadOnlySpan<byte> bytes);
         public uint GetRowCount();
+        public void Merge(RowsetHolder rowsetHolder);
     }
 
     public class RowsetHolder : IRowsetHolder
@@ -327,6 +329,44 @@ namespace PageManager
         public long[] GetPagePointerColumn(int columnId)
         {
             return pagePointerColumns[columnIdToTypeIdMappers[columnId]];
+        }
+
+        public void Merge(RowsetHolder rowsetHolder)
+        {
+            if (this.columnIdToTypeIdMappers.Length != rowsetHolder.columnIdToTypeIdMappers.Length)
+            {
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < this.columnIdToTypeIdMappers.Length; i++)
+            {
+                if (this.columnIdToTypeIdMappers[i] != rowsetHolder.columnIdToTypeIdMappers[i])
+                {
+                    throw new ArgumentException();
+                }
+            }
+
+            for (int i = 0; i < this.pagePointerOffsetColumns.Length; i++)
+            {
+                this.pagePointerOffsetColumns[i] = this.pagePointerOffsetColumns[i].Concat(rowsetHolder.pagePointerOffsetColumns[i]).ToArray();
+            }
+
+            for (int i = 0; i < this.intColumns.Length; i++)
+            {
+                this.intColumns[i] = this.intColumns[i].Concat(rowsetHolder.intColumns[i]).ToArray();
+            }
+
+            for (int i = 0; i < this.doubleColumns.Length; i++)
+            {
+                this.doubleColumns[i] = this.doubleColumns[i].Concat(rowsetHolder.doubleColumns[i]).ToArray();
+            }
+
+            for (int i = 0; i < this.pagePointerColumns.Length; i++)
+            {
+                this.pagePointerColumns[i] = this.pagePointerColumns[i].Concat(rowsetHolder.pagePointerColumns[i]).ToArray();
+            }
+
+            this.rowsetCount = this.rowsetCount + rowsetHolder.rowsetCount;
         }
     }
 }

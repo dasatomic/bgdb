@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace PageManager
@@ -103,6 +104,13 @@ namespace PageManager
         protected override uint GetRowCount(char[][] items)
         {
             return (uint)items.Length;
+        }
+
+        public override void Merge(char[][] items)
+        {
+            char[][] arr = Deserialize();
+            arr = arr.Concat(items).ToArray();
+            this.Serialize(arr);
         }
     }
 }

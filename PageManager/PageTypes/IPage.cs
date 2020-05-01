@@ -10,6 +10,8 @@
         public ulong NextPageId();
         public void SetNextPageId(ulong nextPageId);
         public void SetPrevPageId(ulong prevPageId);
+        public uint RowCount();
+        public uint MaxRowCount();
 
         protected const uint PageIdPosition = 0;
         protected const uint PageSizePosition = 8;

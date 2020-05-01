@@ -26,6 +26,16 @@ namespace PageManagerTests
         }
 
         [Test]
+        public void VerifyRowCount()
+        {
+            long[] startArray = new long[] { 1, 2, 3, 4 };
+            LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            Assert.AreEqual(0, page.RowCount());
+            page.Serialize(startArray);
+            Assert.AreEqual(startArray.Length, page.RowCount());
+        }
+
+        [Test]
         public void VerifySizeInBytes()
         {
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);

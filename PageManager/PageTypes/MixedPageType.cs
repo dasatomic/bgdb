@@ -46,6 +46,14 @@ namespace PageManager
             return rowsetHolder;
         }
 
+        public override void Merge(RowsetHolder item)
+        {
+            // This deserialize is needlessly expensive...
+            RowsetHolder rowsetHolder = this.Deserialize();
+            rowsetHolder.Merge(item);
+            this.Serialize(rowsetHolder);
+        }
+
         public override uint MaxRowCount()
         {
             return (this.pageSize - IPage.FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);

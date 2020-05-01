@@ -7,9 +7,9 @@ namespace PageManager
     {
         public void Serialize(T items);
         public T Deserialize();
-        public uint MaxRowCount();
         public bool CanFit(T items);
         public uint GetSizeNeeded(T items);
+        public void Merge(T items);
     }
 
     public abstract class PageSerializerBase<T> : IPageSerializer<T>
@@ -18,6 +18,7 @@ namespace PageManager
         protected ulong pageId;
         protected ulong prevPageId;
         protected ulong nextPageId;
+        protected uint rowCount;
 
         protected byte[] content;
         public abstract bool CanFit(T items);
@@ -56,7 +57,8 @@ namespace PageManager
                 contentPosition++;
             }
 
-            foreach (byte numOfRowsByte in BitConverter.GetBytes(this.GetRowCount(items)))
+            this.rowCount = this.GetRowCount(items);
+            foreach (byte numOfRowsByte in BitConverter.GetBytes(this.rowCount))
             {
                 content[contentPosition] = numOfRowsByte;
                 contentPosition++;
@@ -71,5 +73,8 @@ namespace PageManager
         protected abstract void SerializeInternal(T items);
         public void SetNextPageId(ulong nextPageId) => this.nextPageId = nextPageId;
         public void SetPrevPageId(ulong prevPageId) => this.prevPageId = prevPageId;
+
+        public uint RowCount() => this.rowCount;
+        public abstract void Merge(T items);
     }
 }
