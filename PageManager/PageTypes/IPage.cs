@@ -8,6 +8,8 @@
         public PageType PageType();
         public ulong PrevPageId();
         public ulong NextPageId();
+        public void SetNextPageId(ulong nextPageId);
+        public void SetPrevPageId(ulong prevPageId);
 
         protected const uint PageIdPosition = 0;
         protected const uint PageSizePosition = 8;

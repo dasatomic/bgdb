@@ -69,5 +69,7 @@ namespace PageManager
         public abstract uint GetSizeNeeded(T items);
         protected abstract uint GetRowCount(T items);
         protected abstract void SerializeInternal(T items);
+        public void SetNextPageId(ulong nextPageId) => this.nextPageId = nextPageId;
+        public void SetPrevPageId(ulong prevPageId) => this.prevPageId = prevPageId;
     }
 }

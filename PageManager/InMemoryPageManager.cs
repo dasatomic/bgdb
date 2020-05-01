@@ -8,7 +8,7 @@ namespace PageManager
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
-        private ulong lastUsedPageId = 0;
+        private ulong lastUsedPageId = 1;
 
         public InMemoryPageManager(uint defaultPageSize)
         {
@@ -51,6 +51,30 @@ namespace PageManager
             }
 
             pages.Add(page);
+
+            if (prevPageId != 0)
+            {
+                IPage prevPage = GetPage(prevPageId);
+
+                if (prevPage.NextPageId() != page.NextPageId())
+                {
+                    throw new ArgumentException("Breaking the link");
+                }
+
+                prevPage.SetNextPageId(page.PageId());
+            }
+
+            if (nextPageId != 0)
+            {
+                IPage nextPage = GetPage(nextPageId);
+
+                if (nextPage.PrevPageId() != page.PrevPageId())
+                {
+                    throw new ArgumentException("breaking the link");
+                }
+
+                nextPage.SetPrevPageId(page.PageId());
+            }
 
             return page;
         }

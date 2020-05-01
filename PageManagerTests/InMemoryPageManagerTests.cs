@@ -104,5 +104,42 @@ namespace PageManagerTests
             Assert.AreEqual(holder2.GetDoubleColumn(2), doubleColumns[0]);
             Assert.AreEqual(holder2.GetIntColumn(3), intColumns[2]);
         }
+
+        [Test]
+        public void PageLinking()
+        {
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+
+            var pageManager = new InMemoryPageManager(DefaultSize);
+            MixedPage page11 = pageManager.AllocateMixedPage(types, 0, 0);
+            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), 0);
+            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), 0);
+
+            Assert.AreEqual(page11.PageId(), page12.PrevPageId());
+            Assert.AreEqual(page11.NextPageId(), page12.PageId());
+            Assert.AreEqual(page12.NextPageId(), page13.PageId());
+            Assert.AreEqual(page13.PrevPageId(), page12.PageId());
+        }
+
+        [Test]
+        public void MultiPageLinking()
+        {
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+
+            var pageManager = new InMemoryPageManager(DefaultSize);
+            MixedPage page11 = pageManager.AllocateMixedPage(types, 0, 0);
+            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), 0);
+            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), 0);
+            MixedPage page21 = pageManager.AllocateMixedPage(types, 0, 0);
+            MixedPage page22 = pageManager.AllocateMixedPage(types, page21.PageId(), 0);
+
+            Assert.AreEqual(page11.PageId(), page12.PrevPageId());
+            Assert.AreEqual(page11.NextPageId(), page12.PageId());
+            Assert.AreEqual(page12.NextPageId(), page13.PageId());
+            Assert.AreEqual(page13.PrevPageId(), page12.PageId());
+
+            Assert.AreEqual(page21.NextPageId(), page22.PageId());
+            Assert.AreEqual(page22.PrevPageId(), page21.PageId());
+        }
     }
 }
