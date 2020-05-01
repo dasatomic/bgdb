@@ -4,7 +4,7 @@ namespace PageManager
 {
     public interface IAllocateMixedPage
     {
-        MixedPage AllocateMixedPage(ColumnType[] columnTypes);
+        MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage);
         MixedPage GetMixedPage(ulong pageId);
     }
 

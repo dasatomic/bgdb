@@ -4,7 +4,7 @@ namespace PageManager
 {
     public interface IAllocateLongPage
     {
-        LongOnlyPage AllocatePageLong();
+        LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage);
         LongOnlyPage GetPageLong(ulong pageId);
     }
 

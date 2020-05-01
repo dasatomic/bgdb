@@ -4,7 +4,7 @@ namespace PageManager
 {
     public interface IAllocateDoublePage
     {
-        DoubleOnlyPage AllocatePageDouble();
+        DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage);
         DoubleOnlyPage GetPageDouble(ulong pageId);
     }
 

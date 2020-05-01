@@ -5,7 +5,7 @@ namespace PageManager
 {
     public interface IAllocateStringPage
     {
-        StringOnlyPage AllocatePageStr();
+        StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage);
         StringOnlyPage GetPageStr(ulong pageId);
     }
 
@@ -21,7 +21,6 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
             this.prevPageId = prevPageId;
-            this.nextPageId = nextPageId;
 
             this.content = new byte[pageSize];
 

@@ -7,15 +7,17 @@ namespace PageManagerTests
     public class InMemoryPageManagerTests
     {
         private const int DefaultSize = 4096;
+        private const ulong DefaultPrevPage = 0;
+        private const ulong DefaultNextPage = 0;
 
         [Test]
         public void VerifyAllocatePage()
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
 
-            IPage page1 = pageManager.AllocatePage(PageType.IntPage);
-            IPage page2 = pageManager.AllocatePage(PageType.IntPage);
-            IPage page3 = pageManager.AllocatePage(PageType.IntPage);
+            IPage page1 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage);
+            IPage page2 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage);
+            IPage page3 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage);
 
             Assert.IsNotNull(page1);
             Assert.IsNotNull(page2);
@@ -30,8 +32,8 @@ namespace PageManagerTests
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
 
-            pageManager.AllocatePageInt();
-            var page2 = pageManager.AllocatePageInt();
+            pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage);
+            var page2 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage);
 
             ulong pageId = page2.PageId();
 
@@ -49,9 +51,9 @@ namespace PageManagerTests
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
 
-            var intPage = pageManager.AllocatePageInt();
-            var doublePage = pageManager.AllocatePageDouble();
-            var strPage = pageManager.AllocatePageStr();
+            var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage);
+            var doublePage = pageManager.AllocatePageDouble(DefaultPrevPage, DefaultNextPage);
+            var strPage = pageManager.AllocatePageStr(DefaultPrevPage, DefaultNextPage);
 
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
@@ -74,7 +76,7 @@ namespace PageManagerTests
         public void GetPageOfInvalidType()
         {
             var pageManager = new InMemoryPageManager(DefaultSize);
-            var intPage = pageManager.AllocatePageInt();
+            var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage);
             pageManager.SavePage(intPage);
 
             Assert.Throws<InvalidCastException>(() => { pageManager.GetPageDouble(intPage.PageId()); });
@@ -86,7 +88,7 @@ namespace PageManagerTests
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
             var pageManager = new InMemoryPageManager(DefaultSize);
-            MixedPage page = pageManager.AllocateMixedPage(types);
+            MixedPage page = pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);

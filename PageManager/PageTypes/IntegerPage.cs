@@ -4,7 +4,7 @@ namespace PageManager
 {
     public interface IAllocateIntegerPage
     {
-        IntegerOnlyPage AllocatePageInt();
+        IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage);
         IntegerOnlyPage GetPageInt(ulong pageId);
     }
 

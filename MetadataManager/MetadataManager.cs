@@ -73,7 +73,7 @@ namespace MetadataManager
 
             if (!useExistingMasterPage)
             {
-                var page = pageAllocator.AllocateMixedPage(masterPageColumnDefinition);
+                var page = pageAllocator.AllocateMixedPage(masterPageColumnDefinition, prevPage: 0, nextPage: 0);
                 if (page.PageId() != 0)
                 {
                     throw new InvalidOperationException("mixed page allocator should be empty");

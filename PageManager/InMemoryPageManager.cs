@@ -15,31 +15,35 @@ namespace PageManager
             this.pageSize = defaultPageSize;
         }
 
-        public IPage AllocatePage(PageType pageType)
+        public IPage AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId)
         {
-            return AllocatePage(pageType, null);
+            return AllocatePage(pageType, null, prevPageId, nextPageId);
         }
 
-        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes)
+        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId)
         {
             IPage page;
             ulong pageId = lastUsedPageId++;
 
             if (pageType == PageType.IntPage)
             {
-                page = new IntegerOnlyPage(pageSize, pageId, 0, 0);
+                page = new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId);
             }
             else if (pageType == PageType.DoublePage)
             {
-                page = new DoubleOnlyPage(pageSize, pageId, 0, 0);
+                page = new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId);
             }
             else if (pageType == PageType.StringPage)
             {
-                page = new StringOnlyPage(pageSize, pageId, 0, 0);
+                page = new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId);
             }
             else if (pageType == PageType.MixedPage)
             {
-                page = new MixedPage(pageSize, pageId, columnTypes, 0, 0);
+                page = new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId);
+            }
+            else if (pageType == PageType.LongPage)
+            {
+                page = new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId);
             }
             else
             {
@@ -68,9 +72,9 @@ namespace PageManager
             // No op. Should release the lock.
         }
 
-        public IntegerOnlyPage AllocatePageInt()
+        public IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage)
         {
-            IPage page = AllocatePage(PageType.IntPage);
+            IPage page = AllocatePage(PageType.IntPage, prevPage, nextPage);
             return (IntegerOnlyPage)page;
         }
 
@@ -86,9 +90,9 @@ namespace PageManager
             return (IntegerOnlyPage)page;
         }
 
-        public DoubleOnlyPage AllocatePageDouble()
+        public DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage)
         {
-            IPage page = AllocatePage(PageType.DoublePage);
+            IPage page = AllocatePage(PageType.DoublePage, prevPage, nextPage);
             return (DoubleOnlyPage)page;
         }
 
@@ -104,9 +108,9 @@ namespace PageManager
             return (DoubleOnlyPage)page;
         }
 
-        public StringOnlyPage AllocatePageStr()
+        public StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage)
         {
-            IPage page = AllocatePage(PageType.StringPage);
+            IPage page = AllocatePage(PageType.StringPage, prevPage, nextPage);
             return (StringOnlyPage)page;
         }
 
@@ -122,9 +126,9 @@ namespace PageManager
             return (StringOnlyPage)page;
         }
 
-        public LongOnlyPage AllocatePageLong()
+        public LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage)
         {
-            IPage page = AllocatePage(PageType.LongPage);
+            IPage page = AllocatePage(PageType.LongPage, prevPage, nextPage);
             return (LongOnlyPage)page;
         }
 
@@ -140,9 +144,9 @@ namespace PageManager
             return (LongOnlyPage)page;
         }
 
-        public MixedPage AllocateMixedPage(ColumnType[] columnTypes)
+        public MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage)
         {
-            IPage page = AllocatePage(PageType.MixedPage, columnTypes);
+            IPage page = AllocatePage(PageType.MixedPage, columnTypes, prevPage, nextPage);
             return (MixedPage)page;
         }
 
