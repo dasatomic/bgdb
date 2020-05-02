@@ -11,7 +11,7 @@ namespace MetadataManager
 
     public class PageListCollection : UnorderedListCollection<RowsetHolder>
     {
-        private MixedPage collectionRoot = null;
+        private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;
         private ColumnType[] columnTypes;
 
@@ -22,18 +22,17 @@ namespace MetadataManager
                 throw new ArgumentNullException();
             }
 
-            collectionRoot = pageAllocator.AllocateMixedPage(columnTypes, 0, 0);
+            this.collectionRootPageId = pageAllocator.AllocateMixedPage(columnTypes, 0, 0).PageId();
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
         }
 
         public ulong Count()
         {
-            IPage currPage = collectionRoot;
             ulong rowCount = 0;
-            ulong currPageId = currPage.PageId();
 
-            for (; currPageId != 0; currPageId = currPage.NextPageId())
+            IPage currPage;
+            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
                 rowCount += currPage.RowCount();
@@ -44,10 +43,8 @@ namespace MetadataManager
 
         public void Add(RowsetHolder item)
         {
-            MixedPage currPage = collectionRoot;
-            ulong currPageId = currPage.PageId();
-
-            for (; currPageId != 0; currPageId = currPage.NextPageId())
+            MixedPage currPage = null;
+            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
                 if (currPage.CanFit(item))
