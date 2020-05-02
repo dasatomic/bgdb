@@ -7,6 +7,7 @@ namespace MetadataManager
     {
         ulong Count();
         void Add(T item);
+        T Where(Func<T, bool> filter);
     }
 
     public class PageListCollection : UnorderedListCollection<RowsetHolder>
@@ -56,6 +57,23 @@ namespace MetadataManager
 
             currPage = this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), 0);
             currPage.Merge(item);
+        }
+
+        public RowsetHolder Where(Func<RowsetHolder, bool> filter)
+        {
+            MixedPage currPage;
+            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            {
+                currPage = pageAllocator.GetMixedPage(currPageId);
+                RowsetHolder holder = currPage.Deserialize();
+
+                if (filter(holder))
+                {
+                    return holder;
+                }
+            }
+
+            return null;
         }
     }
 }
