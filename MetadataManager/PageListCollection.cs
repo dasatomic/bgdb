@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using PageManager;
 
 namespace MetadataManager
@@ -7,7 +8,7 @@ namespace MetadataManager
     {
         ulong Count();
         void Add(T item);
-        T Where(Func<T, bool> filter);
+        List<T> Where(Func<T, bool> filter);
     }
 
     public class PageListCollection : UnorderedListCollection<RowsetHolder>
@@ -59,9 +60,10 @@ namespace MetadataManager
             currPage.Merge(item);
         }
 
-        public RowsetHolder Where(Func<RowsetHolder, bool> filter)
+        public List<RowsetHolder> Where(Func<RowsetHolder, bool> filter)
         {
             MixedPage currPage;
+            List<RowsetHolder> result = new List<RowsetHolder>();
             for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
@@ -69,11 +71,11 @@ namespace MetadataManager
 
                 if (filter(holder))
                 {
-                    return holder;
+                    result.Add(holder);
                 }
             }
 
-            return null;
+            return result;
         }
     }
 }

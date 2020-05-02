@@ -71,7 +71,7 @@ namespace MetadataManagerTests
                 collection.Add(holder);
             }
 
-            Assert.IsNull(collection.Where((holder) => holder.GetIntColumn(0).Contains(42)));
+            Assert.IsEmpty(collection.Where((holder) => holder.GetIntColumn(0).Contains(42)));
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace MetadataManagerTests
                 collection.Add(holder);
             }
 
-            Assert.IsNotNull(collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4])));
+            Assert.IsNotEmpty(collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4])));
         }
     }
 }
