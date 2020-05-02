@@ -61,7 +61,8 @@ namespace PageManager
 
         public override bool CanFit(RowsetHolder items)
         {
-            return this.pageSize - IPage.FirstElementPosition >= items.StorageSizeInBytes();
+            int freeSpace = (int)((this.pageSize - IPage.FirstElementPosition) - (this.RowCount() * RowsetHolder.CalculateSizeOfRow(this.columnTypes)));
+            return freeSpace >= items.StorageSizeInBytes();
         }
 
         public override uint GetSizeNeeded(RowsetHolder items)

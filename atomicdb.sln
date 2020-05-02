@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PageManagerTests", "PageMan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataManager", "MetadataManager\MetadataManager.csproj", "{D3C3BE02-BD80-468F-B199-A2E8A3C57061}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataManagerTests", "MetadataManagerTests\MetadataManagerTests.csproj", "{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Common", "Test.Common\Test.Common.csproj", "{4754AD50-B500-4452-8CB9-57E171486CD1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3C3BE02-BD80-468F-B199-A2E8A3C57061}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4754AD50-B500-4452-8CB9-57E171486CD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4754AD50-B500-4452-8CB9-57E171486CD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4754AD50-B500-4452-8CB9-57E171486CD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4754AD50-B500-4452-8CB9-57E171486CD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

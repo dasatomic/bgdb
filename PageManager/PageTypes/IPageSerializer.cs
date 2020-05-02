@@ -33,7 +33,7 @@ namespace PageManager
         public void Serialize(T items)
         {
             uint neededSize = this.GetSizeNeeded(items);
-            if (!this.CanFit(items))
+            if (neededSize > this.pageSize - IPage.FirstElementPosition)
             {
                 throw new SerializationException();
             }

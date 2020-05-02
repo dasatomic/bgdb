@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using PageManager;
+using Test.Common;
 
 namespace PageManagerTests
 {

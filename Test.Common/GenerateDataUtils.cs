@@ -1,9 +1,9 @@
 ﻿using PageManager;
 using System.Linq;
 
-namespace PageManagerTests
+namespace Test.Common
 {
-    static class GenerateDataUtils
+    public static class GenerateDataUtils
     {
         public static void GenerateSampleData(
             out ColumnType[] types,
