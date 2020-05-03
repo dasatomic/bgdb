@@ -133,6 +133,11 @@ namespace PageManager
                 }
             }
 
+            if (this.pageSize - i < item.Length + 1)
+            {
+                throw new NotEnoughSpaceException();
+            }
+
             for (int j = 0; j < item.Length; j++)
             {
                 this.content[i + j] = (byte)item[j];

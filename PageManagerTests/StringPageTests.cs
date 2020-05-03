@@ -147,13 +147,50 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            IPageWithOffsets<char[]> strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            Assert.AreEqual(0, strPage.RowCount());
             uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
             Assert.AreEqual(IPage.FirstElementPosition, offsetOne);
             Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne));
+            Assert.AreEqual(1, strPage.RowCount());
             uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
             Assert.AreEqual(IPage.FirstElementPosition + startArray[0].Length + 1, offsetTwo);
             Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo));
+            Assert.AreEqual(2, strPage.RowCount());
+        }
+
+        [Test]
+        public void MergeUntilAlmostFull()
+        {
+            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
+
+            char[] elemToInsert = "one".ToArray();
+            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + 1));
+
+            for (uint i = 0; i < maxElemCount; i++)
+            {
+                strPage.MergeWithOffsetFetch(elemToInsert);
+                Assert.AreEqual(i + 1, strPage.RowCount());
+            }
+        }
+
+        [Test]
+        public void MergeUntilFull()
+        {
+            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
+
+            char[] elemToInsert = "one".ToArray();
+            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + 1));
+
+            for (uint i = 0; i < maxElemCount; i++)
+            {
+                strPage.MergeWithOffsetFetch(elemToInsert);
+                Assert.AreEqual(i + 1, strPage.RowCount());
+            }
+
+            Assert.Throws<NotEnoughSpaceException>(() => strPage.MergeWithOffsetFetch(elemToInsert));
         }
     }
 }
