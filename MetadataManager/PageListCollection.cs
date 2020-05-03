@@ -29,6 +29,18 @@ namespace MetadataManager
             this.columnTypes = columnTypes;
         }
 
+        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, IPage initialPage)
+        {
+            if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0)
+            {
+                throw new ArgumentNullException();
+            }
+
+            this.collectionRootPageId = initialPage.PageId();
+            this.pageAllocator = pageAllocator;
+            this.columnTypes = columnTypes;
+        }
+
         public ulong Count()
         {
             ulong rowCount = 0;

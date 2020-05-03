@@ -13,6 +13,7 @@ namespace PageManager
     {
         public uint MergeWithOffsetFetch(T item);
         public T FetchWithOffset(uint offset);
+        public bool CanFit(T item);
     }
 
     public class StringOnlyPage : PageSerializerBase<char[][]>, IPageWithOffsets<char[]>
@@ -178,6 +179,23 @@ namespace PageManager
             }
 
             return result;
+        }
+
+        public bool CanFit(char[] item)
+        {
+            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
+
+            int endCharFound = 0;
+            uint i = IPage.FirstElementPosition;
+            for (; i <  this.content.Length && endCharFound != numOfElements; i++)
+            {
+                if (content[i] == 0x0)
+                {
+                    endCharFound++;
+                }
+            }
+
+            return this.pageSize - i >= item.Length + 1;
         }
     }
 }
