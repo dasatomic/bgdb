@@ -137,5 +137,23 @@ namespace PageManagerTests
 
             Assert.AreEqual(startArray.Concat(secondArray), result);
         }
+
+        [Test]
+        public void MergeWithOffset()
+        {
+            char[][] startArray = new char[][]
+            { 
+                "123".ToCharArray(),
+                "4321".ToCharArray(),
+            };
+
+            IPageWithOffsets<char[]> strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
+            Assert.AreEqual(IPage.FirstElementPosition, offsetOne);
+            Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne));
+            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
+            Assert.AreEqual(IPage.FirstElementPosition + startArray[0].Length + 1, offsetTwo);
+            Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo));
+        }
     }
 }

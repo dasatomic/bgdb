@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.Serialization;
 
 namespace PageManager
 {
@@ -10,7 +9,13 @@ namespace PageManager
         StringOnlyPage GetPageStr(ulong pageId);
     }
 
-    public class StringOnlyPage : PageSerializerBase<char[][]>
+    public interface IPageWithOffsets<T>
+    {
+        public uint MergeWithOffsetFetch(T item);
+        public T FetchWithOffset(uint offset);
+    }
+
+    public class StringOnlyPage : PageSerializerBase<char[][]>, IPageWithOffsets<char[]>
     {
         public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId)
         {
@@ -73,6 +78,7 @@ namespace PageManager
         protected override void SerializeInternal(char[][] items)
         {
             uint contentPosition = IPage.FirstElementPosition;
+
             foreach (char[] elem in items)
             {
                 foreach (byte elemBytes in elem)
@@ -111,6 +117,52 @@ namespace PageManager
             char[][] arr = Deserialize();
             arr = arr.Concat(items).ToArray();
             this.Serialize(arr);
+        }
+
+        public uint MergeWithOffsetFetch(char[] item)
+        {
+            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
+
+            int endCharFound = 0;
+            uint i = IPage.FirstElementPosition;
+            for (; i <  this.content.Length && endCharFound != numOfElements; i++)
+            {
+                if (content[i] == 0x0)
+                {
+                    endCharFound++;
+                }
+            }
+
+            for (int j = 0; j < item.Length; j++)
+            {
+                this.content[i + j] = (byte)item[j];
+            }
+
+            this.content[item.Length] = 0x0;
+            this.rowCount++;
+
+            uint numofRowsPos = IPage.NumOfRowsPosition;
+            foreach (byte numOfRowsByte in BitConverter.GetBytes(this.rowCount))
+            {
+                content[numofRowsPos++] = numOfRowsByte;
+            }
+
+            return i;
+        }
+
+        public char[] FetchWithOffset(uint offset)
+        {
+            char[] result;
+
+            uint length = 0;
+            for (; this.content[offset + length] != 0x0; length++) { }
+            result = new char[length];
+            for (int i = 0; i < length; i++)
+            {
+                result[i] = (char)this.content[offset + i];
+            }
+
+            return result;
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿namespace PageManager
+﻿using System.Runtime.CompilerServices;
+[assembly:InternalsVisibleTo("PageManagerTests")]
+
+namespace PageManager
 {
     public interface IPage
     {
@@ -13,12 +16,12 @@
         public uint RowCount();
         public uint MaxRowCount();
 
-        protected const uint PageIdPosition = 0;
-        protected const uint PageSizePosition = 8;
-        protected const uint PageTypePosition = 12;
-        protected const uint NumOfRowsPosition = 16;
-        protected const uint PrevPagePosition = 20;
-        protected const uint NextPagePosition = 28;
-        protected const uint FirstElementPosition = 32;
+        internal const uint PageIdPosition = 0;
+        internal const uint PageSizePosition = 8;
+        internal const uint PageTypePosition = 12;
+        internal const uint NumOfRowsPosition = 16;
+        internal const uint PrevPagePosition = 20;
+        internal const uint NextPagePosition = 28;
+        internal const uint FirstElementPosition = 32;
     }
 }
