@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace PageManagerTests
@@ -112,6 +113,29 @@ namespace PageManagerTests
             char[][] content = strPage.Deserialize();
 
             Assert.AreEqual(array, content);
+        }
+
+        [Test]
+        public void VerifyMerge()
+        {
+            char[][] startArray = new char[][]
+            { 
+                "123".ToCharArray(),
+                "4321".ToCharArray(),
+            };
+
+            char[][] secondArray = new char[][]
+            { 
+                "456".ToCharArray(),
+                "1234".ToCharArray(),
+            };
+
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            strPage.Serialize(startArray);
+            strPage.Merge(secondArray);
+            char[][] result = strPage.Deserialize();
+
+            Assert.AreEqual(startArray.Concat(secondArray), result);
         }
     }
 }
