@@ -157,6 +157,16 @@ namespace PageManager
 
         public char[] FetchWithOffset(uint offset)
         {
+            if (offset < IPage.FirstElementPosition || offset >= this.pageSize)
+            {
+                throw new ArgumentException();
+            }
+
+            if (offset != IPage.FirstElementPosition && this.content[offset - 1] != 0x0)
+            {
+                throw new PageCorruptedException();
+            }
+
             char[] result;
 
             uint length = 0;

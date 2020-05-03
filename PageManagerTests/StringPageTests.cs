@@ -192,5 +192,22 @@ namespace PageManagerTests
 
             Assert.Throws<NotEnoughSpaceException>(() => strPage.MergeWithOffsetFetch(elemToInsert));
         }
+
+        [Test]
+        public void PageCoruptionTest()
+        {
+            char[][] startArray = new char[][]
+            { 
+                "123".ToCharArray(),
+                "4321".ToCharArray(),
+            };
+
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            Assert.AreEqual(0, strPage.RowCount());
+            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
+            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
+            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetOne + 1));
+            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetTwo + 1));
+        }
     }
 }
