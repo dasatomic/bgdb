@@ -67,18 +67,33 @@ namespace MetadataManager
             ColumnType.PagePointer,
         };
 
-        public MetadataManager(IAllocateMixedPage pageAllocator, bool useExistingMasterPage)
+        private PageListCollection masterMetadataCollection;
+        private HeapWithOffsets<char[]> stringHeap;
+
+        private MetadataColumnsManager columnsManager;
+        private MetadataTablesManager tableManager;
+
+        public MetadataManager(IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, bool useExistingMasterPage)
         {
             this.pageAllocator = pageAllocator;
+            this.stringHeap = stringHeap;
 
             if (!useExistingMasterPage)
             {
-                var page = pageAllocator.AllocateMixedPage(masterPageColumnDefinition, prevPage: 0, nextPage: 0);
-                if (page.PageId() != 0)
-                {
-                    throw new InvalidOperationException("mixed page allocator should be empty");
-                }
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition);
+                MetadataInitialSetup();
             }
+            else
+            {
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(0));
+            }
+        }
+
+        private void MetadataInitialSetup()
+        {
+            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(this.tableManager.GetSchemaDefinition(), 0, 0);
+            tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap);
+            // Setup column definitions.
         }
     }
 }

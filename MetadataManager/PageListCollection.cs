@@ -9,6 +9,7 @@ namespace MetadataManager
         ulong Count();
         void Add(T item);
         List<T> Where(Func<T, bool> filter);
+        U Max<U>(Func<T, U> projector, U startMin) where U : IComparable;
     }
 
     public class PageListCollection : UnorderedListCollection<RowsetHolder>
@@ -88,6 +89,27 @@ namespace MetadataManager
             }
 
             return result;
+        }
+
+        public U Max<U>(Func<RowsetHolder, U> projector, U startMin) where U : IComparable
+        {
+            MixedPage currPage;
+            U max = startMin;
+
+            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            {
+                currPage = pageAllocator.GetMixedPage(currPageId);
+                RowsetHolder holder = currPage.Deserialize();
+
+                U curr = projector(holder);
+
+                if (curr.CompareTo(max) == 1)
+                {
+                    max = curr;
+                }
+            }
+
+            return max;
         }
     }
 }

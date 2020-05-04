@@ -6,6 +6,19 @@ namespace MetadataManager
 {
     public enum MetadataObjectEnum
     {
-        MdTableId = 1,
+        MdColumnId = 1,
+        MdTableId = 2,
+    }
+
+    public struct MetadataIdPageIdPair
+    {
+        public MetadataObjectEnum MedataObjectId;
+        public ulong FirstPageId;
+
+        public MetadataIdPageIdPair(MetadataObjectEnum metadataObjectId, ulong firstPageId)
+        {
+            this.MedataObjectId = metadataObjectId;
+            this.FirstPageId = firstPageId;
+        }
     }
 }
