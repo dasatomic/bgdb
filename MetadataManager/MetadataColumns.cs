@@ -8,9 +8,13 @@ namespace MetadataManager
 {
     public struct MetadataColumn
     {
+        public const int ColumnIdColumnPos = 0;
         public int ColumnId;
+        public const int TableIdColumnPos = 1;
         public int TableId;
+        public const int ColumnNameColumnPos = 2;
         public string ColumnName;
+        public const int ColumnTypeColumnPos = 3;
         public ColumnType ColumnType;
     }
 
@@ -30,10 +34,10 @@ namespace MetadataManager
 
         private static ColumnType[] columnDefinitions = new ColumnType[]
         {
-            ColumnType.Int,
-            ColumnType.Int,
-            ColumnType.StringPointer,
-            ColumnType.Int,
+            ColumnType.Int, // Column id
+            ColumnType.Int, // Table id
+            ColumnType.StringPointer, // pointer to name
+            ColumnType.Int, // column type
         };
 
         public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
@@ -58,13 +62,12 @@ namespace MetadataManager
                     var mdObj = 
                         new MetadataColumn()
                         {
-                            ColumnId = rh.GetIntColumn(0)[i],
-                            TableId = rh.GetIntColumn(1)[i],
-                            ColumnType = (ColumnType)rh.GetIntColumn(2)[i],
+                            ColumnId = rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos)[i],
+                            TableId = rh.GetIntColumn(MetadataColumn.TableIdColumnPos)[i],
+                            ColumnType = (ColumnType)rh.GetIntColumn(MetadataColumn.ColumnTypeColumnPos)[i],
                         };
 
-                    rh.GetStringPointerColumn(0);
-                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(0)[i];
+                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
                     char[] columnName = this.stringHeap.Fetch(stringPointer);
 
                     mdObj.ColumnName = new string(columnName);
@@ -84,7 +87,7 @@ namespace MetadataManager
             int id = 1;
             if (!pageListCollection.IsEmpty())
             {
-                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
+                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos).Max(), startMin: 0);
                 id = maxId + 1;
             }
 
@@ -105,14 +108,13 @@ namespace MetadataManager
         {
             foreach (RowsetHolder rh in pageListCollection)
             {
-                int[] tableIds = rh.GetIntColumn(1);
+                int[] tableIds = rh.GetIntColumn(MetadataColumn.TableIdColumnPos);
 
                 for (int i = 0; i < tableIds.Length; i++)
                 {
                     if (tableIds[i] == def.TableId)
                     {
-                        rh.GetStringPointerColumn(0);
-                        PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(0)[i];
+                        PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
 
                         if (def.ColumnName == new string(stringHeap.Fetch(stringPointer)))
                         {

@@ -8,9 +8,13 @@ namespace MetadataManager
 {
     public struct MetadataTable
     {
+        public const int TableIdColumnPos = 0;
         public int TableId;
+        public const int TableNameColumnPos = 1;
         public string TableName;
+        public const int RootPageColumnPos = 2;
         public ulong RootPage;
+        public MetadataColumn[] Columns;
     }
 
     public struct TableCreateDefinition
@@ -55,7 +59,7 @@ namespace MetadataManager
         {
             foreach (RowsetHolder rh in pageListCollection)
             {
-                foreach (PagePointerOffsetPair stringPointer in rh.GetStringPointerColumn(0))
+                foreach (PagePointerOffsetPair stringPointer in rh.GetStringPointerColumn(1))
                 {
                     if (def.TableName == new string(stringHeap.Fetch(stringPointer)))
                     {
@@ -119,15 +123,16 @@ namespace MetadataManager
                     var mdObj = 
                         new MetadataTable()
                         {
-                            TableId = rh.GetIntColumn(0)[i],
-                            RootPage = (ulong)rh.GetPagePointerColumn(0)[i],
+                            TableId = rh.GetIntColumn(MetadataTable.TableIdColumnPos)[i],
+                            RootPage = (ulong)rh.GetPagePointerColumn(MetadataTable.RootPageColumnPos)[i],
                         };
 
-                    rh.GetStringPointerColumn(0);
-                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(0)[i];
+                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataTable.TableNameColumnPos)[i];
                     char[] tableName= this.stringHeap.Fetch(stringPointer);
 
                     mdObj.TableName = new string(tableName);
+
+                    mdObj.Columns = this.columnManager.Where(c => c.TableId == mdObj.TableId).ToArray();
 
                     yield return mdObj;
                 }

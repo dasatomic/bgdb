@@ -17,10 +17,9 @@ namespace QueryProcessing
             int rowWidth = intCols.Length + doubleCols.Length + stringCols.Length;
             colIdToValMapper = new int[rowWidth];
 
-            for (int i = 0; i < intCols.Length; i++)
-            {
-
-            }
+            this.intCols = intCols;
+            this.doubleCols = doubleCols;
+            this.stringCols = stringCols;
         }
     }
 }

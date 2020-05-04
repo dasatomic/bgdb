@@ -2,6 +2,7 @@
 using MetadataManager;
 using PageManager;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MetadataManager
 {
@@ -29,7 +30,11 @@ namespace MetadataManager
                 TableName = "A",
             }));
 
-            Assert.AreEqual("A", tm.GetById(objId).TableName);
+            MetadataTable table = tm.GetById(objId);
+            Assert.AreEqual("A", table.TableName);
+
+            Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(t => t.ColumnName));
+            Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType));
 
             var cm = mm.GetColumnManager();
 
@@ -49,8 +54,9 @@ namespace MetadataManager
             MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator);
 
             var tm = mm.GetTableManager();
+            const int repCount = 200;
 
-            for (int i = 1; i < 1000; i++)
+            for (int i = 1; i < repCount; i++)
             {
                 int id = tm.CreateObject(new TableCreateDefinition()
                 {
@@ -60,10 +66,13 @@ namespace MetadataManager
                 });
             }
 
-            for (int i = 1; i < 1000; i++)
+            for (int i = 1; i < repCount; i++)
             {
                 var table = tm.GetById(i);
                 Assert.AreEqual("T" + i, table.TableName);
+
+                Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(c => c.ColumnName));
+                Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType));
             }
         }
 
