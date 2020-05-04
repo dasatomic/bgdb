@@ -5,6 +5,7 @@ namespace MetadataManager
     public interface HeapWithOffsets<T>
     {
         PagePointerOffsetPair Add(T item);
+        T Fetch(PagePointerOffsetPair loc);
     }
 
     public class StringHeapCollection : HeapWithOffsets<char[]>
@@ -41,6 +42,12 @@ namespace MetadataManager
             currPage = this.allocator.AllocatePageStr(currPage.PageId(), 0);
             offset = currPage.MergeWithOffsetFetch(item);
             return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+        }
+
+        public char[] Fetch(PagePointerOffsetPair loc)
+        {
+            StringOnlyPage page = allocator.GetPageStr((ulong)loc.PageId);
+            return page.FetchWithOffset((uint)loc.OffsetInPage);
         }
     }
 }

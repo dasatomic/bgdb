@@ -38,9 +38,28 @@ namespace MetadataManager
             this.stringHeap = stringHeap;
         }
 
+        public bool Exists(string tableName)
+        {
+            foreach (RowsetHolder rh in pageListCollection)
+            {
+                foreach (PagePointerOffsetPair stringPointer in rh.GetStringPointerColumn(0))
+                {
+                    if (tableName == new string(stringHeap.Fetch(stringPointer)))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public int CreateObject(string tableName)
         {
-            // TODO: Check if table name already exists...
+            if (this.Exists(tableName))
+            {
+                throw new ElementWithSameNameExistsException();
+            }
 
             int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
             int id = maxId + 1;
