@@ -19,13 +19,13 @@ namespace MetadataManager
         private PageListCollection pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
-        private readonly ColumnType[] columnDefinitions = new ColumnType[]
+        private static ColumnType[] columnDefinitions = new ColumnType[]
         {
             ColumnType.Int,
             ColumnType.StringPointer,
         };
 
-        public ColumnType[] GetSchemaDefinition() => columnDefinitions;
+        public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
 
         public MetadataTablesManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap)
         {
@@ -34,7 +34,7 @@ namespace MetadataManager
                 throw new ArgumentNullException();
             }
 
-            pageListCollection = new PageListCollection(pageAllocator, this.columnDefinitions, firstPage);
+            pageListCollection = new PageListCollection(pageAllocator, columnDefinitions, firstPage);
             this.stringHeap = stringHeap;
         }
 
@@ -45,7 +45,7 @@ namespace MetadataManager
             int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
             int id = maxId + 1;
 
-            RowsetHolder rh = new RowsetHolder(this.columnDefinitions);
+            RowsetHolder rh = new RowsetHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  this.stringHeap.Add(tableName.ToCharArray());
 
             rh.SetColumns(new int[1][] { new[] { id } }, null, new PagePointerOffsetPair[1][] { new[] { namePointer } }, null);

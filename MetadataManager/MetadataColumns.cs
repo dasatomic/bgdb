@@ -1,5 +1,6 @@
 ﻿using PageManager;
 using System;
+using System.Linq;
 
 namespace MetadataManager
 {
@@ -16,8 +17,9 @@ namespace MetadataManager
         public const string MetadataTableName = "sys.columns";
 
         private PageListCollection pageListCollection;
+        private HeapWithOffsets<char[]> stringHeap;
 
-        private readonly ColumnType[] columnDefinitions = new ColumnType[]
+        private static ColumnType[] columnDefinitions = new ColumnType[]
         {
             ColumnType.Int,
             ColumnType.Int,
@@ -25,16 +27,33 @@ namespace MetadataManager
             ColumnType.Int,
         };
 
-        public ColumnType[] GetSchemaDefinition() => columnDefinitions;
+        public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
 
-        public MetadataColumnsManager(IAllocateMixedPage pageAllocator, MixedPage firstPage)
+        public MetadataColumnsManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap)
         {
             if (pageAllocator == null || firstPage == null)
             {
                 throw new ArgumentNullException();
             }
 
-            pageListCollection = new PageListCollection(pageAllocator, this.columnDefinitions, firstPage);
+            this.pageListCollection = new PageListCollection(pageAllocator, columnDefinitions, firstPage);
+            this.stringHeap = stringHeap;
+        }
+
+        public int CreateObject(int tableId, string columnName, ColumnType columnType)
+        {
+            // TODO: Check if column name already exists in this table...
+
+            int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
+            int id = maxId + 1;
+
+            RowsetHolder rh = new RowsetHolder(columnDefinitions);
+            PagePointerOffsetPair namePointer =  this.stringHeap.Add(columnName.ToCharArray());
+
+            rh.SetColumns(new int[1][] { new[] { id, tableId, (int)columnType } }, null, new PagePointerOffsetPair[1][] { new[] { namePointer } }, null);
+            pageListCollection.Add(rh);
+
+            return id;
         }
     }
 }
