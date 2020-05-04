@@ -10,6 +10,7 @@ namespace MetadataManager
     {
         public int TableId;
         public string TableName;
+        public ulong RootPage;
     }
 
     public struct TableCreateDefinition
@@ -26,11 +27,13 @@ namespace MetadataManager
         private PageListCollection pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
         private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager;
+        private IAllocateMixedPage pageAllocator;
 
         private static ColumnType[] columnDefinitions = new ColumnType[]
         {
             ColumnType.Int,
             ColumnType.StringPointer,
+            ColumnType.PagePointer,
         };
 
         public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
@@ -45,6 +48,7 @@ namespace MetadataManager
             this.pageListCollection = new PageListCollection(pageAllocator, columnDefinitions, firstPage);
             this.stringHeap = stringHeap;
             this.columnManager = columnManager;
+            this.pageAllocator = pageAllocator;
         }
 
         public bool Exists(TableCreateDefinition def)
@@ -82,10 +86,12 @@ namespace MetadataManager
                 id = maxId + 1;
             }
 
+            MixedPage rootPage = this.pageAllocator.AllocateMixedPage(def.ColumnTypes, 0, 0);
+
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.TableName.ToCharArray());
 
-            rh.SetColumns(new int[1][] { new[] { id } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
+            rh.SetColumns(new int[1][] { new[] { id } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[1][] { new[] { (long)rootPage.PageId() }});
             pageListCollection.Add(rh);
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
@@ -100,6 +106,7 @@ namespace MetadataManager
                 columnManager.CreateObject(ccd);
             }
 
+
             return id;
         }
 
@@ -113,6 +120,7 @@ namespace MetadataManager
                         new MetadataTable()
                         {
                             TableId = rh.GetIntColumn(0)[i],
+                            RootPage = (ulong)rh.GetPagePointerColumn(0)[i],
                         };
 
                     rh.GetStringPointerColumn(0);

@@ -5,15 +5,17 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "atomicdbstarter", "atomicdbstarter\atomicdbstarter.csproj", "{6EDC6868-199F-4922-8400-9CE4F935064D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PageManager", "PageManager\PageManager.csproj", "{47BAD1E5-1717-4138-AFBE-0F27587C7CE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageManager", "PageManager\PageManager.csproj", "{47BAD1E5-1717-4138-AFBE-0F27587C7CE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PageManagerTests", "PageManagerTests\PageManagerTests.csproj", "{00599A0C-7CA3-45FF-8757-44248A5565AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageManagerTests", "PageManagerTests\PageManagerTests.csproj", "{00599A0C-7CA3-45FF-8757-44248A5565AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataManager", "MetadataManager\MetadataManager.csproj", "{D3C3BE02-BD80-468F-B199-A2E8A3C57061}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MetadataManager", "MetadataManager\MetadataManager.csproj", "{D3C3BE02-BD80-468F-B199-A2E8A3C57061}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetadataManagerTests", "MetadataManagerTests\MetadataManagerTests.csproj", "{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MetadataManagerTests", "MetadataManagerTests\MetadataManagerTests.csproj", "{EFCE82BA-5F2D-4C9C-91EF-BC0C48D32651}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Common", "Test.Common\Test.Common.csproj", "{4754AD50-B500-4452-8CB9-57E171486CD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Common", "Test.Common\Test.Common.csproj", "{4754AD50-B500-4452-8CB9-57E171486CD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryProcessing", "QueryProcessing\QueryProcessing.csproj", "{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{4754AD50-B500-4452-8CB9-57E171486CD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4754AD50-B500-4452-8CB9-57E171486CD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4754AD50-B500-4452-8CB9-57E171486CD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
