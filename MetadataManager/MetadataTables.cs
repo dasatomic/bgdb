@@ -12,7 +12,7 @@ namespace MetadataManager
         public string TableName;
     }
 
-    public class MetadataTablesManager : IMetadataObjectManager
+    public class MetadataTablesManager : IMetadataObjectManager<MetadataTable>
     {
         public const string MetadataTableName = "sys.tables";
 
@@ -52,6 +52,11 @@ namespace MetadataManager
             pageListCollection.Add(rh);
 
             return id;
+        }
+
+        public IEnumerator<MetadataTable> GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
     }
 }

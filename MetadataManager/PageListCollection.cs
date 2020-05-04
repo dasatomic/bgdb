@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using PageManager;
 
 namespace MetadataManager
 {
-    public interface UnorderedListCollection<T>
+    public interface UnorderedListCollection<T> : IEnumerable<T>
     {
         ulong Count();
         void Add(T item);
@@ -110,6 +111,28 @@ namespace MetadataManager
             }
 
             return max;
+        }
+
+        public IEnumerator<RowsetHolder> GetEnumerator()
+        {
+            MixedPage currPage;
+            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            {
+                currPage = pageAllocator.GetMixedPage(currPageId);
+                PageManager.RowsetHolder holder = currPage.Deserialize();
+
+                yield return holder;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator1();
+        }
+
+        private IEnumerator GetEnumerator1()
+        {
+            return this.GetEnumerator();
         }
     }
 }

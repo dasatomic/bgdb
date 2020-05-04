@@ -1,5 +1,6 @@
 ﻿using PageManager;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MetadataManager
@@ -12,7 +13,7 @@ namespace MetadataManager
         public ColumnType ColumnType;
     }
 
-    public class MetadataColumnsManager : IMetadataObjectManager
+    public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn>
     {
         public const string MetadataTableName = "sys.columns";
 
@@ -54,6 +55,11 @@ namespace MetadataManager
             pageListCollection.Add(rh);
 
             return id;
+        }
+
+        public IEnumerator<MetadataColumn> GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
     }
 }
