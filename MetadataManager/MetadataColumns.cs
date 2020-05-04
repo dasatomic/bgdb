@@ -1,11 +1,12 @@
 ﻿using PageManager;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MetadataManager
 {
-    public class MetadataColumn
+    public struct MetadataColumn
     {
         public int ColumnId;
         public int TableId;
@@ -13,7 +14,14 @@ namespace MetadataManager
         public ColumnType ColumnType;
     }
 
-    public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn>
+    public struct ColumnCreateDefinition
+    {
+        public int TableId;
+        public string ColumnName;
+        public ColumnType ColumnType;
+    }
+
+    public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition>
     {
         public const string MetadataTableName = "sys.columns";
 
@@ -41,25 +49,103 @@ namespace MetadataManager
             this.stringHeap = stringHeap;
         }
 
-        public int CreateObject(int tableId, string columnName, ColumnType columnType)
+        public IEnumerator<MetadataColumn> GetEnumerator()
         {
-            // TODO: Check if column name already exists in this table...
+            foreach (RowsetHolder rh in pageListCollection)
+            {
+                for (int i = 0; i < rh.GetRowCount(); i++)
+                {
+                    var mdObj = 
+                        new MetadataColumn()
+                        {
+                            ColumnId = rh.GetIntColumn(0)[i],
+                            TableId = rh.GetIntColumn(1)[i],
+                            ColumnType = (ColumnType)rh.GetIntColumn(2)[i],
+                        };
 
-            int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
-            int id = maxId + 1;
+                    rh.GetStringPointerColumn(0);
+                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(0)[i];
+                    char[] columnName = this.stringHeap.Fetch(stringPointer);
+
+                    mdObj.ColumnName = new string(columnName);
+
+                    yield return mdObj;
+                }
+            }
+        }
+
+        public int CreateObject(ColumnCreateDefinition def)
+        {
+            if (this.Exists(def))
+            {
+                throw new ElementWithSameNameExistsException();
+            }
+
+            int id = 1;
+            if (!pageListCollection.IsEmpty())
+            {
+                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0);
+                id = maxId + 1;
+            }
 
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
-            PagePointerOffsetPair namePointer =  this.stringHeap.Add(columnName.ToCharArray());
+            PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.ColumnName.ToCharArray());
 
-            rh.SetColumns(new int[1][] { new[] { id, tableId, (int)columnType } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
+            int[][] intCols = new int[3][];
+            intCols[0] = new[] { id };
+            intCols[1] = new[] { def.TableId };
+            intCols[2] = new[] { (int)def.ColumnType };
+            rh.SetColumns(intCols, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
             pageListCollection.Add(rh);
 
             return id;
         }
 
-        public IEnumerator<MetadataColumn> GetEnumerator()
+        public bool Exists(ColumnCreateDefinition def)
         {
-            throw new NotImplementedException();
+            foreach (RowsetHolder rh in pageListCollection)
+            {
+                int[] tableIds = rh.GetIntColumn(1);
+
+                for (int i = 0; i < tableIds.Length; i++)
+                {
+                    if (tableIds[i] == def.TableId)
+                    {
+                        rh.GetStringPointerColumn(0);
+                        PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(0)[i];
+
+                        if (def.ColumnName == new string(stringHeap.Fetch(stringPointer)))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public MetadataColumn GetById(int id)
+        {
+            foreach (var column in this)
+            {
+                if (column.ColumnId == id)
+                {
+                    return column;
+                }
+            }
+
+            throw new KeyNotFoundException();
+        }
+
+        private IEnumerator GetEnumerator1()
+        {
+            return this.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator1();
         }
     }
 }

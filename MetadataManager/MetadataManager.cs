@@ -1,5 +1,6 @@
 ﻿using PageManager;
 using System;
+using System.Collections.Generic;
 
 namespace MetadataManager
 {
@@ -42,11 +43,11 @@ namespace MetadataManager
         {
             RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
 
-            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), 0, 0);
-            this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap);
-
             var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), 0, 0);
             this.columnsManager = new MetadataColumnsManager(this.pageAllocator, mdColumnsFirstPage, this.stringHeap);
+
+            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), 0, 0);
+            this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap, this.columnsManager);
 
             rh.SetColumns(
                 new int[1][] { new int[] 
@@ -62,5 +63,9 @@ namespace MetadataManager
                 }});
             masterMetadataCollection.Add(rh);
         }
+
+        public MetadataTablesManager GetTableManager() => this.tableManager;
+
+        public MetadataColumnsManager GetColumnManager() => this.columnsManager;
     }
 }

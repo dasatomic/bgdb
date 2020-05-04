@@ -11,6 +11,7 @@ namespace MetadataManager
         void Add(T item);
         List<T> Where(Func<T, bool> filter);
         U Max<U>(Func<T, U> projector, U startMin) where U : IComparable;
+        bool IsEmpty();
     }
 
     public class PageListCollection : UnorderedListCollection<RowsetHolder>
@@ -133,6 +134,11 @@ namespace MetadataManager
         private IEnumerator GetEnumerator1()
         {
             return this.GetEnumerator();
+        }
+
+        public bool IsEmpty()
+        {
+            return this.Count() == 0;
         }
     }
 }

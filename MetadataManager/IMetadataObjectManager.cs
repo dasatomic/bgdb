@@ -3,8 +3,10 @@ using System.Collections.Generic;
 
 namespace MetadataManager
 {
-    public interface IMetadataObjectManager<O>
+    public interface IMetadataObjectManager<O, C> : IEnumerable<O>
     {
-        IEnumerator<O> GetEnumerator();
+        int CreateObject(C def);
+        bool Exists(C def);
+        O GetById(int id);
     }
 }

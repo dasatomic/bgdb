@@ -2,7 +2,7 @@
 
 namespace MetadataManager
 {
-    class ElementWithSameNameExistsException : Exception
+    public class ElementWithSameNameExistsException : Exception
     {
     }
 }
