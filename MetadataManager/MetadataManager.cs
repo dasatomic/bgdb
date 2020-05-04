@@ -21,29 +21,46 @@ namespace MetadataManager
         private MetadataColumnsManager columnsManager;
         private MetadataTablesManager tableManager;
 
-        public MetadataManager(IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, bool useExistingMasterPage)
+        public MetadataManager(IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IBootPageAllocator bootPageAllocator)
         {
             this.pageAllocator = pageAllocator;
             this.stringHeap = stringHeap;
 
-            if (!useExistingMasterPage)
+            if (!bootPageAllocator.BootPageInitialized())
             {
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition);
+                bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition);
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId));
                 MetadataInitialSetup();
             }
             else
             {
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(0));
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId));
             }
         }
 
         private void MetadataInitialSetup()
         {
+            RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
+
             var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), 0, 0);
             this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap);
 
             var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), 0, 0);
             this.columnsManager = new MetadataColumnsManager(this.pageAllocator, mdColumnsFirstPage, this.stringHeap);
+
+            rh.SetColumns(
+                new int[1][] { new int[] 
+                { 
+                    (int)MetadataObjectEnum.MdTableId,
+                    (int)MetadataObjectEnum.MdColumnId,
+                }},
+                new double[0][], new PagePointerOffsetPair[0][],
+                new long[1][] { new long[] 
+                { 
+                    (long)mdTableFirstPage.PageId(),
+                    (long)mdColumnsFirstPage.PageId() 
+                }});
+            masterMetadataCollection.Add(rh);
         }
     }
 }

@@ -87,7 +87,7 @@ namespace PageManager
 
         private uint VerifyColumnValidityAndGetRowCount(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns)
         {
-            if (intColumns.Length != this.intColumns.Length ||
+            if (intColumns?.Length != this.intColumns?.Length ||
                 doubleColumns.Length != this.doubleColumns.Length ||
                 pagePointerColumns.Length != this.pagePointerColumns.Length ||
                 pagePointerOffsetColumns.Length != this.pagePointerOffsetColumns.Length)

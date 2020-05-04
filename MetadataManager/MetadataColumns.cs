@@ -50,7 +50,7 @@ namespace MetadataManager
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  this.stringHeap.Add(columnName.ToCharArray());
 
-            rh.SetColumns(new int[1][] { new[] { id, tableId, (int)columnType } }, null, new PagePointerOffsetPair[1][] { new[] { namePointer } }, null);
+            rh.SetColumns(new int[1][] { new[] { id, tableId, (int)columnType } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
             pageListCollection.Add(rh);
 
             return id;

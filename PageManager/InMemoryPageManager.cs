@@ -4,7 +4,15 @@ using System.Linq;
 
 namespace PageManager
 {
-    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage
+    public interface IBootPageAllocator
+    {
+        IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes);
+        bool BootPageInitialized();
+
+        public const ulong BootPageId = ulong.MaxValue;
+    }
+
+    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
@@ -22,8 +30,17 @@ namespace PageManager
 
         public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId)
         {
+            return AllocatePage(pageType, columnTypes, prevPageId, nextPageId, lastUsedPageId++);
+        }
+
+        public IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes)
+        {
+            return AllocatePage(pageType, columnTypes, 0, 0, IBootPageAllocator.BootPageId);
+        }
+
+        private IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId)
+        {
             IPage page;
-            ulong pageId = lastUsedPageId++;
 
             if (pageType == PageType.IntPage)
             {
@@ -184,6 +201,11 @@ namespace PageManager
             }
 
             return (MixedPage)page;
+        }
+
+        public bool BootPageInitialized()
+        {
+            return pages.Any(p => p.PageId() == IBootPageAllocator.BootPageId);
         }
     }
 }
