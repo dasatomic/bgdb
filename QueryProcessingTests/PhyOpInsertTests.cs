@@ -26,10 +26,11 @@ namespace QueryProcessingTests
 
             var table = tm.GetById(id);
 
-            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap);
+            Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }) };
+            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
-            Row r = new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" });
-            op.Invoke(r);
+            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap);
+            op.Invoke(opStatic);
         }
     }
 }

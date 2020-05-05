@@ -1,5 +1,7 @@
 ﻿using MetadataManager;
 using PageManager;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace QueryProcessing
@@ -21,9 +23,22 @@ namespace QueryProcessing
             this.stringHeap = stringHeap;
         }
 
-        public void Invoke(Row row)
+        public void Invoke(IPhysicalOperator<Row> input)
         {
-            this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap));
+            foreach (Row row in input)
+            {
+                this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap));
+            }
+        }
+
+        public IEnumerator<Row> GetEnumerator()
+        {
+            yield break;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            yield break;
         }
     }
 }

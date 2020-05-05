@@ -1,7 +1,9 @@
-﻿namespace QueryProcessing
+﻿using System.Collections.Generic;
+
+namespace QueryProcessing
 {
-    public interface IPhysicalOperator<T>
+    public interface IPhysicalOperator<T> : IEnumerable<T>
     {
-        void Invoke(T input);
+        void Invoke(IPhysicalOperator<T> input);
     }
 }

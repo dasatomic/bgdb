@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PageManager
@@ -7,8 +9,8 @@ namespace PageManager
     {
         public int[] GetIntColumn(int columnId);
         public double[] GetDoubleColumn(int columnId);
-        public  PagePointerOffsetPair[] GetStringPointerColumn(int columnId);
-        public  long[] GetPagePointerColumn(int columnId);
+        public PagePointerOffsetPair[] GetStringPointerColumn(int columnId);
+        public long[] GetPagePointerColumn(int columnId);
         public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns);
         public uint StorageSizeInBytes();
         public byte[] Serialize();
@@ -16,9 +18,18 @@ namespace PageManager
         public void Deserialize(ReadOnlySpan<byte> bytes);
         public uint GetRowCount();
         public void Merge(RowsetHolder rowsetHolder);
+        public ColumnType[] GetColumnTypes();
     }
 
-    public class RowsetHolder : IRowsetHolder
+    public struct RowHolder
+    {
+        public int[] iRow;
+        public double[] dRow;
+        public PagePointerOffsetPair[] strPRow;
+        public long[] pagePRow;
+    }
+
+    public class RowsetHolder : IRowsetHolder, IEnumerable<RowHolder>
     {
         private int[][] intColumns;
         private PagePointerOffsetPair[][] pagePointerOffsetColumns;
@@ -26,6 +37,7 @@ namespace PageManager
         private long[][] pagePointerColumns;
         private int[] columnIdToTypeIdMappers;
         private uint rowsetCount = 0;
+        private ColumnType[] columnTypes;
 
         public RowsetHolder(ColumnType[] columnTypes)
         {
@@ -33,6 +45,7 @@ namespace PageManager
             int doubleCount = 0;
             int pagePointerOffsetCount = 0;
             int pagePointerCount = 0;
+            this.columnTypes = columnTypes;
 
             columnIdToTypeIdMappers = new int[columnTypes.Length];
 
@@ -367,6 +380,50 @@ namespace PageManager
             }
 
             this.rowsetCount = this.rowsetCount + rowsetHolder.rowsetCount;
+        }
+
+        public ColumnType[] GetColumnTypes() => this.columnTypes;
+
+        public IEnumerator<RowHolder> GetEnumerator()
+        {
+            for (int i = 0; i < this.rowsetCount; i++)
+            {
+                RowHolder rh = new RowHolder();
+                rh.iRow = new int[this.intColumns.Length];
+                for (int columnNum = 0; columnNum < this.intColumns.Length; columnNum++)
+                {
+                    rh.iRow[columnNum] = this.intColumns[columnNum][i];
+                }
+
+                rh.dRow = new double[this.doubleColumns.Length];
+                for (int columnNum = 0; columnNum < this.doubleColumns.Length; columnNum++)
+                {
+                    rh.dRow[columnNum] = this.doubleColumns[columnNum][i];
+                }
+
+                rh.pagePRow = new long[this.pagePointerColumns.Length];
+                for (int columnNum = 0; columnNum < this.pagePointerColumns.Length; columnNum++)
+                {
+                    rh.pagePRow[columnNum] = this.pagePointerColumns[columnNum][i];
+                }
+
+                rh.strPRow = new PagePointerOffsetPair[this.pagePointerOffsetColumns.Length];
+                for (int columnNum = 0; columnNum < this.pagePointerOffsetColumns.Length; columnNum++)
+                {
+                    rh.strPRow[columnNum] = this.pagePointerOffsetColumns[columnNum][i];
+                }
+
+                yield return rh;
+            }
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator1();
+        }
+
+        private IEnumerator GetEnumerator1()
+        {
+            return this.GetEnumerator();
         }
     }
 }
