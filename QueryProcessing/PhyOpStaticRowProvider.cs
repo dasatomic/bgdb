@@ -18,12 +18,8 @@ namespace QueryProcessing
             return source.GetEnumerator();
         }
 
-        public void Invoke(IPhysicalOperator<Row> input)
+        public void Invoke()
         {
-            if (input != null)
-            {
-                throw new ArgumentException("input has to be null for static row provider");
-            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()

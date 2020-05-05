@@ -4,6 +4,6 @@ namespace QueryProcessing
 {
     public interface IPhysicalOperator<T> : IEnumerable<T>
     {
-        void Invoke(IPhysicalOperator<T> input);
+        void Invoke();
     }
 }

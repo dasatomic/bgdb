@@ -12,8 +12,9 @@ namespace QueryProcessing
         private PageListCollection pageCollection;
         private IAllocateMixedPage pageAllocator;
         private HeapWithOffsets<char[]> stringHeap;
+        private IPhysicalOperator<Row> input;
 
-        public PhyOpTableInsert(MetadataTable mdTable, IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap)
+        public PhyOpTableInsert(MetadataTable mdTable, IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IPhysicalOperator<Row> input)
         {
             this.mdTable = mdTable;
             this.pageAllocator = pageAllocator;
@@ -21,11 +22,12 @@ namespace QueryProcessing
             IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage);
             this.pageCollection = new PageListCollection(this.pageAllocator, mdTable.Columns.Select(c => c.ColumnType).ToArray(), rootPage);
             this.stringHeap = stringHeap;
+            this.input = input;
         }
 
-        public void Invoke(IPhysicalOperator<Row> input)
+        public void Invoke()
         {
-            foreach (Row row in input)
+            foreach (Row row in this.input)
             {
                 this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap));
             }

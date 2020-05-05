@@ -8,21 +8,18 @@ namespace QueryProcessing
 {
     public class PhyOpScan : IPhysicalOperator<Row>
     {
-        private PageListCollection pageListCollection;
-        private IEnumerator<RowsetHolder> enumerator = null;
+        private PageListCollection source;
         private HeapWithOffsets<char[]> strHeap = null;
-        int posInRowsetHolder = 0;
 
         public PhyOpScan(PageListCollection collection, HeapWithOffsets<char[]> strHeap)
         {
-            this.pageListCollection = collection;
-            this.enumerator = this.pageListCollection.GetEnumerator();
+            this.source = collection;
             this.strHeap = strHeap;
         }
 
         public IEnumerator<Row> GetEnumerator()
         {
-            foreach (var rowsetHolder in this.pageListCollection)
+            foreach (var rowsetHolder in this.source)
             {
                 foreach (RowHolder rowHolder in rowsetHolder)
                 {
@@ -38,7 +35,7 @@ namespace QueryProcessing
             }
         }
 
-        public void Invoke(IPhysicalOperator<Row> input)
+        public void Invoke()
         {
             throw new NotImplementedException();
         }

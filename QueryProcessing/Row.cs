@@ -1,12 +1,12 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace QueryProcessing
 {
-    public class Row
+    public class Row : IEquatable<Row>
     {
         private int[] intCols;
         private double[] doubleCols;
@@ -19,6 +19,18 @@ namespace QueryProcessing
             this.intCols = intCols;
             this.doubleCols = doubleCols;
             this.stringCols = stringCols;
+        }
+
+        public bool Equals([AllowNull] Row other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return Enumerable.SequenceEqual(this.intCols, other.intCols) &&
+                Enumerable.SequenceEqual(this.doubleCols, other.doubleCols) &&
+                Enumerable.SequenceEqual(this.stringCols, other.stringCols);
         }
 
         public RowsetHolder ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc)
