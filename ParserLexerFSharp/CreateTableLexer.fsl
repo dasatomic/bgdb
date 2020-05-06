@@ -1,0 +1,29 @@
+﻿{   
+module CreateTableLexer
+open System   
+open CreateTableParser   
+open FSharp.Text.Lexing
+ 
+let keywords =   
+    [   
+        "CREATE", CREATE
+        "TABLE", TABLE
+    ] |> Map.ofList   
+}
+ 
+let char        = ['a'-'z' 'A'-'Z']   
+let digit       = ['0'-'9']   
+let int         = '-'?digit+   
+let float       = '-'?digit+ '.' digit+   
+let identifier  = char(char|digit|['-' '_' '.'])*   
+let whitespace  = [' ' '\t']   
+let newline     = "\n\r" | '\n' | '\r'  
+ 
+rule tokenize = parse   
+| whitespace    { tokenize lexbuf }   
+| newline       { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; }   
+| identifier    { match keywords.TryFind(LexBuffer<_>.LexemeString lexbuf) with   
+                  | Some(token) -> token   
+                  | None -> ID(LexBuffer<_>.LexemeString lexbuf) }   
+| ','           { COMMA }   
+| eof           { EOF }

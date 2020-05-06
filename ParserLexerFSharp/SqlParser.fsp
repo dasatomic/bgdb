@@ -11,6 +11,7 @@ open Sql
 %token EQ LT LE GT GE   
 %token JOIN INNER LEFT RIGHT ON   
 %token SELECT FROM WHERE ORDER BY   
+%token CREATE_TABLE
 %token ASC DESC   
 %token EOF   
  
@@ -84,3 +85,4 @@ orderBy:
     | ID DESC                       { $1, Desc}   
  
 %%
+

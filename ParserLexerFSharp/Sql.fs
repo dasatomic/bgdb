@@ -27,3 +27,10 @@ type sqlStatement =
         Where : where option
         OrderBy : order list
     }
+
+type column = string * string
+
+type createTableStatement =
+    {
+        Table: string;
+    }

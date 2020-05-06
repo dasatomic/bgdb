@@ -4,6 +4,7 @@ type token =
   | EOF
   | ASC
   | DESC
+  | CREATE_TABLE
   | SELECT
   | FROM
   | WHERE
@@ -29,6 +30,7 @@ type tokenId =
     | TOKEN_EOF
     | TOKEN_ASC
     | TOKEN_DESC
+    | TOKEN_CREATE_TABLE
     | TOKEN_SELECT
     | TOKEN_FROM
     | TOKEN_WHERE

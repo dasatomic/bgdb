@@ -6,19 +6,30 @@
 
   <ItemGroup>
     <Compile Include="Sql.fs" />
+    <None Include="CreateTableLexer.fsl" />
+    <None Include="CreateTableParser.fsp" />
     <None Include="SqlParser.fsp" />
     <None Include="SqlLexer.fsl" />
     <Compile Include="SqlParser.fsi" />
     <Compile Include="SqlParser.fs" />
+    <Compile Include="CreateTableParser.fsi" />
+    <Compile Include="CreateTableParser.fs" />
     <Compile Include="SqlLexer.fs" />
+    <Compile Include="CreateTableLexer.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <FsLex Include="SqlLexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
+    <FsLex Include="CreateTableLexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
     <FsYacc Include="SqlParser.fsp">
       <OtherFlags>--module SqlParser -v</OtherFlags>
+    </FsYacc>
+    <FsYacc Include="CreateTableParser.fsp">
+      <OtherFlags>--module CreateTableParser -v</OtherFlags>
     </FsYacc>
   </ItemGroup>
 

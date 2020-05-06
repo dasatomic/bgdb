@@ -1,10 +1,8 @@
 using NUnit.Framework;
 using FSharp.Text.Lexing;
-using FSharp.Text.Parsing;
 using Microsoft.FSharp.Core;
 using System;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace ParserLexerTests
 {
@@ -66,6 +64,19 @@ namespace ParserLexerTests
             Assert.IsTrue(rightCond.Item.Item2.IsEq);
             Assert.IsTrue(rightCond.Item.Item3.IsInt);
             Assert.IsTrue(((Sql.value.Int)rightCond.Item.Item3).Item == 20);
+        }
+
+        [Test]
+        public void CreateTableTest()
+        {
+            string query = "CREATE TABLE mytable";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
+            Assert.AreEqual("mytable", statement.Table);
         }
     }
 }

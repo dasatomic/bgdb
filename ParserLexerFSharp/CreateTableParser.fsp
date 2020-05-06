@@ -1,0 +1,22 @@
+﻿%{   
+open Sql   
+%}   
+ 
+%token <string> ID   
+ 
+%token COMMA   
+%token CREATE
+%token TABLE
+%token EOF   
+
+%start startCT
+%type <Sql.createTableStatement> startCT
+ 
+%%   
+ 
+startCT:  CREATE TABLE ID
+        EOF                 {   
+                                { Table = $3;
+                                 }   
+                            }   
+%%
