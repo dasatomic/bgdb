@@ -12,6 +12,29 @@ namespace E2EQueryExecutionTests
     public class Tests
     {
         [Test]
+        public void CreateTableE2E()
+        {
+            var allocator = new InMemoryPageManager(4096);
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
+            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
+
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, allocator);
+
+            string query = @"CREATE TABLE MyTable (INT a, DOUBLE b, STRING c)";
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            var f = FuncConvert.FromFunc(func);
+            Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
+
+            treeBuilder.ParseDdl(statement);
+
+            var tm = mm.GetTableManager();
+            var table = tm.GetByName("MyTable");
+
+            Assert.NotNull(table);
+        }
+
+        [Test]
         public void SimpleE2E()
         {
             var allocator =
@@ -47,7 +70,7 @@ namespace E2EQueryExecutionTests
             Sql.sqlStatement statement = SqlParser.start(f, lexbuf);
 
             AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, allocator);
-            IPhysicalOperator<Row> root =  treeBuilder.Parse(statement);
+            IPhysicalOperator<Row> root =  treeBuilder.ParseSqlStatement(statement);
 
             Row[] result = root.ToArray();
 
