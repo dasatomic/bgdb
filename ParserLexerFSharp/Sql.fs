@@ -33,4 +33,5 @@ type column = string * string
 type createTableStatement =
     {
         Table: string;
+        ColumnList: string list;
     }

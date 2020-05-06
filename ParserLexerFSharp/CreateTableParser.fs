@@ -10,6 +10,8 @@ open Sql
 # 10 "CreateTableParser.fs"
 // This type is the type of tokens accepted by the parser
 type token = 
+  | CBRCK
+  | OBRCK
   | EOF
   | TABLE
   | CREATE
@@ -17,6 +19,8 @@ type token =
   | ID of (string)
 // This type is used to give symbolic names to token indexes, useful for error messages
 type tokenId = 
+    | TOKEN_CBRCK
+    | TOKEN_OBRCK
     | TOKEN_EOF
     | TOKEN_TABLE
     | TOKEN_CREATE
@@ -28,26 +32,31 @@ type tokenId =
 type nonTerminalId = 
     | NONTERM__startstartCT
     | NONTERM_startCT
+    | NONTERM_columnTypeList
 
 // This function maps tokens to integer indexes
 let tagOfToken (t:token) = 
   match t with
-  | EOF  -> 0 
-  | TABLE  -> 1 
-  | CREATE  -> 2 
-  | COMMA  -> 3 
-  | ID _ -> 4 
+  | CBRCK  -> 0 
+  | OBRCK  -> 1 
+  | EOF  -> 2 
+  | TABLE  -> 3 
+  | CREATE  -> 4 
+  | COMMA  -> 5 
+  | ID _ -> 6 
 
 // This function maps integer indexes to symbolic token ids
 let tokenTagToTokenId (tokenIdx:int) = 
   match tokenIdx with
-  | 0 -> TOKEN_EOF 
-  | 1 -> TOKEN_TABLE 
-  | 2 -> TOKEN_CREATE 
-  | 3 -> TOKEN_COMMA 
-  | 4 -> TOKEN_ID 
-  | 7 -> TOKEN_end_of_input
-  | 5 -> TOKEN_error
+  | 0 -> TOKEN_CBRCK 
+  | 1 -> TOKEN_OBRCK 
+  | 2 -> TOKEN_EOF 
+  | 3 -> TOKEN_TABLE 
+  | 4 -> TOKEN_CREATE 
+  | 5 -> TOKEN_COMMA 
+  | 6 -> TOKEN_ID 
+  | 9 -> TOKEN_end_of_input
+  | 7 -> TOKEN_error
   | _ -> failwith "tokenTagToTokenId: bad token"
 
 /// This function maps production indexes returned in syntax errors to strings representing the non terminal that would be produced by that production
@@ -55,14 +64,18 @@ let prodIdxToNonTerminal (prodIdx:int) =
   match prodIdx with
     | 0 -> NONTERM__startstartCT 
     | 1 -> NONTERM_startCT 
+    | 2 -> NONTERM_columnTypeList 
+    | 3 -> NONTERM_columnTypeList 
     | _ -> failwith "prodIdxToNonTerminal: bad production index"
 
-let _fsyacc_endOfInputTag = 7 
-let _fsyacc_tagOfErrorTerminal = 5
+let _fsyacc_endOfInputTag = 9 
+let _fsyacc_tagOfErrorTerminal = 7
 
 // This function gets the name of a token as a string
 let token_to_string (t:token) = 
   match t with 
+  | CBRCK  -> "CBRCK" 
+  | OBRCK  -> "OBRCK" 
   | EOF  -> "EOF" 
   | TABLE  -> "TABLE" 
   | CREATE  -> "CREATE" 
@@ -72,23 +85,25 @@ let token_to_string (t:token) =
 // This function gets the data carried by a token as an object
 let _fsyacc_dataOfToken (t:token) = 
   match t with 
+  | CBRCK  -> (null : System.Object) 
+  | OBRCK  -> (null : System.Object) 
   | EOF  -> (null : System.Object) 
   | TABLE  -> (null : System.Object) 
   | CREATE  -> (null : System.Object) 
   | COMMA  -> (null : System.Object) 
   | ID _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
-let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; |]
-let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; |]
-let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; |]
-let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; |]
-let _fsyacc_action_rows = 6
-let _fsyacc_actionTableElements = [|1us; 32768us; 2us; 2us; 0us; 49152us; 1us; 32768us; 1us; 3us; 1us; 32768us; 4us; 4us; 1us; 32768us; 0us; 5us; 0us; 16385us; |]
-let _fsyacc_actionTableRowOffsets = [|0us; 2us; 3us; 5us; 7us; 9us; |]
-let _fsyacc_reductionSymbolCounts = [|1us; 4us; |]
-let _fsyacc_productionToNonTerminalTable = [|0us; 1us; |]
-let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 65535us; 65535us; 16385us; |]
+let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 5us; 6us; |]
+let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; |]
+let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 3us; |]
+let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 15us; 17us; 19us; 21us; 23us; |]
+let _fsyacc_action_rows = 12
+let _fsyacc_actionTableElements = [|1us; 32768us; 4us; 2us; 0us; 49152us; 1us; 32768us; 3us; 3us; 1us; 32768us; 6us; 4us; 1us; 32768us; 1us; 5us; 1us; 32768us; 6us; 9us; 2us; 32768us; 0us; 7us; 5us; 10us; 1us; 32768us; 2us; 8us; 0us; 16385us; 0us; 16386us; 1us; 32768us; 6us; 11us; 0us; 16387us; |]
+let _fsyacc_actionTableRowOffsets = [|0us; 2us; 3us; 5us; 7us; 9us; 11us; 14us; 16us; 17us; 18us; 20us; |]
+let _fsyacc_reductionSymbolCounts = [|1us; 7us; 1us; 3us; |]
+let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; |]
+let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16385us; 16386us; 65535us; 16387us; |]
 let _fsyacc_reductions ()  =    [| 
-# 91 "CreateTableParser.fs"
+# 106 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Sql.createTableStatement)) in
             Microsoft.FSharp.Core.Operators.box
@@ -97,22 +112,47 @@ let _fsyacc_reductions ()  =    [|
                       raise (FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startstartCT));
-# 100 "CreateTableParser.fs"
+# 115 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnTypeList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 21 "CreateTableParser.fsp"
+                                                     
+                                                     { Table = _3;
+                                                       ColumnList = List.rev _5
+                                                      }   
+                                                 
+                   )
+# 21 "CreateTableParser.fsp"
+                 : Sql.createTableStatement));
+# 131 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 28 "CreateTableParser.fsp"
+                                                   [_1]
+                   )
+# 28 "CreateTableParser.fsp"
+                 : 'columnTypeList));
+# 142 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnTypeList)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 18 "CreateTableParser.fsp"
-                                                     
-                                                     { Table = _3;
-                                                      }   
-                                                 
+# 29 "CreateTableParser.fsp"
+                                                      _3 :: _1 
                    )
-# 18 "CreateTableParser.fsp"
-                 : Sql.createTableStatement));
+# 29 "CreateTableParser.fsp"
+                 : 'columnTypeList));
 |]
-# 115 "CreateTableParser.fs"
+# 155 "CreateTableParser.fs"
 let tables () : FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;
@@ -131,7 +171,7 @@ let tables () : FSharp.Text.Parsing.Tables<_> =
                               match parse_error_rich with 
                               | Some f -> f ctxt
                               | None -> parse_error ctxt.Message);
-    numTerminals = 8;
+    numTerminals = 10;
     productionToNonTerminalTable = _fsyacc_productionToNonTerminalTable  }
 let engine lexer lexbuf startState = (tables ()).Interpret(lexer, lexbuf, startState)
 let startCT lexer lexbuf : Sql.createTableStatement =

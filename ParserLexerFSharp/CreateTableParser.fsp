@@ -8,6 +8,8 @@ open Sql
 %token CREATE
 %token TABLE
 %token EOF   
+%token OBRCK
+%token CBRCK
 
 %start startCT
 %type <Sql.createTableStatement> startCT
@@ -15,8 +17,14 @@ open Sql
 %%   
  
 startCT:  CREATE TABLE ID
+        OBRCK columnTypeList CBRCK
         EOF                 {   
                                 { Table = $3;
+                                  ColumnList = List.rev $5
                                  }   
                             }   
+
+columnTypeList:   
+    | ID                    { [$1]}   
+    | columnTypeList COMMA ID  { $3 :: $1 }   
 %%
