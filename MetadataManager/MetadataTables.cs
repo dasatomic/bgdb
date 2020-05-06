@@ -152,6 +152,19 @@ namespace MetadataManager
             throw new KeyNotFoundException();
         }
 
+        public MetadataTable GetByName(string name)
+        {
+            foreach (var table in this)
+            {
+                if (table.TableName == name)
+                {
+                    return table;
+                }
+            }
+
+            throw new KeyNotFoundException();
+        }
+
         private IEnumerator GetEnumerator1()
         {
             return this.GetEnumerator();

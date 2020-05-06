@@ -1,25 +1,80 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace QueryProcessing
 {
+    public class RowDescriptor
+    {
+        public string[] ColumnNames;
+        public int[] ColumnIds;
+    }
+
     public class Row : IEquatable<Row>
     {
         private int[] intCols;
         private double[] doubleCols;
         private string[] stringCols;
+        private ColumnType[] columnTypes;
 
-        public Row(int[] intCols, double[] doubleCols, string[] stringCols)
+        public Row(int[] intCols, double[] doubleCols, string[] stringCols, ColumnType[] columnTypes)
         {
-            int rowWidth = intCols.Length + doubleCols.Length + stringCols.Length;
-
             this.intCols = intCols;
             this.doubleCols = doubleCols;
             this.stringCols = stringCols;
+            this.columnTypes = columnTypes;
         }
+
+        public Row Project(int[] columnIds)
+        {
+            ColumnType[] destColumnTypes = new ColumnType[columnIds.Length];
+
+            int projectPos = 0;
+            foreach (int id in columnIds)
+            {
+                if (id >= this.columnTypes.Length)
+                {
+                    throw new ArgumentException();
+                }
+
+                destColumnTypes[projectPos++] = this.columnTypes[id];
+            }
+
+            List<int> iCols = new List<int>();
+            List<double> dCols = new List<double>();
+            List<string> sCols = new List<string>();
+
+            for (int posProj = 0; posProj < columnIds.Length; posProj++)
+            {
+                int iColNum = 0;
+                int dColNum = 0;
+                int sColNum = 0;
+
+                for (int posSource = 0; posSource < columnIds[posProj]; posSource++)
+                {
+                    if (this.columnTypes[posSource] == ColumnType.Int) iColNum++;
+                    else if (this.columnTypes[posSource] == ColumnType.Double) dColNum++;
+                    else if (this.columnTypes[posSource] == ColumnType.StringPointer) sColNum++;
+                    else throw new InvalidRowsetDefinitionException();
+                }
+
+                if (this.columnTypes[columnIds[posProj]] == ColumnType.Int) iCols.Add(this.intCols[iColNum]);
+                else if (this.columnTypes[columnIds[posProj]] == ColumnType.Double) dCols.Add(this.doubleCols[dColNum]);
+                else if (this.columnTypes[columnIds[posProj]] == ColumnType.StringPointer) sCols.Add(this.stringCols[sColNum]);
+                else throw new InvalidRowsetDefinitionException();
+            }
+
+            return new Row(iCols.ToArray(), dCols.ToArray(), sCols.ToArray(), destColumnTypes);
+        }
+
+        public ColumnType[] ColumnTypesOrdered => this.columnTypes;
+
+        public int[] IntCols => intCols;
+        public double[] DoubleCols => doubleCols;
+        public string[] StringCols => stringCols;
 
         public bool Equals([AllowNull] Row other)
         {

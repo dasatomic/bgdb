@@ -29,7 +29,7 @@ namespace QueryProcessing
                         strVals[i] = new string(strHeap.Fetch(rowHolder.strPRow[i]));
                     }
 
-                    Row row = new Row(rowHolder.iRow, rowHolder.dRow, strVals);
+                    Row row = new Row(rowHolder.iRow, rowHolder.dRow, strVals, rowsetHolder.GetColumnTypes());
                     yield return row;
                 }
             }
