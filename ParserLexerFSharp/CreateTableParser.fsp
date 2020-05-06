@@ -10,6 +10,7 @@ open Sql
 %token EOF   
 %token OBRCK
 %token CBRCK
+%token INT DOUBLE STRING
 
 %start startCT
 %type <Sql.createTableStatement> startCT
@@ -25,6 +26,12 @@ startCT:  CREATE TABLE ID
                             }   
 
 columnTypeList:   
-    | ID ID                    { [($1, $2)] }   
-    | columnTypeList COMMA ID ID { ($3, $4) :: $1 }   
+    | columnType                    { [$1] }   
+    | columnTypeList COMMA columnType { $3 :: $1 }   
+
+columnType:
+    | INT ID { IntCType, $2 }
+    | DOUBLE ID { DoubleCType, $2 }
+    | STRING ID { StringCType, $2 }
+
 %%

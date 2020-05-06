@@ -77,7 +77,9 @@ namespace ParserLexerTests
             var f = FuncConvert.FromFunc(func);
             Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
             Assert.AreEqual("mytable", statement.Table);
-            Assert.AreEqual(new string[] { "INT", "INT", "STRING" }, statement.ColumnList.Select(cl => cl.Item1).ToArray());
+            Assert.IsTrue(statement.ColumnList[0].Item1.IsIntCType);
+            Assert.IsTrue(statement.ColumnList[1].Item1.IsIntCType);
+            Assert.IsTrue(statement.ColumnList[2].Item1.IsStringCType);
             Assert.AreEqual(new string[] { "A", "B", "C" }, statement.ColumnList.Select(cl => cl.Item2).ToArray());
         }
     }

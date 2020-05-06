@@ -8,6 +8,9 @@ let keywords =
     [   
         "CREATE", CREATE
         "TABLE", TABLE
+        "INT", INT
+        "DOUBLE", DOUBLE
+        "STRING", STRING
     ] |> Map.ofList   
 }
  

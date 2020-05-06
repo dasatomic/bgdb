@@ -28,7 +28,8 @@ type sqlStatement =
         OrderBy : order list
     }
 
-type columndef = string * string
+type columntype = IntCType | StringCType | DoubleCType
+type columndef = columntype * string
 
 type createTableStatement =
     {

@@ -9,9 +9,12 @@ let keywords =
     [   
         "CREATE", CREATE
         "TABLE", TABLE
+        "INT", INT
+        "DOUBLE", DOUBLE
+        "STRING", STRING
     ] |> Map.ofList   
 
-# 14 "CreateTableLexer.fs"
+# 17 "CreateTableLexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -42,41 +45,41 @@ let rec _fslex_dummy () = _fslex_dummy()
 and tokenize  lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 25 "CreateTableLexer.fsl"
+# 28 "CreateTableLexer.fsl"
                                  tokenize lexbuf 
-# 47 "CreateTableLexer.fs"
+# 50 "CreateTableLexer.fs"
           )
   | 1 -> ( 
-# 26 "CreateTableLexer.fsl"
+# 29 "CreateTableLexer.fsl"
                                  lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; 
-# 52 "CreateTableLexer.fs"
+# 55 "CreateTableLexer.fs"
           )
   | 2 -> ( 
-# 27 "CreateTableLexer.fsl"
+# 30 "CreateTableLexer.fsl"
                                  match keywords.TryFind(LexBuffer<_>.LexemeString lexbuf) with   
                                  | Some(token) -> token   
                                  | None -> ID(LexBuffer<_>.LexemeString lexbuf) 
-# 59 "CreateTableLexer.fs"
+# 62 "CreateTableLexer.fs"
           )
   | 3 -> ( 
-# 30 "CreateTableLexer.fsl"
+# 33 "CreateTableLexer.fsl"
                                  COMMA 
-# 64 "CreateTableLexer.fs"
+# 67 "CreateTableLexer.fs"
           )
   | 4 -> ( 
-# 31 "CreateTableLexer.fsl"
+# 34 "CreateTableLexer.fsl"
                                  EOF 
-# 69 "CreateTableLexer.fs"
+# 72 "CreateTableLexer.fs"
           )
   | 5 -> ( 
-# 32 "CreateTableLexer.fsl"
+# 35 "CreateTableLexer.fsl"
                                OBRCK 
-# 74 "CreateTableLexer.fs"
+# 77 "CreateTableLexer.fs"
           )
   | 6 -> ( 
-# 33 "CreateTableLexer.fsl"
+# 36 "CreateTableLexer.fsl"
                                  CBRCK 
-# 79 "CreateTableLexer.fs"
+# 82 "CreateTableLexer.fs"
           )
   | _ -> failwith "tokenize"
 
