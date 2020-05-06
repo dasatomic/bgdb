@@ -32,7 +32,15 @@ namespace QueryProcessing
             PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetMixedPage(table.RootPage));
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap);
 
-            return scanOp;
+            List<int> columnMapping = new List<int>();
+            foreach (string columnName in columns)
+            {
+                columnMapping.Add(table.Columns.First(c => c.ColumnName == columnName).ColumnId);
+            }
+
+            PhyOpProject projectOp = new PhyOpProject(scanOp, columnMapping.ToArray());
+
+            return projectOp;
         }
     }
 }

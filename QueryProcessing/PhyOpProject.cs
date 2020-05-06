@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace QueryProcessing
 {
@@ -18,17 +16,24 @@ namespace QueryProcessing
 
         public IEnumerator<Row> GetEnumerator()
         {
-            throw new NotImplementedException();
+            foreach (Row row in this.source)
+            {
+                yield return row.Project(this.columnChooser);
+            }
         }
 
         public void Invoke()
         {
-            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return this.GetEnumerator1();
+        }
+
+        private IEnumerator GetEnumerator1()
+        {
+            return this.GetEnumerator();
         }
     }
 }

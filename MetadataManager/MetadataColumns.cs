@@ -84,7 +84,7 @@ namespace MetadataManager
                 throw new ElementWithSameNameExistsException();
             }
 
-            int id = 1;
+            int id = 0;
             if (!pageListCollection.IsEmpty())
             {
                 int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos).Max(), startMin: 0);
