@@ -69,7 +69,7 @@ namespace ParserLexerTests
         [Test]
         public void CreateTableTest()
         {
-            string query = "CREATE TABLE mytable (A, B, C)";
+            string query = "CREATE TABLE mytable (INT A, INT B, STRING C)";
 
             var lexbuf = LexBuffer<char>.FromString(query);
             Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
@@ -77,7 +77,8 @@ namespace ParserLexerTests
             var f = FuncConvert.FromFunc(func);
             Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
             Assert.AreEqual("mytable", statement.Table);
-            Assert.AreEqual(new string[] { "A", "B", "C" }, statement.ColumnList.ToArray());
+            Assert.AreEqual(new string[] { "INT", "INT", "STRING" }, statement.ColumnList.Select(cl => cl.Item1).ToArray());
+            Assert.AreEqual(new string[] { "A", "B", "C" }, statement.ColumnList.Select(cl => cl.Item2).ToArray());
         }
     }
 }

@@ -94,14 +94,14 @@ let _fsyacc_dataOfToken (t:token) =
   | ID _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
 let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 5us; 6us; |]
 let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; |]
-let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 3us; |]
-let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 15us; 17us; 19us; 21us; 23us; |]
-let _fsyacc_action_rows = 12
-let _fsyacc_actionTableElements = [|1us; 32768us; 4us; 2us; 0us; 49152us; 1us; 32768us; 3us; 3us; 1us; 32768us; 6us; 4us; 1us; 32768us; 1us; 5us; 1us; 32768us; 6us; 9us; 2us; 32768us; 0us; 7us; 5us; 10us; 1us; 32768us; 2us; 8us; 0us; 16385us; 0us; 16386us; 1us; 32768us; 6us; 11us; 0us; 16387us; |]
-let _fsyacc_actionTableRowOffsets = [|0us; 2us; 3us; 5us; 7us; 9us; 11us; 14us; 16us; 17us; 18us; 20us; |]
-let _fsyacc_reductionSymbolCounts = [|1us; 7us; 1us; 3us; |]
+let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 3us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 2us; 1us; 3us; 1us; 3us; 1us; 3us; |]
+let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 15us; 17us; 19us; 21us; 23us; 25us; 27us; |]
+let _fsyacc_action_rows = 14
+let _fsyacc_actionTableElements = [|1us; 32768us; 4us; 2us; 0us; 49152us; 1us; 32768us; 3us; 3us; 1us; 32768us; 6us; 4us; 1us; 32768us; 1us; 5us; 1us; 32768us; 6us; 9us; 2us; 32768us; 0us; 7us; 5us; 11us; 1us; 32768us; 2us; 8us; 0us; 16385us; 1us; 32768us; 6us; 10us; 0us; 16386us; 1us; 32768us; 6us; 12us; 1us; 32768us; 6us; 13us; 0us; 16387us; |]
+let _fsyacc_actionTableRowOffsets = [|0us; 2us; 3us; 5us; 7us; 9us; 11us; 14us; 16us; 17us; 19us; 20us; 22us; 24us; |]
+let _fsyacc_reductionSymbolCounts = [|1us; 7us; 2us; 4us; |]
 let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; |]
-let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16385us; 16386us; 65535us; 16387us; |]
+let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16385us; 65535us; 16386us; 65535us; 65535us; 16387us; |]
 let _fsyacc_reductions ()  =    [| 
 # 106 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
@@ -131,28 +131,30 @@ let _fsyacc_reductions ()  =    [|
 # 131 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
 # 28 "CreateTableParser.fsp"
-                                                   [_1]
+                                                      [(_1, _2)] 
                    )
 # 28 "CreateTableParser.fsp"
                  : 'columnTypeList));
-# 142 "CreateTableParser.fs"
+# 143 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnTypeList)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
 # 29 "CreateTableParser.fsp"
-                                                      _3 :: _1 
+                                                        (_3, _4) :: _1 
                    )
 # 29 "CreateTableParser.fsp"
                  : 'columnTypeList));
 |]
-# 155 "CreateTableParser.fs"
+# 157 "CreateTableParser.fs"
 let tables () : FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;

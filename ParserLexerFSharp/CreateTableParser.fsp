@@ -25,6 +25,6 @@ startCT:  CREATE TABLE ID
                             }   
 
 columnTypeList:   
-    | ID                    { [$1]}   
-    | columnTypeList COMMA ID  { $3 :: $1 }   
+    | ID ID                    { [($1, $2)] }   
+    | columnTypeList COMMA ID ID { ($3, $4) :: $1 }   
 %%

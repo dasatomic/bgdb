@@ -28,10 +28,10 @@ type sqlStatement =
         OrderBy : order list
     }
 
-type column = string * string
+type columndef = string * string
 
 type createTableStatement =
     {
         Table: string;
-        ColumnList: string list;
+        ColumnList: columndef list;
     }
