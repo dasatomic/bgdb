@@ -15,11 +15,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MetadataManagerTests", "Met
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Common", "Test.Common\Test.Common.csproj", "{4754AD50-B500-4452-8CB9-57E171486CD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryProcessing", "QueryProcessing\QueryProcessing.csproj", "{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryProcessing", "QueryProcessing\QueryProcessing.csproj", "{77D778C3-8B84-4AF0-94C4-AB5B705DE45E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryProcessingTests", "QueryProcessingTests\QueryProcessingTests.csproj", "{EB4E64CE-A891-43C5-8866-DF3C11DA38E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryProcessingTests", "QueryProcessingTests\QueryProcessingTests.csproj", "{EB4E64CE-A891-43C5-8866-DF3C11DA38E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitBenchmark", "UnitBenchmark\UnitBenchmark.csproj", "{969D6EB9-08E1-415E-968B-CC514A2D92C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitBenchmark", "UnitBenchmark\UnitBenchmark.csproj", "{969D6EB9-08E1-415E-968B-CC514A2D92C6}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ParserLexerFSharp", "ParserLexerFSharp\ParserLexerFSharp.fsproj", "{F036B20D-C2C7-4CD7-88EF-C59942BBBBE9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserLexerTests", "ParserLexerTests\ParserLexerTests.csproj", "{AC8FA285-A0D1-49F8-93C9-425654E447FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +67,14 @@ Global
 		{969D6EB9-08E1-415E-968B-CC514A2D92C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{969D6EB9-08E1-415E-968B-CC514A2D92C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{969D6EB9-08E1-415E-968B-CC514A2D92C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F036B20D-C2C7-4CD7-88EF-C59942BBBBE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F036B20D-C2C7-4CD7-88EF-C59942BBBBE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F036B20D-C2C7-4CD7-88EF-C59942BBBBE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F036B20D-C2C7-4CD7-88EF-C59942BBBBE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC8FA285-A0D1-49F8-93C9-425654E447FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC8FA285-A0D1-49F8-93C9-425654E447FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC8FA285-A0D1-49F8-93C9-425654E447FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC8FA285-A0D1-49F8-93C9-425654E447FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

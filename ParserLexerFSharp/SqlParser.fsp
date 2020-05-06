@@ -1,0 +1,86 @@
+﻿%{   
+open Sql   
+%}   
+ 
+%token <string> ID   
+%token <int> INT   
+%token <float> FLOAT   
+ 
+%token AND OR   
+%token COMMA   
+%token EQ LT LE GT GE   
+%token JOIN INNER LEFT RIGHT ON   
+%token SELECT FROM WHERE ORDER BY   
+%token ASC DESC   
+%token EOF   
+ 
+// start   
+%start start   
+%type <Sql.sqlStatement> start   
+ 
+%%   
+ 
+start:  SELECT columnList   
+        FROM ID   
+        joinList   
+        whereClause   
+        orderByClause   
+        EOF                 {   
+                                { Table = $4;   
+                                  Columns = List.rev $2;   
+                                  Joins = $5;   
+                                  Where = $6;   
+                                  OrderBy = $7 }   
+                            }   
+columnList:   
+    | ID                    { [$1]}   
+    | columnList COMMA ID  { $3 :: $1 }   
+ 
+// join clause   
+joinList:   
+    |                               { [] }   
+    | joinClause                    { [$1] }   
+    | joinClause joinList           { $1 :: $2 }       
+ 
+joinClause:   
+    | INNER JOIN ID joinOnClause    { $3, Inner, $4 }   
+    | LEFT JOIN ID joinOnClause     { $3, Left, $4 }   
+    | RIGHT JOIN ID joinOnClause    { $3, Right, $4 }   
+ 
+joinOnClause:   
+    |                               { None }   
+    | ON conditionList              { Some($2) }   
+ 
+conditionList:   
+    | value op value                    { Cond($1, $2, $3) }   
+    | value op value AND conditionList  { And(Cond($1, $2, $3), $5) }   
+    | value op value OR conditionList   { Or(Cond($1, $2, $3), $5) }   
+ 
+// where clause   
+whereClause:   
+    |                               { None }   
+    | WHERE conditionList           { Some($2) }   
+ 
+op: EQ { Eq } | LT { Lt } | LE { Le } | GT { Gt } | GE { Ge }   
+ 
+value:   
+    | INT                   { Int($1) }   
+    | FLOAT                 { Float($1) }   
+    | ID                    { String($1) }   
+ 
+// order by clause   
+ 
+orderByClause:   
+    |                               { [] }   
+    | ORDER BY orderByList          { $3 }   
+ 
+orderByList:   
+    | orderBy                       { [$1] }   
+    | orderBy COMMA orderByList     { $1 :: $3 }   
+ 
+orderBy:   
+    | ID                            { $1, Asc }   
+    | ID ASC                        { $1, Asc }   
+    | ID DESC                       { $1, Desc}   
+ 
+%%

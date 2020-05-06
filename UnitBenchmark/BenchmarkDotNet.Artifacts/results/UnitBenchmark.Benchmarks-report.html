@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>UnitBenchmark.Benchmarks-20200505-223600</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.12.1, OS=Windows 10.0.18363.778 (1909/November2018Update/19H2)
+AMD Ryzen 5 1600X, 1 CPU, 12 logical and 6 physical cores
+.NET Core SDK=3.1.201
+  [Host]     : .NET Core 3.1.3 (CoreCLR 4.700.20.11803, CoreFX 4.700.20.12001), X64 RyuJIT
+  DefaultJob : .NET Core 3.1.3 (CoreCLR 4.700.20.11803, CoreFX 4.700.20.12001), X64 RyuJIT
+</code></pre>
+<pre><code></code></pre>
+
+<table>
+<thead><tr><th>   Method</th><th>TableNumber</th><th>RowsInTableNumber</th><th>     Mean</th><th>  Error</th><th> StdDev</th><th>   Median</th>
+</tr>
+</thead><tbody><tr><td>CreateTable</td><td>10</td><td>10</td><td>128.04 &mu;s</td><td>2.480 &mu;s</td><td>3.861 &mu;s</td><td>126.46 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>10</td><td>10</td><td>37.73 &mu;s</td><td>0.310 &mu;s</td><td>0.290 &mu;s</td><td>37.66 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>10</td><td>100</td><td>127.15 &mu;s</td><td>0.839 &mu;s</td><td>0.785 &mu;s</td><td>127.46 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>10</td><td>100</td><td>378.90 &mu;s</td><td>3.956 &mu;s</td><td>3.507 &mu;s</td><td>377.52 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>10</td><td>1000</td><td>126.80 &mu;s</td><td>1.424 &mu;s</td><td>1.332 &mu;s</td><td>126.37 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>10</td><td>1000</td><td>9,327.07 &mu;s</td><td>63.808 &mu;s</td><td>56.564 &mu;s</td><td>9,323.71 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>10</td><td>10000</td><td>126.03 &mu;s</td><td>1.136 &mu;s</td><td>1.007 &mu;s</td><td>125.82 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>10</td><td>10000</td><td>621,139.07 &mu;s</td><td>9,591.935 &mu;s</td><td>8,503.000 &mu;s</td><td>622,519.90 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>100</td><td>10</td><td>4,799.53 &mu;s</td><td>75.002 &mu;s</td><td>70.157 &mu;s</td><td>4,794.49 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>100</td><td>10</td><td>37.91 &mu;s</td><td>0.217 &mu;s</td><td>0.203 &mu;s</td><td>37.84 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>100</td><td>100</td><td>4,763.09 &mu;s</td><td>44.034 &mu;s</td><td>41.190 &mu;s</td><td>4,756.55 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>100</td><td>100</td><td>378.09 &mu;s</td><td>2.617 &mu;s</td><td>2.320 &mu;s</td><td>378.23 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>100</td><td>1000</td><td>5,096.59 &mu;s</td><td>99.245 &mu;s</td><td>114.290 &mu;s</td><td>5,108.57 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>100</td><td>1000</td><td>9,761.28 &mu;s</td><td>81.210 &mu;s</td><td>71.990 &mu;s</td><td>9,761.02 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>100</td><td>10000</td><td>4,996.86 &mu;s</td><td>91.353 &mu;s</td><td>85.452 &mu;s</td><td>5,005.69 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>100</td><td>10000</td><td>669,155.71 &mu;s</td><td>10,755.920 &mu;s</td><td>10,061.094 &mu;s</td><td>664,314.50 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>1000</td><td>10</td><td>2,074,893.90 &mu;s</td><td>8,120.200 &mu;s</td><td>7,198.346 &mu;s</td><td>2,072,935.30 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>1000</td><td>10</td><td>39.14 &mu;s</td><td>0.704 &mu;s</td><td>1.214 &mu;s</td><td>38.58 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>1000</td><td>100</td><td>2,037,729.57 &mu;s</td><td>10,367.368 &mu;s</td><td>8,657.222 &mu;s</td><td>2,038,227.20 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>1000</td><td>100</td><td>386.61 &mu;s</td><td>2.176 &mu;s</td><td>1.929 &mu;s</td><td>387.18 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>1000</td><td>1000</td><td>2,041,105.94 &mu;s</td><td>19,203.739 &mu;s</td><td>17,023.614 &mu;s</td><td>2,036,075.35 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>1000</td><td>1000</td><td>9,262.80 &mu;s</td><td>71.828 &mu;s</td><td>67.188 &mu;s</td><td>9,239.94 &mu;s</td>
+</tr><tr><td>CreateTable</td><td>1000</td><td>10000</td><td>2,089,832.96 &mu;s</td><td>5,386.183 &mu;s</td><td>4,497.707 &mu;s</td><td>2,088,898.90 &mu;s</td>
+</tr><tr><td>InsertIntoTable</td><td>1000</td><td>10000</td><td>623,007.84 &mu;s</td><td>7,222.928 &mu;s</td><td>6,402.938 &mu;s</td><td>622,702.80 &mu;s</td>
+</tr></tbody></table>
+</body>
+</html>

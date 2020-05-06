@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Sql.fs" />
+    <None Include="SqlParser.fsp" />
+    <None Include="SqlLexer.fsl" />
+    <Compile Include="SqlParser.fsi" />
+    <Compile Include="SqlParser.fs" />
+    <Compile Include="SqlLexer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FsLex Include="SqlLexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="SqlParser.fsp">
+      <OtherFlags>--module SqlParser -v</OtherFlags>
+    </FsYacc>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsLexYacc" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

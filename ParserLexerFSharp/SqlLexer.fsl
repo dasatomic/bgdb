@@ -1,0 +1,54 @@
+﻿{   
+module SqlLexer
+open System   
+open SqlParser   
+open FSharp.Text.Lexing
+ 
+let keywords =   
+    [   
+        "SELECT", SELECT;   
+        "FROM", FROM;   
+        "WHERE", WHERE;   
+        "ORDER", ORDER;   
+        "BY", BY;   
+        "JOIN", JOIN;   
+        "INNER", INNER;   
+        "LEFT", LEFT;   
+        "RIGHT", RIGHT;   
+        "ASC", ASC;   
+        "DESC", DESC;   
+        "AND", AND;   
+        "OR", OR;   
+        "ON", ON;   
+    ] |> Map.ofList   
+ 
+let ops =   
+    [   
+        "=",    EQ;   
+        "<",    LT;   
+        "<=",   LE;   
+        ">",    GT;   
+        ">=",   GE;   
+    ] |> Map.ofList   
+}   
+ 
+let char        = ['a'-'z' 'A'-'Z']   
+let digit       = ['0'-'9']   
+let int         = '-'?digit+   
+let float       = '-'?digit+ '.' digit+   
+let identifier  = char(char|digit|['-' '_' '.'])*   
+let whitespace  = [' ' '\t']   
+let newline     = "\n\r" | '\n' | '\r'  
+let operator    = ">" | ">=" | "<" | "<=" | "="  
+ 
+rule tokenize = parse   
+| whitespace    { tokenize lexbuf }   
+| newline       { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; }   
+| int           { INT(Int32.Parse(LexBuffer<_>.LexemeString lexbuf)) }   
+| float         { FLOAT(Double.Parse(LexBuffer<_>.LexemeString lexbuf)) }   
+| operator      { ops.[LexBuffer<_>.LexemeString lexbuf] }   
+| identifier    { match keywords.TryFind(LexBuffer<_>.LexemeString lexbuf) with   
+                  | Some(token) -> token   
+                  | None -> ID(LexBuffer<_>.LexemeString lexbuf) }   
+| ','           { COMMA }   
+| eof           { EOF }
