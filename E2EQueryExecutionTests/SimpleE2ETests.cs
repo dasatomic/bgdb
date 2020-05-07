@@ -17,7 +17,7 @@ namespace E2EQueryExecutionTests
 
             IExecuteQuery queryExecutor = new QueryEntryGate(mm, allocator, stringHeap);
 
-            string query = @"CREATE TABLE MyTable (INT a, DOUBLE b, STRING c)";
+            string query = @"CREATE TABLE MyTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
             await queryExecutor.ExecuteDdl(query);
 
             var tm = mm.GetTableManager();
@@ -37,7 +37,7 @@ namespace E2EQueryExecutionTests
             IExecuteQuery queryExecutor = new QueryEntryGate(mm, allocator, stringHeap);
             var tm = mm.GetTableManager();
 
-            string createTableQuery = "CREATE TABLE Table (INT a, STRING b, DOUBLE c)";
+            string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_STRING b, TYPE_DOUBLE c)";
             await queryExecutor.ExecuteDdl(createTableQuery);
 
             // TODO: Remove insert once you have parser support.

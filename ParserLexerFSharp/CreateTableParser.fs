@@ -10,29 +10,73 @@ open Sql
 # 10 "CreateTableParser.fs"
 // This type is the type of tokens accepted by the parser
 type token = 
-  | INT
-  | DOUBLE
-  | STRING
+  | EOF
+  | TYPE_INT
+  | TYPE_DOUBLE
+  | TYPE_STRING
   | CBRCK
   | OBRCK
-  | EOF
   | TABLE
   | DROP
   | CREATE
+  | ASC
+  | DESC
+  | CREATE_TABLE
+  | SELECT
+  | FROM
+  | WHERE
+  | ORDER
+  | BY
+  | JOIN
+  | INNER
+  | LEFT
+  | RIGHT
+  | ON
+  | EQ
+  | LT
+  | LE
+  | GT
+  | GE
   | COMMA
+  | AND
+  | OR
+  | FLOAT of (float)
+  | INT of (int)
   | ID of (string)
 // This type is used to give symbolic names to token indexes, useful for error messages
 type tokenId = 
-    | TOKEN_INT
-    | TOKEN_DOUBLE
-    | TOKEN_STRING
+    | TOKEN_EOF
+    | TOKEN_TYPE_INT
+    | TOKEN_TYPE_DOUBLE
+    | TOKEN_TYPE_STRING
     | TOKEN_CBRCK
     | TOKEN_OBRCK
-    | TOKEN_EOF
     | TOKEN_TABLE
     | TOKEN_DROP
     | TOKEN_CREATE
+    | TOKEN_ASC
+    | TOKEN_DESC
+    | TOKEN_CREATE_TABLE
+    | TOKEN_SELECT
+    | TOKEN_FROM
+    | TOKEN_WHERE
+    | TOKEN_ORDER
+    | TOKEN_BY
+    | TOKEN_JOIN
+    | TOKEN_INNER
+    | TOKEN_LEFT
+    | TOKEN_RIGHT
+    | TOKEN_ON
+    | TOKEN_EQ
+    | TOKEN_LT
+    | TOKEN_LE
+    | TOKEN_GT
+    | TOKEN_GE
     | TOKEN_COMMA
+    | TOKEN_AND
+    | TOKEN_OR
+    | TOKEN_FLOAT
+    | TOKEN_INT
     | TOKEN_ID
     | TOKEN_end_of_input
     | TOKEN_error
@@ -45,38 +89,94 @@ type nonTerminalId =
     | NONTERM_DropStatement
     | NONTERM_columnTypeList
     | NONTERM_columnType
+    | NONTERM_SelectStatement
+    | NONTERM_columnList
+    | NONTERM_joinList
+    | NONTERM_joinClause
+    | NONTERM_joinOnClause
+    | NONTERM_conditionList
+    | NONTERM_whereClause
+    | NONTERM_op
+    | NONTERM_value
+    | NONTERM_orderByClause
+    | NONTERM_orderByList
+    | NONTERM_orderBy
 
 // This function maps tokens to integer indexes
 let tagOfToken (t:token) = 
   match t with
-  | INT  -> 0 
-  | DOUBLE  -> 1 
-  | STRING  -> 2 
-  | CBRCK  -> 3 
-  | OBRCK  -> 4 
-  | EOF  -> 5 
+  | EOF  -> 0 
+  | TYPE_INT  -> 1 
+  | TYPE_DOUBLE  -> 2 
+  | TYPE_STRING  -> 3 
+  | CBRCK  -> 4 
+  | OBRCK  -> 5 
   | TABLE  -> 6 
   | DROP  -> 7 
   | CREATE  -> 8 
-  | COMMA  -> 9 
-  | ID _ -> 10 
+  | ASC  -> 9 
+  | DESC  -> 10 
+  | CREATE_TABLE  -> 11 
+  | SELECT  -> 12 
+  | FROM  -> 13 
+  | WHERE  -> 14 
+  | ORDER  -> 15 
+  | BY  -> 16 
+  | JOIN  -> 17 
+  | INNER  -> 18 
+  | LEFT  -> 19 
+  | RIGHT  -> 20 
+  | ON  -> 21 
+  | EQ  -> 22 
+  | LT  -> 23 
+  | LE  -> 24 
+  | GT  -> 25 
+  | GE  -> 26 
+  | COMMA  -> 27 
+  | AND  -> 28 
+  | OR  -> 29 
+  | FLOAT _ -> 30 
+  | INT _ -> 31 
+  | ID _ -> 32 
 
 // This function maps integer indexes to symbolic token ids
 let tokenTagToTokenId (tokenIdx:int) = 
   match tokenIdx with
-  | 0 -> TOKEN_INT 
-  | 1 -> TOKEN_DOUBLE 
-  | 2 -> TOKEN_STRING 
-  | 3 -> TOKEN_CBRCK 
-  | 4 -> TOKEN_OBRCK 
-  | 5 -> TOKEN_EOF 
+  | 0 -> TOKEN_EOF 
+  | 1 -> TOKEN_TYPE_INT 
+  | 2 -> TOKEN_TYPE_DOUBLE 
+  | 3 -> TOKEN_TYPE_STRING 
+  | 4 -> TOKEN_CBRCK 
+  | 5 -> TOKEN_OBRCK 
   | 6 -> TOKEN_TABLE 
   | 7 -> TOKEN_DROP 
   | 8 -> TOKEN_CREATE 
-  | 9 -> TOKEN_COMMA 
-  | 10 -> TOKEN_ID 
-  | 13 -> TOKEN_end_of_input
-  | 11 -> TOKEN_error
+  | 9 -> TOKEN_ASC 
+  | 10 -> TOKEN_DESC 
+  | 11 -> TOKEN_CREATE_TABLE 
+  | 12 -> TOKEN_SELECT 
+  | 13 -> TOKEN_FROM 
+  | 14 -> TOKEN_WHERE 
+  | 15 -> TOKEN_ORDER 
+  | 16 -> TOKEN_BY 
+  | 17 -> TOKEN_JOIN 
+  | 18 -> TOKEN_INNER 
+  | 19 -> TOKEN_LEFT 
+  | 20 -> TOKEN_RIGHT 
+  | 21 -> TOKEN_ON 
+  | 22 -> TOKEN_EQ 
+  | 23 -> TOKEN_LT 
+  | 24 -> TOKEN_LE 
+  | 25 -> TOKEN_GT 
+  | 26 -> TOKEN_GE 
+  | 27 -> TOKEN_COMMA 
+  | 28 -> TOKEN_AND 
+  | 29 -> TOKEN_OR 
+  | 30 -> TOKEN_FLOAT 
+  | 31 -> TOKEN_INT 
+  | 32 -> TOKEN_ID 
+  | 35 -> TOKEN_end_of_input
+  | 33 -> TOKEN_error
   | _ -> failwith "tokenTagToTokenId: bad token"
 
 /// This function maps production indexes returned in syntax errors to strings representing the non terminal that would be produced by that production
@@ -86,108 +186,195 @@ let prodIdxToNonTerminal (prodIdx:int) =
     | 1 -> NONTERM_startCT 
     | 2 -> NONTERM_StatementType 
     | 3 -> NONTERM_StatementType 
-    | 4 -> NONTERM_CreateStatement 
-    | 5 -> NONTERM_DropStatement 
-    | 6 -> NONTERM_columnTypeList 
+    | 4 -> NONTERM_StatementType 
+    | 5 -> NONTERM_CreateStatement 
+    | 6 -> NONTERM_DropStatement 
     | 7 -> NONTERM_columnTypeList 
-    | 8 -> NONTERM_columnType 
+    | 8 -> NONTERM_columnTypeList 
     | 9 -> NONTERM_columnType 
     | 10 -> NONTERM_columnType 
+    | 11 -> NONTERM_columnType 
+    | 12 -> NONTERM_SelectStatement 
+    | 13 -> NONTERM_columnList 
+    | 14 -> NONTERM_columnList 
+    | 15 -> NONTERM_joinList 
+    | 16 -> NONTERM_joinList 
+    | 17 -> NONTERM_joinList 
+    | 18 -> NONTERM_joinClause 
+    | 19 -> NONTERM_joinClause 
+    | 20 -> NONTERM_joinClause 
+    | 21 -> NONTERM_joinOnClause 
+    | 22 -> NONTERM_joinOnClause 
+    | 23 -> NONTERM_conditionList 
+    | 24 -> NONTERM_conditionList 
+    | 25 -> NONTERM_conditionList 
+    | 26 -> NONTERM_whereClause 
+    | 27 -> NONTERM_whereClause 
+    | 28 -> NONTERM_op 
+    | 29 -> NONTERM_op 
+    | 30 -> NONTERM_op 
+    | 31 -> NONTERM_op 
+    | 32 -> NONTERM_op 
+    | 33 -> NONTERM_value 
+    | 34 -> NONTERM_value 
+    | 35 -> NONTERM_value 
+    | 36 -> NONTERM_orderByClause 
+    | 37 -> NONTERM_orderByClause 
+    | 38 -> NONTERM_orderByList 
+    | 39 -> NONTERM_orderByList 
+    | 40 -> NONTERM_orderBy 
+    | 41 -> NONTERM_orderBy 
+    | 42 -> NONTERM_orderBy 
     | _ -> failwith "prodIdxToNonTerminal: bad production index"
 
-let _fsyacc_endOfInputTag = 13 
-let _fsyacc_tagOfErrorTerminal = 11
+let _fsyacc_endOfInputTag = 35 
+let _fsyacc_tagOfErrorTerminal = 33
 
 // This function gets the name of a token as a string
 let token_to_string (t:token) = 
   match t with 
-  | INT  -> "INT" 
-  | DOUBLE  -> "DOUBLE" 
-  | STRING  -> "STRING" 
+  | EOF  -> "EOF" 
+  | TYPE_INT  -> "TYPE_INT" 
+  | TYPE_DOUBLE  -> "TYPE_DOUBLE" 
+  | TYPE_STRING  -> "TYPE_STRING" 
   | CBRCK  -> "CBRCK" 
   | OBRCK  -> "OBRCK" 
-  | EOF  -> "EOF" 
   | TABLE  -> "TABLE" 
   | DROP  -> "DROP" 
   | CREATE  -> "CREATE" 
+  | ASC  -> "ASC" 
+  | DESC  -> "DESC" 
+  | CREATE_TABLE  -> "CREATE_TABLE" 
+  | SELECT  -> "SELECT" 
+  | FROM  -> "FROM" 
+  | WHERE  -> "WHERE" 
+  | ORDER  -> "ORDER" 
+  | BY  -> "BY" 
+  | JOIN  -> "JOIN" 
+  | INNER  -> "INNER" 
+  | LEFT  -> "LEFT" 
+  | RIGHT  -> "RIGHT" 
+  | ON  -> "ON" 
+  | EQ  -> "EQ" 
+  | LT  -> "LT" 
+  | LE  -> "LE" 
+  | GT  -> "GT" 
+  | GE  -> "GE" 
   | COMMA  -> "COMMA" 
+  | AND  -> "AND" 
+  | OR  -> "OR" 
+  | FLOAT _ -> "FLOAT" 
+  | INT _ -> "INT" 
   | ID _ -> "ID" 
 
 // This function gets the data carried by a token as an object
 let _fsyacc_dataOfToken (t:token) = 
   match t with 
-  | INT  -> (null : System.Object) 
-  | DOUBLE  -> (null : System.Object) 
-  | STRING  -> (null : System.Object) 
+  | EOF  -> (null : System.Object) 
+  | TYPE_INT  -> (null : System.Object) 
+  | TYPE_DOUBLE  -> (null : System.Object) 
+  | TYPE_STRING  -> (null : System.Object) 
   | CBRCK  -> (null : System.Object) 
   | OBRCK  -> (null : System.Object) 
-  | EOF  -> (null : System.Object) 
   | TABLE  -> (null : System.Object) 
   | DROP  -> (null : System.Object) 
   | CREATE  -> (null : System.Object) 
+  | ASC  -> (null : System.Object) 
+  | DESC  -> (null : System.Object) 
+  | CREATE_TABLE  -> (null : System.Object) 
+  | SELECT  -> (null : System.Object) 
+  | FROM  -> (null : System.Object) 
+  | WHERE  -> (null : System.Object) 
+  | ORDER  -> (null : System.Object) 
+  | BY  -> (null : System.Object) 
+  | JOIN  -> (null : System.Object) 
+  | INNER  -> (null : System.Object) 
+  | LEFT  -> (null : System.Object) 
+  | RIGHT  -> (null : System.Object) 
+  | ON  -> (null : System.Object) 
+  | EQ  -> (null : System.Object) 
+  | LT  -> (null : System.Object) 
+  | LE  -> (null : System.Object) 
+  | GT  -> (null : System.Object) 
+  | GE  -> (null : System.Object) 
   | COMMA  -> (null : System.Object) 
+  | AND  -> (null : System.Object) 
+  | OR  -> (null : System.Object) 
+  | FLOAT _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
+  | INT _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
   | ID _fsyacc_x -> Microsoft.FSharp.Core.Operators.box _fsyacc_x 
-let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 0us; 2us; 1us; 65535us; 4us; 5us; 1us; 65535us; 6us; 7us; 1us; 65535us; 10us; 11us; 2us; 65535us; 10us; 16us; 17us; 18us; |]
-let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; 5us; 7us; 9us; 11us; |]
-let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 2us; 1us; 3us; 1us; 3us; 1us; 4us; 1us; 4us; 1us; 4us; 2us; 4us; 7us; 1us; 4us; 1us; 4us; 1us; 5us; 1us; 5us; 1us; 6us; 1us; 7us; 1us; 7us; 1us; 8us; 1us; 8us; 1us; 9us; 1us; 9us; 1us; 10us; 1us; 10us; |]
-let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 14us; 16us; 18us; 20us; 22us; 25us; 27us; 29us; 31us; 33us; 35us; 37us; 39us; 41us; 43us; 45us; 47us; 49us; |]
-let _fsyacc_action_rows = 25
-let _fsyacc_actionTableElements = [|2us; 32768us; 7us; 6us; 8us; 4us; 0us; 49152us; 1us; 32768us; 5us; 3us; 0us; 16385us; 1us; 32768us; 6us; 8us; 0us; 16386us; 1us; 32768us; 6us; 14us; 0us; 16387us; 1us; 32768us; 10us; 9us; 1us; 32768us; 4us; 10us; 3us; 32768us; 0us; 19us; 1us; 21us; 2us; 23us; 2us; 32768us; 3us; 12us; 9us; 17us; 1us; 32768us; 5us; 13us; 0us; 16388us; 1us; 32768us; 10us; 15us; 0us; 16389us; 0us; 16390us; 3us; 32768us; 0us; 19us; 1us; 21us; 2us; 23us; 0us; 16391us; 1us; 32768us; 10us; 20us; 0us; 16392us; 1us; 32768us; 10us; 22us; 0us; 16393us; 1us; 32768us; 10us; 24us; 0us; 16394us; |]
-let _fsyacc_actionTableRowOffsets = [|0us; 3us; 4us; 6us; 7us; 9us; 10us; 12us; 13us; 15us; 17us; 21us; 24us; 26us; 27us; 29us; 30us; 31us; 35us; 36us; 38us; 39us; 41us; 42us; 44us; |]
-let _fsyacc_reductionSymbolCounts = [|1us; 2us; 2us; 2us; 6us; 2us; 1us; 3us; 2us; 2us; 2us; |]
-let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; 3us; 4us; 5us; 5us; 6us; 6us; 6us; |]
-let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 16385us; 65535us; 16386us; 65535us; 16387us; 65535us; 65535us; 65535us; 65535us; 65535us; 16388us; 65535us; 16389us; 16390us; 65535us; 16391us; 65535us; 16392us; 65535us; 16393us; 65535us; 16394us; |]
+let _fsyacc_gotos = [| 0us; 65535us; 1us; 65535us; 0us; 1us; 1us; 65535us; 0us; 2us; 1us; 65535us; 4us; 5us; 1us; 65535us; 6us; 7us; 1us; 65535us; 12us; 13us; 2us; 65535us; 12us; 18us; 19us; 20us; 1us; 65535us; 8us; 9us; 1us; 65535us; 8us; 27us; 2us; 65535us; 29us; 30us; 37us; 38us; 2us; 65535us; 29us; 37us; 37us; 37us; 3us; 65535us; 41us; 42us; 45us; 46us; 49us; 50us; 4us; 65535us; 51us; 52us; 56us; 57us; 58us; 59us; 60us; 61us; 1us; 65535us; 30us; 31us; 1us; 65535us; 53us; 54us; 5us; 65535us; 51us; 53us; 54us; 55us; 56us; 53us; 58us; 53us; 60us; 53us; 1us; 65535us; 31us; 32us; 2us; 65535us; 71us; 72us; 74us; 75us; 2us; 65535us; 71us; 73us; 74us; 73us; |]
+let _fsyacc_sparseGotoTableRowOffsets = [|0us; 1us; 3us; 5us; 7us; 9us; 11us; 14us; 16us; 18us; 21us; 24us; 28us; 33us; 35us; 37us; 43us; 45us; 48us; |]
+let _fsyacc_stateToProdIdxsTableElements = [| 1us; 0us; 1us; 0us; 1us; 1us; 1us; 1us; 1us; 2us; 1us; 2us; 1us; 3us; 1us; 3us; 1us; 4us; 1us; 4us; 1us; 5us; 1us; 5us; 1us; 5us; 2us; 5us; 8us; 1us; 5us; 1us; 5us; 1us; 6us; 1us; 6us; 1us; 7us; 1us; 8us; 1us; 8us; 1us; 9us; 1us; 9us; 1us; 10us; 1us; 10us; 1us; 11us; 1us; 11us; 2us; 12us; 14us; 1us; 12us; 1us; 12us; 1us; 12us; 1us; 12us; 1us; 12us; 1us; 12us; 1us; 13us; 1us; 14us; 1us; 14us; 2us; 16us; 17us; 1us; 17us; 1us; 18us; 1us; 18us; 1us; 18us; 1us; 18us; 1us; 19us; 1us; 19us; 1us; 19us; 1us; 19us; 1us; 20us; 1us; 20us; 1us; 20us; 1us; 20us; 1us; 22us; 1us; 22us; 3us; 23us; 24us; 25us; 3us; 23us; 24us; 25us; 3us; 23us; 24us; 25us; 1us; 24us; 1us; 24us; 1us; 25us; 1us; 25us; 1us; 27us; 1us; 27us; 1us; 28us; 1us; 29us; 1us; 30us; 1us; 31us; 1us; 32us; 1us; 33us; 1us; 34us; 1us; 35us; 1us; 37us; 1us; 37us; 1us; 37us; 2us; 38us; 39us; 1us; 39us; 1us; 39us; 3us; 40us; 41us; 42us; 1us; 41us; 1us; 42us; |]
+let _fsyacc_stateToProdIdxsTableRowOffsets = [|0us; 2us; 4us; 6us; 8us; 10us; 12us; 14us; 16us; 18us; 20us; 22us; 24us; 26us; 29us; 31us; 33us; 35us; 37us; 39us; 41us; 43us; 45us; 47us; 49us; 51us; 53us; 55us; 58us; 60us; 62us; 64us; 66us; 68us; 70us; 72us; 74us; 76us; 79us; 81us; 83us; 85us; 87us; 89us; 91us; 93us; 95us; 97us; 99us; 101us; 103us; 105us; 107us; 109us; 113us; 117us; 121us; 123us; 125us; 127us; 129us; 131us; 133us; 135us; 137us; 139us; 141us; 143us; 145us; 147us; 149us; 151us; 153us; 155us; 158us; 160us; 162us; 166us; 168us; |]
+let _fsyacc_action_rows = 79
+let _fsyacc_actionTableElements = [|3us; 32768us; 7us; 6us; 8us; 4us; 12us; 8us; 0us; 49152us; 1us; 32768us; 0us; 3us; 0us; 16385us; 1us; 32768us; 6us; 10us; 0us; 16386us; 1us; 32768us; 6us; 16us; 0us; 16387us; 1us; 32768us; 32us; 34us; 0us; 16388us; 1us; 32768us; 32us; 11us; 1us; 32768us; 5us; 12us; 3us; 32768us; 1us; 21us; 2us; 23us; 3us; 25us; 2us; 32768us; 4us; 14us; 27us; 19us; 1us; 32768us; 0us; 15us; 0us; 16389us; 1us; 32768us; 32us; 17us; 0us; 16390us; 0us; 16391us; 3us; 32768us; 1us; 21us; 2us; 23us; 3us; 25us; 0us; 16392us; 1us; 32768us; 32us; 22us; 0us; 16393us; 1us; 32768us; 32us; 24us; 0us; 16394us; 1us; 32768us; 32us; 26us; 0us; 16395us; 2us; 32768us; 13us; 28us; 27us; 35us; 1us; 32768us; 32us; 29us; 3us; 16399us; 18us; 39us; 19us; 43us; 20us; 47us; 1us; 16410us; 14us; 60us; 1us; 16420us; 15us; 70us; 1us; 32768us; 0us; 33us; 0us; 16396us; 0us; 16397us; 1us; 32768us; 32us; 36us; 0us; 16398us; 3us; 16399us; 18us; 39us; 19us; 43us; 20us; 47us; 0us; 16401us; 1us; 32768us; 17us; 40us; 1us; 32768us; 32us; 41us; 1us; 16405us; 21us; 51us; 0us; 16402us; 1us; 32768us; 17us; 44us; 1us; 32768us; 32us; 45us; 1us; 16405us; 21us; 51us; 0us; 16403us; 1us; 32768us; 17us; 48us; 1us; 32768us; 32us; 49us; 1us; 16405us; 21us; 51us; 0us; 16404us; 3us; 32768us; 30us; 68us; 31us; 67us; 32us; 69us; 0us; 16406us; 5us; 32768us; 22us; 62us; 23us; 63us; 24us; 64us; 25us; 65us; 26us; 66us; 3us; 32768us; 30us; 68us; 31us; 67us; 32us; 69us; 2us; 16407us; 28us; 56us; 29us; 58us; 3us; 32768us; 30us; 68us; 31us; 67us; 32us; 69us; 0us; 16408us; 3us; 32768us; 30us; 68us; 31us; 67us; 32us; 69us; 0us; 16409us; 3us; 32768us; 30us; 68us; 31us; 67us; 32us; 69us; 0us; 16411us; 0us; 16412us; 0us; 16413us; 0us; 16414us; 0us; 16415us; 0us; 16416us; 0us; 16417us; 0us; 16418us; 0us; 16419us; 1us; 32768us; 16us; 71us; 1us; 32768us; 32us; 76us; 0us; 16421us; 1us; 16422us; 27us; 74us; 1us; 32768us; 32us; 76us; 0us; 16423us; 2us; 16424us; 9us; 77us; 10us; 78us; 0us; 16425us; 0us; 16426us; |]
+let _fsyacc_actionTableRowOffsets = [|0us; 4us; 5us; 7us; 8us; 10us; 11us; 13us; 14us; 16us; 17us; 19us; 21us; 25us; 28us; 30us; 31us; 33us; 34us; 35us; 39us; 40us; 42us; 43us; 45us; 46us; 48us; 49us; 52us; 54us; 58us; 60us; 62us; 64us; 65us; 66us; 68us; 69us; 73us; 74us; 76us; 78us; 80us; 81us; 83us; 85us; 87us; 88us; 90us; 92us; 94us; 95us; 99us; 100us; 106us; 110us; 113us; 117us; 118us; 122us; 123us; 127us; 128us; 129us; 130us; 131us; 132us; 133us; 134us; 135us; 136us; 138us; 140us; 141us; 143us; 145us; 146us; 149us; 150us; |]
+let _fsyacc_reductionSymbolCounts = [|1us; 2us; 2us; 2us; 2us; 6us; 2us; 1us; 3us; 2us; 2us; 2us; 7us; 1us; 3us; 0us; 1us; 2us; 4us; 4us; 4us; 0us; 2us; 3us; 5us; 5us; 0us; 2us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 1us; 0us; 3us; 1us; 3us; 1us; 2us; 2us; |]
+let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 2us; 2us; 3us; 4us; 5us; 5us; 6us; 6us; 6us; 7us; 8us; 8us; 9us; 9us; 9us; 10us; 10us; 10us; 11us; 11us; 12us; 12us; 12us; 13us; 13us; 14us; 14us; 14us; 14us; 14us; 15us; 15us; 15us; 16us; 16us; 17us; 17us; 18us; 18us; 18us; |]
+let _fsyacc_immediateActions = [|65535us; 49152us; 65535us; 16385us; 65535us; 16386us; 65535us; 16387us; 65535us; 16388us; 65535us; 65535us; 65535us; 65535us; 65535us; 16389us; 65535us; 16390us; 16391us; 65535us; 16392us; 65535us; 16393us; 65535us; 16394us; 65535us; 16395us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16396us; 16397us; 65535us; 16398us; 65535us; 16401us; 65535us; 65535us; 65535us; 16402us; 65535us; 65535us; 65535us; 16403us; 65535us; 65535us; 65535us; 16404us; 65535us; 16406us; 65535us; 65535us; 65535us; 65535us; 16408us; 65535us; 16409us; 65535us; 16411us; 16412us; 16413us; 16414us; 16415us; 16416us; 16417us; 16418us; 16419us; 65535us; 65535us; 16421us; 65535us; 65535us; 16423us; 65535us; 16425us; 16426us; |]
 let _fsyacc_reductions ()  =    [| 
-# 141 "CreateTableParser.fs"
+# 317 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
-            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Sql.CreateStatement)) in
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : Sql.DmlDdlSqlStatement)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
                       raise (FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startstartCT));
-# 150 "CreateTableParser.fs"
+# 326 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'StatementType)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 22 "CreateTableParser.fsp"
+# 30 "CreateTableParser.fsp"
                            _1 
                    )
-# 22 "CreateTableParser.fsp"
-                 : Sql.CreateStatement));
-# 161 "CreateTableParser.fs"
+# 30 "CreateTableParser.fsp"
+                 : Sql.DmlDdlSqlStatement));
+# 337 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'CreateStatement)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 25 "CreateTableParser.fsp"
+# 33 "CreateTableParser.fsp"
                                                     Create(_2) 
                    )
-# 25 "CreateTableParser.fsp"
+# 33 "CreateTableParser.fsp"
                  : 'StatementType));
-# 172 "CreateTableParser.fs"
+# 348 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'DropStatement)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 26 "CreateTableParser.fsp"
+# 34 "CreateTableParser.fsp"
                                                 Drop(_2) 
                    )
-# 26 "CreateTableParser.fsp"
+# 34 "CreateTableParser.fsp"
                  : 'StatementType));
-# 183 "CreateTableParser.fs"
+# 359 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'SelectStatement)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 35 "CreateTableParser.fsp"
+                                                    Select(_2) 
+                   )
+# 35 "CreateTableParser.fsp"
+                 : 'StatementType));
+# 370 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnTypeList)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 30 "CreateTableParser.fsp"
+# 39 "CreateTableParser.fsp"
                               
                              {
                                  Table = _2;
@@ -195,77 +382,433 @@ let _fsyacc_reductions ()  =    [|
                              } 
                          
                    )
-# 30 "CreateTableParser.fsp"
+# 39 "CreateTableParser.fsp"
                  : 'CreateStatement));
-# 200 "CreateTableParser.fs"
+# 387 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 38 "CreateTableParser.fsp"
+# 47 "CreateTableParser.fsp"
                                       _2 
                    )
-# 38 "CreateTableParser.fsp"
+# 47 "CreateTableParser.fsp"
                  : 'DropStatement));
-# 211 "CreateTableParser.fs"
+# 398 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnType)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 41 "CreateTableParser.fsp"
+# 50 "CreateTableParser.fsp"
                                                            [_1] 
                    )
-# 41 "CreateTableParser.fsp"
+# 50 "CreateTableParser.fsp"
                  : 'columnTypeList));
-# 222 "CreateTableParser.fs"
+# 409 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnTypeList)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnType)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 42 "CreateTableParser.fsp"
+# 51 "CreateTableParser.fsp"
                                                              _3 :: _1 
                    )
-# 42 "CreateTableParser.fsp"
+# 51 "CreateTableParser.fsp"
                  : 'columnTypeList));
-# 234 "CreateTableParser.fs"
+# 421 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 45 "CreateTableParser.fsp"
-                                    IntCType, _2 
+# 54 "CreateTableParser.fsp"
+                                         IntCType, _2 
                    )
-# 45 "CreateTableParser.fsp"
+# 54 "CreateTableParser.fsp"
                  : 'columnType));
-# 245 "CreateTableParser.fs"
+# 432 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 46 "CreateTableParser.fsp"
-                                       DoubleCType, _2 
+# 55 "CreateTableParser.fsp"
+                                            DoubleCType, _2 
                    )
-# 46 "CreateTableParser.fsp"
+# 55 "CreateTableParser.fsp"
                  : 'columnType));
-# 256 "CreateTableParser.fs"
+# 443 "CreateTableParser.fs"
         (fun (parseState : FSharp.Text.Parsing.IParseState) ->
             let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 47 "CreateTableParser.fsp"
-                                       StringCType, _2 
+# 56 "CreateTableParser.fsp"
+                                            StringCType, _2 
                    )
-# 47 "CreateTableParser.fsp"
+# 56 "CreateTableParser.fsp"
                  : 'columnType));
+# 454 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnList)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinList)) in
+            let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'whereClause)) in
+            let _6 = (let data = parseState.GetInput(6) in (Microsoft.FSharp.Core.Operators.unbox data : 'orderByClause)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 65 "CreateTableParser.fsp"
+                                                     
+                                                     { Table = _3;   
+                                                       Columns = List.rev _1;   
+                                                       Joins = _4;   
+                                                       Where = _5;   
+                                                       OrderBy = _6 }   
+                                                 
+                   )
+# 65 "CreateTableParser.fsp"
+                 : 'SelectStatement));
+# 475 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 73 "CreateTableParser.fsp"
+                                                   [_1]
+                   )
+# 73 "CreateTableParser.fsp"
+                 : 'columnList));
+# 486 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'columnList)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 74 "CreateTableParser.fsp"
+                                                  _3 :: _1 
+                   )
+# 74 "CreateTableParser.fsp"
+                 : 'columnList));
+# 498 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 78 "CreateTableParser.fsp"
+                                                           [] 
+                   )
+# 78 "CreateTableParser.fsp"
+                 : 'joinList));
+# 508 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinClause)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 79 "CreateTableParser.fsp"
+                                                           [_1] 
+                   )
+# 79 "CreateTableParser.fsp"
+                 : 'joinList));
+# 519 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinClause)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 80 "CreateTableParser.fsp"
+                                                           _1 :: _2 
+                   )
+# 80 "CreateTableParser.fsp"
+                 : 'joinList));
+# 531 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinOnClause)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 83 "CreateTableParser.fsp"
+                                                           _3, Inner, _4 
+                   )
+# 83 "CreateTableParser.fsp"
+                 : 'joinClause));
+# 543 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinOnClause)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 84 "CreateTableParser.fsp"
+                                                           _3, Left, _4 
+                   )
+# 84 "CreateTableParser.fsp"
+                 : 'joinClause));
+# 555 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            let _4 = (let data = parseState.GetInput(4) in (Microsoft.FSharp.Core.Operators.unbox data : 'joinOnClause)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 85 "CreateTableParser.fsp"
+                                                           _3, Right, _4 
+                   )
+# 85 "CreateTableParser.fsp"
+                 : 'joinClause));
+# 567 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 88 "CreateTableParser.fsp"
+                                                           None 
+                   )
+# 88 "CreateTableParser.fsp"
+                 : 'joinOnClause));
+# 577 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'conditionList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 89 "CreateTableParser.fsp"
+                                                           Some(_2) 
+                   )
+# 89 "CreateTableParser.fsp"
+                 : 'joinOnClause));
+# 588 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'op)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 92 "CreateTableParser.fsp"
+                                                               Cond(_1, _2, _3) 
+                   )
+# 92 "CreateTableParser.fsp"
+                 : 'conditionList));
+# 601 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'op)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'conditionList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 93 "CreateTableParser.fsp"
+                                                               And(Cond(_1, _2, _3), _5) 
+                   )
+# 93 "CreateTableParser.fsp"
+                 : 'conditionList));
+# 615 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'op)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'value)) in
+            let _5 = (let data = parseState.GetInput(5) in (Microsoft.FSharp.Core.Operators.unbox data : 'conditionList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 94 "CreateTableParser.fsp"
+                                                               Or(Cond(_1, _2, _3), _5) 
+                   )
+# 94 "CreateTableParser.fsp"
+                 : 'conditionList));
+# 629 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 98 "CreateTableParser.fsp"
+                                                           None 
+                   )
+# 98 "CreateTableParser.fsp"
+                 : 'whereClause));
+# 639 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _2 = (let data = parseState.GetInput(2) in (Microsoft.FSharp.Core.Operators.unbox data : 'conditionList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 99 "CreateTableParser.fsp"
+                                                           Some(_2) 
+                   )
+# 99 "CreateTableParser.fsp"
+                 : 'whereClause));
+# 650 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 101 "CreateTableParser.fsp"
+                              Eq 
+                   )
+# 101 "CreateTableParser.fsp"
+                 : 'op));
+# 660 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 101 "CreateTableParser.fsp"
+                                          Lt 
+                   )
+# 101 "CreateTableParser.fsp"
+                 : 'op));
+# 670 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 101 "CreateTableParser.fsp"
+                                                      Le 
+                   )
+# 101 "CreateTableParser.fsp"
+                 : 'op));
+# 680 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 101 "CreateTableParser.fsp"
+                                                                  Gt 
+                   )
+# 101 "CreateTableParser.fsp"
+                 : 'op));
+# 690 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 101 "CreateTableParser.fsp"
+                                                                              Ge 
+                   )
+# 101 "CreateTableParser.fsp"
+                 : 'op));
+# 700 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : int)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 104 "CreateTableParser.fsp"
+                                                   Int(_1) 
+                   )
+# 104 "CreateTableParser.fsp"
+                 : 'value));
+# 711 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : float)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 105 "CreateTableParser.fsp"
+                                                   Float(_1) 
+                   )
+# 105 "CreateTableParser.fsp"
+                 : 'value));
+# 722 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 106 "CreateTableParser.fsp"
+                                                   String(_1) 
+                   )
+# 106 "CreateTableParser.fsp"
+                 : 'value));
+# 733 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 111 "CreateTableParser.fsp"
+                                                           [] 
+                   )
+# 111 "CreateTableParser.fsp"
+                 : 'orderByClause));
+# 743 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'orderByList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 112 "CreateTableParser.fsp"
+                                                           _3 
+                   )
+# 112 "CreateTableParser.fsp"
+                 : 'orderByClause));
+# 754 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'orderBy)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 115 "CreateTableParser.fsp"
+                                                           [_1] 
+                   )
+# 115 "CreateTableParser.fsp"
+                 : 'orderByList));
+# 765 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'orderBy)) in
+            let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'orderByList)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 116 "CreateTableParser.fsp"
+                                                           _1 :: _3 
+                   )
+# 116 "CreateTableParser.fsp"
+                 : 'orderByList));
+# 777 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 119 "CreateTableParser.fsp"
+                                                           _1, Asc 
+                   )
+# 119 "CreateTableParser.fsp"
+                 : 'orderBy));
+# 788 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 120 "CreateTableParser.fsp"
+                                                           _1, Asc 
+                   )
+# 120 "CreateTableParser.fsp"
+                 : 'orderBy));
+# 799 "CreateTableParser.fs"
+        (fun (parseState : FSharp.Text.Parsing.IParseState) ->
+            let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : string)) in
+            Microsoft.FSharp.Core.Operators.box
+                (
+                   (
+# 121 "CreateTableParser.fsp"
+                                                           _1, Desc
+                   )
+# 121 "CreateTableParser.fsp"
+                 : 'orderBy));
 |]
-# 268 "CreateTableParser.fs"
+# 811 "CreateTableParser.fs"
 let tables () : FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;
@@ -284,8 +827,8 @@ let tables () : FSharp.Text.Parsing.Tables<_> =
                               match parse_error_rich with 
                               | Some f -> f ctxt
                               | None -> parse_error ctxt.Message);
-    numTerminals = 14;
+    numTerminals = 36;
     productionToNonTerminalTable = _fsyacc_productionToNonTerminalTable  }
 let engine lexer lexbuf startState = (tables ()).Interpret(lexer, lexbuf, startState)
-let startCT lexer lexbuf : Sql.CreateStatement =
+let startCT lexer lexbuf : Sql.DmlDdlSqlStatement =
     Microsoft.FSharp.Core.Operators.unbox ((tables ()).Interpret(lexer, lexbuf, 0))

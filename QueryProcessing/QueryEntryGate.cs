@@ -28,10 +28,17 @@ namespace QueryProcessing
         public async Task<Row[]> Execute(string queryText)
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            Sql.sqlStatement statement = SqlParser.start(FuncConvert.FromFunc(func), lexbuf);
+            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
-            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseSqlStatement(statement);
+            if (!statement.IsSelect)
+            {
+                throw new ArgumentException();
+            }
+
+            Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
+
+            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseSqlStatement(selectStatement.Item);
             return rootOp.ToArray();
         }
 
@@ -39,11 +46,11 @@ namespace QueryProcessing
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
             Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
-            Sql.CreateStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
             if (statement.IsCreate)
             {
-                Sql.CreateStatement.Create createStatement = (Sql.CreateStatement.Create)statement;
+                Sql.DmlDdlSqlStatement.Create createStatement = (Sql.DmlDdlSqlStatement.Create)statement;
                 string tableName = createStatement.Item.Table;
                 var columns = createStatement.Item.ColumnList.ToList();
 

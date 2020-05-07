@@ -20,11 +20,15 @@ namespace ParserLexerTests
                 ORDER BY x ASC, y DESC, z";
 
             var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            
             var f = FuncConvert.FromFunc(func);
-            Sql.sqlStatement statement = SqlParser.start(f, lexbuf);
+            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
 
-            Assert.AreEqual(new string[] { "x", "y", "z" }, statement.Columns.ToArray());
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+
+            Assert.AreEqual(new string[] { "x", "y", "z" }, selectStatement.Columns.ToArray());
         }
 
         [Test]
@@ -36,14 +40,18 @@ namespace ParserLexerTests
                 WHERE x = 50 AND y = 20";
 
             var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            
             var f = FuncConvert.FromFunc(func);
-            Sql.sqlStatement statement = SqlParser.start(f, lexbuf);
+            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
 
-            Assert.AreEqual(new string[] { "x", "y", "z" }, statement.Columns.ToArray());
-            Assert.AreEqual("t1", statement.Table);
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
 
-            Sql.where whereStatement = statement.Where.Value;
+            Assert.AreEqual(new string[] { "x", "y", "z" }, selectStatement.Columns.ToArray());
+            Assert.AreEqual("t1", selectStatement.Table);
+
+            Sql.where whereStatement = selectStatement.Where.Value;
             Assert.IsTrue(whereStatement.IsAnd);
 
             Sql.where.And andStatement = (Sql.where.And)whereStatement;
@@ -69,17 +77,17 @@ namespace ParserLexerTests
         [Test]
         public void CreateTableTest()
         {
-            string query = "CREATE TABLE mytable (INT A, INT B, STRING C)";
+            string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING C)";
 
             var lexbuf = LexBuffer<char>.FromString(query);
             Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
             
             var f = FuncConvert.FromFunc(func);
-            Sql.CreateStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
             Assert.IsTrue(statement.IsCreate);
 
-            var createStatement = ((Sql.CreateStatement.Create)statement).Item;
+            var createStatement = ((Sql.DmlDdlSqlStatement.Create)statement).Item;
 
             Assert.AreEqual("mytable", createStatement.Table);
             Assert.IsTrue(createStatement.ColumnList[0].Item1.IsIntCType);
