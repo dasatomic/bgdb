@@ -1,8 +1,8 @@
-# 1 "CreateTableLexer.fsl"
+# 1 "SqlLexer.fsl"
     
-module CreateTableLexer
+module SqlLexer
 open System   
-open CreateTableParser   
+open SqlParser   
 open FSharp.Text.Lexing
  
 let keywords =   
@@ -38,7 +38,7 @@ let ops =
         ">=",   GE;   
     ] |> Map.ofList   
 
-# 41 "CreateTableLexer.fs"
+# 41 "SqlLexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -87,57 +87,57 @@ let rec _fslex_dummy () = _fslex_dummy()
 and tokenize  lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 53 "CreateTableLexer.fsl"
+# 53 "SqlLexer.fsl"
                                  tokenize lexbuf 
-# 92 "CreateTableLexer.fs"
+# 92 "SqlLexer.fs"
           )
   | 1 -> ( 
-# 54 "CreateTableLexer.fsl"
+# 54 "SqlLexer.fsl"
                                  lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; 
-# 97 "CreateTableLexer.fs"
+# 97 "SqlLexer.fs"
           )
   | 2 -> ( 
-# 55 "CreateTableLexer.fsl"
+# 55 "SqlLexer.fsl"
                                  INT(Int32.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 102 "CreateTableLexer.fs"
+# 102 "SqlLexer.fs"
           )
   | 3 -> ( 
-# 56 "CreateTableLexer.fsl"
+# 56 "SqlLexer.fsl"
                                  FLOAT(Double.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 107 "CreateTableLexer.fs"
+# 107 "SqlLexer.fs"
           )
   | 4 -> ( 
-# 57 "CreateTableLexer.fsl"
+# 57 "SqlLexer.fsl"
                                  ops.[LexBuffer<_>.LexemeString lexbuf] 
-# 112 "CreateTableLexer.fs"
+# 112 "SqlLexer.fs"
           )
   | 5 -> ( 
-# 58 "CreateTableLexer.fsl"
+# 58 "SqlLexer.fsl"
                                  match keywords.TryFind(LexBuffer<_>.LexemeString lexbuf) with   
                                  | Some(token) -> token   
                                  | None -> ID(LexBuffer<_>.LexemeString lexbuf) 
-# 119 "CreateTableLexer.fs"
+# 119 "SqlLexer.fs"
           )
   | 6 -> ( 
-# 61 "CreateTableLexer.fsl"
+# 61 "SqlLexer.fsl"
                                  COMMA 
-# 124 "CreateTableLexer.fs"
+# 124 "SqlLexer.fs"
           )
   | 7 -> ( 
-# 62 "CreateTableLexer.fsl"
+# 62 "SqlLexer.fsl"
                                  EOF 
-# 129 "CreateTableLexer.fs"
+# 129 "SqlLexer.fs"
           )
   | 8 -> ( 
-# 63 "CreateTableLexer.fsl"
+# 63 "SqlLexer.fsl"
                                OBRCK 
-# 134 "CreateTableLexer.fs"
+# 134 "SqlLexer.fs"
           )
   | 9 -> ( 
-# 64 "CreateTableLexer.fsl"
+# 64 "SqlLexer.fsl"
                                  CBRCK 
-# 139 "CreateTableLexer.fs"
+# 139 "SqlLexer.fs"
           )
   | _ -> failwith "tokenize"
 
-# 3000000 "CreateTableLexer.fs"
+# 3000000 "SqlLexer.fs"

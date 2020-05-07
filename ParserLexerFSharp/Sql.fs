@@ -46,9 +46,3 @@ type DmlDdlSqlStatement =
     | Select of sqlStatement
     | Create of createTableStatement
     | Drop of string
-
-
-    
-//type CreateStatement =
-//    | Create of createTableStatement
-//    | Drop of string 

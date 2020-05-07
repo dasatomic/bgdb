@@ -20,10 +20,10 @@ namespace ParserLexerTests
                 ORDER BY x ASC, y DESC, z";
 
             var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
             
             var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
             Assert.IsTrue(statement.IsSelect);
 
             var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
@@ -40,10 +40,10 @@ namespace ParserLexerTests
                 WHERE x = 50 AND y = 20";
 
             var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
             
             var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
             Assert.IsTrue(statement.IsSelect);
 
             var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
@@ -80,10 +80,10 @@ namespace ParserLexerTests
             string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING C)";
 
             var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
             
             var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
             Assert.IsTrue(statement.IsCreate);
 

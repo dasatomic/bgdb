@@ -1,7 +1,7 @@
 ﻿{   
-module CreateTableLexer
+module SqlLexer
 open System   
-open CreateTableParser   
+open SqlParser   
 open FSharp.Text.Lexing
  
 let keywords =   

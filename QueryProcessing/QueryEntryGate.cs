@@ -28,8 +28,8 @@ namespace QueryProcessing
         public async Task<Row[]> Execute(string queryText)
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
-            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
             if (!statement.IsSelect)
             {
@@ -45,8 +45,8 @@ namespace QueryProcessing
         public async Task ExecuteDdl(string queryText)
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
-            Sql.DmlDdlSqlStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
             if (statement.IsCreate)
             {
