@@ -1,32 +1,24 @@
-using FSharp.Text.Lexing;
 using MetadataManager;
-using Microsoft.FSharp.Core;
 using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
-using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace E2EQueryExecutionTests
 {
     public class Tests
     {
         [Test]
-        public void CreateTableE2E()
+        public async Task CreateTableE2E()
         {
             var allocator = new InMemoryPageManager(4096);
             StringHeapCollection stringHeap = new StringHeapCollection(allocator);
             var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
 
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, allocator);
+            IExecuteQuery queryExecutor = new QueryEntryGate(mm, allocator, stringHeap);
 
             string query = @"CREATE TABLE MyTable (INT a, DOUBLE b, STRING c)";
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
-            var f = FuncConvert.FromFunc(func);
-            Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
-
-            treeBuilder.ParseDdl(statement);
+            await queryExecutor.ExecuteDdl(query);
 
             var tm = mm.GetTableManager();
             var table = tm.GetByName("MyTable");
@@ -35,44 +27,31 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
-        public void SimpleE2E()
+        public async Task SimpleE2E()
         {
             var allocator =
                 new InMemoryPageManager(4096);
 
             StringHeapCollection stringHeap = new StringHeapCollection(allocator);
             var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
+            IExecuteQuery queryExecutor = new QueryEntryGate(mm, allocator, stringHeap);
             var tm = mm.GetTableManager();
 
-            var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
-            int id = tm.CreateObject(new TableCreateDefinition()
-            {
-                TableName = "Table",
-                ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = columnTypes,
-            });
+            string createTableQuery = "CREATE TABLE Table (INT a, STRING b, DOUBLE c)";
+            await queryExecutor.ExecuteDdl(createTableQuery);
 
-            var table = tm.GetById(id);
+            // TODO: Remove insert once you have parser support.
+            var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
+            var table = tm.GetByName("Table");
 
             Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes) };
-            string query =
-                @"SELECT a, b, c
-                FROM Table";
-
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic);
             op.Invoke();
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            var f = FuncConvert.FromFunc(func);
-            Sql.sqlStatement statement = SqlParser.start(f, lexbuf);
-
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, allocator);
-            IPhysicalOperator<Row> root =  treeBuilder.ParseSqlStatement(statement);
-
-            Row[] result = root.ToArray();
+            string query = @"SELECT a, b, c FROM Table";
+            Row[] result = await queryExecutor.Execute(query);
 
             Assert.AreEqual(source, result);
         }

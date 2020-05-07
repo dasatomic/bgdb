@@ -22,27 +22,6 @@ namespace QueryProcessing
             this.stringHeap = stringHeap;
         }
 
-        public void ParseDdl(Sql.createTableStatement statement)
-        {
-            string tableName = statement.Table;
-            var columns = statement.ColumnList.ToList();
-
-            MetadataTablesManager tableManager = metadataManager.GetTableManager();
-
-            TableCreateDefinition tableCreateDefinition = new TableCreateDefinition();
-            tableCreateDefinition.TableName = tableName;
-            tableCreateDefinition.ColumnNames = columns.Select(c => c.Item2).ToArray();
-            tableCreateDefinition.ColumnTypes = columns.Select(c =>
-            {
-                if (c.Item1.IsDoubleCType) return ColumnType.Double;
-                else if (c.Item1.IsIntCType) return ColumnType.Int;
-                else if (c.Item1.IsStringCType) return ColumnType.PagePointer;
-                else throw new ArgumentException();
-            }).ToArray();
-
-            tableManager.CreateObject(tableCreateDefinition);
-        }
-
         public IPhysicalOperator<Row> ParseSqlStatement(Sql.sqlStatement sqlStatement)
         {
             string tableName = sqlStatement.Table;
