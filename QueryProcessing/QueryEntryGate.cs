@@ -39,25 +39,29 @@ namespace QueryProcessing
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
             Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
-            Sql.createTableStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.CreateStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
 
-            string tableName = statement.Table;
-            var columns = statement.ColumnList.ToList();
-
-            MetadataTablesManager tableManager = this.metadataManager.GetTableManager();
-
-            TableCreateDefinition tableCreateDefinition = new TableCreateDefinition();
-            tableCreateDefinition.TableName = tableName;
-            tableCreateDefinition.ColumnNames = columns.Select(c => c.Item2).ToArray();
-            tableCreateDefinition.ColumnTypes = columns.Select(c =>
+            if (statement.IsCreate)
             {
-                if (c.Item1.IsDoubleCType) return ColumnType.Double;
-                else if (c.Item1.IsIntCType) return ColumnType.Int;
-                else if (c.Item1.IsStringCType) return ColumnType.StringPointer;
-                else throw new ArgumentException();
-            }).ToArray();
+                Sql.CreateStatement.Create createStatement = (Sql.CreateStatement.Create)statement;
+                string tableName = createStatement.Item.Table;
+                var columns = createStatement.Item.ColumnList.ToList();
 
-            tableManager.CreateObject(tableCreateDefinition);
+                MetadataTablesManager tableManager = this.metadataManager.GetTableManager();
+
+                TableCreateDefinition tableCreateDefinition = new TableCreateDefinition();
+                tableCreateDefinition.TableName = tableName;
+                tableCreateDefinition.ColumnNames = columns.Select(c => c.Item2).ToArray();
+                tableCreateDefinition.ColumnTypes = columns.Select(c =>
+                {
+                    if (c.Item1.IsDoubleCType) return ColumnType.Double;
+                    else if (c.Item1.IsIntCType) return ColumnType.Int;
+                    else if (c.Item1.IsStringCType) return ColumnType.StringPointer;
+                    else throw new ArgumentException();
+                }).ToArray();
+
+                tableManager.CreateObject(tableCreateDefinition);
+            }
         }
     }
 }

@@ -75,12 +75,17 @@ namespace ParserLexerTests
             Func<LexBuffer<char>, CreateTableParser.token> func = (x) => CreateTableLexer.tokenize(x);
             
             var f = FuncConvert.FromFunc(func);
-            Sql.createTableStatement statement = CreateTableParser.startCT(f, lexbuf);
-            Assert.AreEqual("mytable", statement.Table);
-            Assert.IsTrue(statement.ColumnList[0].Item1.IsIntCType);
-            Assert.IsTrue(statement.ColumnList[1].Item1.IsIntCType);
-            Assert.IsTrue(statement.ColumnList[2].Item1.IsStringCType);
-            Assert.AreEqual(new string[] { "A", "B", "C" }, statement.ColumnList.Select(cl => cl.Item2).ToArray());
+            Sql.CreateStatement statement = CreateTableParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+
+            Assert.IsTrue(statement.IsCreate);
+
+            var createStatement = ((Sql.CreateStatement.Create)statement).Item;
+
+            Assert.AreEqual("mytable", createStatement.Table);
+            Assert.IsTrue(createStatement.ColumnList[0].Item1.IsIntCType);
+            Assert.IsTrue(createStatement.ColumnList[1].Item1.IsIntCType);
+            Assert.IsTrue(createStatement.ColumnList[2].Item1.IsStringCType);
+            Assert.AreEqual(new string[] { "A", "B", "C" }, createStatement.ColumnList.Select(cl => cl.Item2).ToArray());
         }
     }
 }

@@ -6,6 +6,7 @@ open Sql
  
 %token COMMA   
 %token CREATE
+%token DROP
 %token TABLE
 %token EOF   
 %token OBRCK
@@ -13,17 +14,28 @@ open Sql
 %token INT DOUBLE STRING
 
 %start startCT
-%type <Sql.createTableStatement> startCT
+%type <Sql.CreateStatement> startCT
  
 %%   
- 
-startCT:  CREATE TABLE ID
-        OBRCK columnTypeList CBRCK
-        EOF                 {   
-                                { Table = $3;
-                                  ColumnList = List.rev $5
-                                 }   
-                            }   
+
+startCT: StatementType
+EOF { $1 }
+
+StatementType:
+    | CREATE CreateStatement { Create($2) }
+    | DROP DropStatement { Drop($2) }
+
+CreateStatement:
+    TABLE ID OBRCK columnTypeList CBRCK
+    EOF {
+        {
+            Table = $2;
+            ColumnList = List.rev $4
+        } 
+    }
+
+DropStatement:
+    | TABLE ID { $2 }
 
 columnTypeList:   
     | columnType                    { [$1] }   

@@ -8,6 +8,7 @@ type token =
   | OBRCK
   | EOF
   | TABLE
+  | DROP
   | CREATE
   | COMMA
   | ID of (string)
@@ -19,6 +20,7 @@ type tokenId =
     | TOKEN_OBRCK
     | TOKEN_EOF
     | TOKEN_TABLE
+    | TOKEN_DROP
     | TOKEN_CREATE
     | TOKEN_COMMA
     | TOKEN_ID
@@ -27,6 +29,9 @@ type tokenId =
 type nonTerminalId = 
     | NONTERM__startstartCT
     | NONTERM_startCT
+    | NONTERM_StatementType
+    | NONTERM_CreateStatement
+    | NONTERM_DropStatement
     | NONTERM_columnTypeList
     | NONTERM_columnType
 /// This function maps tokens to integer indexes
@@ -40,4 +45,4 @@ val prodIdxToNonTerminal: int -> nonTerminalId
 
 /// This function gets the name of a token as a string
 val token_to_string: token -> string
-val startCT : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (Sql.createTableStatement) 
+val startCT : (FSharp.Text.Lexing.LexBuffer<'cty> -> token) -> FSharp.Text.Lexing.LexBuffer<'cty> -> (Sql.CreateStatement) 

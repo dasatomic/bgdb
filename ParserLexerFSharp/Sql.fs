@@ -36,3 +36,13 @@ type createTableStatement =
         Table: string;
         ColumnList: columndef list;
     }
+
+type dropTableStatement =
+    {
+        Table: string;
+    }
+
+
+type CreateStatement =
+    | Create of createTableStatement
+    | Drop of string 
