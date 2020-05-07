@@ -1,84 +1,40 @@
 ﻿using FSharp.Text.Lexing;
-using MetadataManager;
 using Microsoft.FSharp.Core;
-using PageManager;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public interface IExecuteQuery
+    public class QueryEntryGate
     {
-        Task<Row[]> Execute(string queryText);
-        Task ExecuteNonQuery(string queryText);
-    }
+        private IEnumerable<ISqlStatement> statementHandlers;
 
-    public class QueryEntryGate : IExecuteQuery
-    {
-        private AstToOpTreeBuilder treeBuilder;
-        private MetadataManager.MetadataManager metadataManager;
-
-        public QueryEntryGate(MetadataManager.MetadataManager metadataManager, IAllocateMixedPage allocator, HeapWithOffsets<char[]> stringHeap)
+        public QueryEntryGate(IEnumerable<ISqlStatement> statementHandlers)
         {
-            this.metadataManager = metadataManager;
-            treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, allocator);
+            this.statementHandlers = statementHandlers;
         }
 
-        public async Task<Row[]> Execute(string queryText)
+        private Sql.DmlDdlSqlStatement BuildStatement(string query)
         {
-            var lexbuf = LexBuffer<char>.FromString(queryText);
+            var lexbuf = LexBuffer<char>.FromString(query);
             Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-
-            if (!statement.IsSelect)
-            {
-                throw new ArgumentException();
-            }
-
-            Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
-
-            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseSqlStatement(selectStatement.Item);
-            return rootOp.ToArray();
+            return SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
         }
 
-        public async Task ExecuteNonQuery(string queryText)
+        public async Task<IEnumerable<Row>> Execute(string queryText)
         {
-            var lexbuf = LexBuffer<char>.FromString(queryText);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
 
-            if (statement.IsCreate)
+            foreach (ISqlStatement handler in statementHandlers)
             {
-                Sql.DmlDdlSqlStatement.Create createStatement = (Sql.DmlDdlSqlStatement.Create)statement;
-                string tableName = createStatement.Item.Table;
-                var columns = createStatement.Item.ColumnList.ToList();
-
-                MetadataTablesManager tableManager = this.metadataManager.GetTableManager();
-
-                TableCreateDefinition tableCreateDefinition = new TableCreateDefinition();
-                tableCreateDefinition.TableName = tableName;
-                tableCreateDefinition.ColumnNames = columns.Select(c => c.Item2).ToArray();
-                tableCreateDefinition.ColumnTypes = columns.Select(c =>
+                if (handler.ShouldExecute(statement))
                 {
-                    if (c.Item1.IsDoubleCType) return ColumnType.Double;
-                    else if (c.Item1.IsIntCType) return ColumnType.Int;
-                    else if (c.Item1.IsStringCType) return ColumnType.StringPointer;
-                    else throw new ArgumentException();
-                }).ToArray();
+                    return await handler.Execute(statement);
+                }
+            }
 
-                tableManager.CreateObject(tableCreateDefinition);
-            }
-            else if (statement.IsInsert)
-            {
-                Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
-                IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseInsertStatement(insertStatement.Item);
-                rootOp.Invoke();
-            }
-            else
-            {
-                throw new InvalidProgramException();
-            }
+            throw new ArgumentException();
         }
     }
 }
