@@ -5,6 +5,9 @@ type token =
   | TYPE_INT
   | TYPE_DOUBLE
   | TYPE_STRING
+  | VALUES
+  | INTO
+  | INSERT
   | CBRCK
   | OBRCK
   | TABLE
@@ -39,6 +42,9 @@ type tokenId =
     | TOKEN_TYPE_INT
     | TOKEN_TYPE_DOUBLE
     | TOKEN_TYPE_STRING
+    | TOKEN_VALUES
+    | TOKEN_INTO
+    | TOKEN_INSERT
     | TOKEN_CBRCK
     | TOKEN_OBRCK
     | TOKEN_TABLE
@@ -74,6 +80,8 @@ type nonTerminalId =
     | NONTERM__startstartCT
     | NONTERM_startCT
     | NONTERM_StatementType
+    | NONTERM_InsertStatement
+    | NONTERM_valueList
     | NONTERM_CreateStatement
     | NONTERM_DropStatement
     | NONTERM_columnTypeList

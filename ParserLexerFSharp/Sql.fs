@@ -42,7 +42,14 @@ type dropTableStatement =
         Table: string;
     }
 
+type insertStatement =
+    {
+        Table: string;
+        Values: value list;
+    }
+
 type DmlDdlSqlStatement = 
     | Select of sqlStatement
     | Create of createTableStatement
     | Drop of string
+    | Insert of insertStatement

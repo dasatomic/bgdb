@@ -95,5 +95,30 @@ namespace ParserLexerTests
             Assert.IsTrue(createStatement.ColumnList[2].Item1.IsStringCType);
             Assert.AreEqual(new string[] { "A", "B", "C" }, createStatement.ColumnList.Select(cl => cl.Item2).ToArray());
         }
+
+        [Test]
+        public void InsertStatementTests()
+        {
+            string query = "INSERT INTO mytable VALUES (17,b,1.1)";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+
+            Assert.IsTrue(statement.IsInsert);
+
+            var insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement).Item;
+
+            Assert.AreEqual("mytable", insertStatement.Table);
+            Assert.IsTrue(insertStatement.Values[0].IsInt);
+            Assert.IsTrue(insertStatement.Values[1].IsString);
+            Assert.IsTrue(insertStatement.Values[2].IsFloat);
+
+            Assert.AreEqual(((Sql.value.Int)insertStatement.Values[0]).Item, 17);
+            Assert.AreEqual(((Sql.value.String)insertStatement.Values[1]).Item, "b");
+            Assert.AreEqual(((Sql.value.Float)insertStatement.Values[2]).Item, 1.1);
+        }
     }
 }

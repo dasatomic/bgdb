@@ -18,13 +18,16 @@ open Sql
 %token TABLE
 %token OBRCK
 %token CBRCK
+%token INSERT
+%token INTO
+%token VALUES
 %token TYPE_INT TYPE_DOUBLE TYPE_STRING
-%token EOF   
+%token EOF
 
 %start startCT
 %type <Sql.DmlDdlSqlStatement> startCT
- 
-%%   
+
+%%
 
 startCT: StatementType
 EOF { $1 }
@@ -33,6 +36,20 @@ StatementType:
     | CREATE CreateStatement { Create($2) }
     | DROP DropStatement { Drop($2) }
     | SELECT SelectStatement { Select($2) }
+    | INSERT InsertStatement { Insert($2)}
+
+InsertStatement:
+    INTO ID VALUES OBRCK valueList CBRCK 
+    EOF { 
+        { 
+            Table = $2;
+            Values = List.rev $5;
+        }
+    }
+
+valueList:   
+    | value { [$1]}
+    | valueList COMMA value { $3 :: $1 }
 
 CreateStatement:
     TABLE ID OBRCK columnTypeList CBRCK
@@ -46,9 +63,9 @@ CreateStatement:
 DropStatement:
     | TABLE ID { $2 }
 
-columnTypeList:   
-    | columnType                    { [$1] }   
-    | columnTypeList COMMA columnType { $3 :: $1 }   
+columnTypeList:
+    | columnType                    { [$1] }
+    | columnTypeList COMMA columnType { $3 :: $1 }
 
 columnType:
     | TYPE_INT ID { IntCType, $2 }
@@ -57,48 +74,48 @@ columnType:
 
 
 // Select statement
-SelectStatement:  columnList   
-        FROM ID   
-        joinList   
-        whereClause   
-        orderByClause   
-        EOF                 {   
-                                { Table = $3;   
-                                  Columns = List.rev $1;   
-                                  Joins = $4;   
-                                  Where = $5;   
-                                  OrderBy = $6 }   
-                            }   
-columnList:   
-    | ID                    { [$1]}   
-    | columnList COMMA ID  { $3 :: $1 }   
- 
-// join clause   
+SelectStatement:  columnList
+        FROM ID
+        joinList
+        whereClause
+        orderByClause
+        EOF                 {
+                                { Table = $3;
+                                  Columns = List.rev $1;
+                                  Joins = $4;
+                                  Where = $5;
+                                  OrderBy = $6 }
+                            }
+columnList:
+    | ID                    { [$1]}
+    | columnList COMMA ID  { $3 :: $1 }
+
+// join clause
 joinList:   
-    |                               { [] }   
-    | joinClause                    { [$1] }   
-    | joinClause joinList           { $1 :: $2 }       
+    |                               { [] }
+    | joinClause                    { [$1] }
+    | joinClause joinList           { $1 :: $2 }
  
-joinClause:   
-    | INNER JOIN ID joinOnClause    { $3, Inner, $4 }   
-    | LEFT JOIN ID joinOnClause     { $3, Left, $4 }   
-    | RIGHT JOIN ID joinOnClause    { $3, Right, $4 }   
+joinClause:
+    | INNER JOIN ID joinOnClause    { $3, Inner, $4 }
+    | LEFT JOIN ID joinOnClause     { $3, Left, $4 }
+    | RIGHT JOIN ID joinOnClause    { $3, Right, $4 }
  
 joinOnClause:   
-    |                               { None }   
-    | ON conditionList              { Some($2) }   
+    |                               { None }
+    | ON conditionList              { Some($2) }
  
-conditionList:   
-    | value op value                    { Cond($1, $2, $3) }   
-    | value op value AND conditionList  { And(Cond($1, $2, $3), $5) }   
-    | value op value OR conditionList   { Or(Cond($1, $2, $3), $5) }   
+conditionList:
+    | value op value                    { Cond($1, $2, $3) }
+    | value op value AND conditionList  { And(Cond($1, $2, $3), $5) }
+    | value op value OR conditionList   { Or(Cond($1, $2, $3), $5) }
  
 // where clause   
-whereClause:   
-    |                               { None }   
-    | WHERE conditionList           { Some($2) }   
- 
-op: EQ { Eq } | LT { Lt } | LE { Le } | GT { Gt } | GE { Ge }   
+whereClause:
+    |                               { None }
+    | WHERE conditionList           { Some($2) }
+
+op: EQ { Eq } | LT { Lt } | LE { Le } | GT { Gt } | GE { Ge }
  
 value:   
     | INT                   { Int($1) }   

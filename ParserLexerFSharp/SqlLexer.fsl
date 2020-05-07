@@ -7,6 +7,9 @@ open FSharp.Text.Lexing
 let keywords =   
     [   
         "CREATE", CREATE
+        "INSERT", INSERT
+        "INTO", INTO
+        "VALUES", VALUES
         "DROP", DROP
         "TABLE", TABLE
         "TYPE_INT", TYPE_INT
