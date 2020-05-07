@@ -43,5 +43,31 @@ namespace QueryProcessing
 
             return projectOp;
         }
+
+        public PhyOpTableInsert ParseInsertStatement(Sql.insertStatement insertStatement)
+        {
+            string tableName = insertStatement.Table;
+
+            MetadataTablesManager tableManager = metadataManager.GetTableManager();
+            MetadataTable table = tableManager.GetByName(tableName);
+
+            List<int> intCols = new List<int>();
+            List<double> doubleCols = new List<double>();
+            List<string> stringCols = new List<string>();
+
+            foreach (var value in insertStatement.Values)
+            {
+                if (value.IsFloat) doubleCols.Add(((Sql.value.Float)value).Item);
+                else if (value.IsInt) intCols.Add(((Sql.value.Int)value).Item);
+                else if (value.IsString) stringCols.Add(((Sql.value.String)value).Item);
+                else { throw new ArgumentException(); }
+            }
+
+            Row[] source = new Row[] { new Row(intCols.ToArray(), doubleCols.ToArray(), stringCols.ToArray() , table.Columns.Select(c => c.ColumnType).ToArray()) };
+            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
+
+            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic);
+            return op;
+        }
     }
 }

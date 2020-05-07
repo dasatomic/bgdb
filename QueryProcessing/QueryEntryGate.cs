@@ -11,7 +11,7 @@ namespace QueryProcessing
     public interface IExecuteQuery
     {
         Task<Row[]> Execute(string queryText);
-        Task ExecuteDdl(string queryText);
+        Task ExecuteNonQuery(string queryText);
     }
 
     public class QueryEntryGate : IExecuteQuery
@@ -42,7 +42,7 @@ namespace QueryProcessing
             return rootOp.ToArray();
         }
 
-        public async Task ExecuteDdl(string queryText)
+        public async Task ExecuteNonQuery(string queryText)
         {
             var lexbuf = LexBuffer<char>.FromString(queryText);
             Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
@@ -68,6 +68,16 @@ namespace QueryProcessing
                 }).ToArray();
 
                 tableManager.CreateObject(tableCreateDefinition);
+            }
+            else if (statement.IsInsert)
+            {
+                Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
+                IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseInsertStatement(insertStatement.Item);
+                rootOp.Invoke();
+            }
+            else
+            {
+                throw new InvalidProgramException();
             }
         }
     }
