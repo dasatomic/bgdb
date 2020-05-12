@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Threading.Tasks;
 
 namespace LogManager
 {
@@ -11,7 +12,7 @@ namespace LogManager
             this.storage = storage;
         }
 
-        public void CommitTransaction(ITransaction tran)
+        public async Task CommitTransaction(ITransaction tran)
         {
             foreach (ILogRecord record in tran.GetRecords())
             {
@@ -21,7 +22,7 @@ namespace LogManager
             storage.Write((byte)LogRecordType.Commit);
             storage.Write(tran.TranscationId());
 
-            storage.Flush();
+            await storage.BaseStream.FlushAsync();
         }
     }
 }

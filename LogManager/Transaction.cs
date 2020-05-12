@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LogManager
 {
@@ -23,9 +24,9 @@ namespace LogManager
             this.logRecords.Add(logRecord);
         }
 
-        public void Commit()
+        public async Task Commit()
         {
-            this.logManager.CommitTransaction(this);
+            await this.logManager.CommitTransaction(this);
         }
 
         public void Rollback()

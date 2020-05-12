@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LogManager
 {
@@ -7,7 +7,7 @@ namespace LogManager
     {
         ulong TranscationId();
         void Rollback();
-        void Commit();
+        Task Commit();
         void AddRecord(ILogRecord logRecord);
         IEnumerable<ILogRecord> GetRecords();
     }

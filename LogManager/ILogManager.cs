@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace LogManager
 {
     public interface ILogManager
     {
-        public void CommitTransaction(ITransaction tran);
+        public Task CommitTransaction(ITransaction tran);
     }
 }

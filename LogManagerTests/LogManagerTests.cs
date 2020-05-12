@@ -1,13 +1,14 @@
 using NUnit.Framework;
 using LogManager;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace LogManagerTests
 {
     public class LogManagerTests
     {
         [Test]
-        public void Test1()
+        public async Task TranCommitSimple()
         {
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
@@ -25,7 +26,7 @@ namespace LogManagerTests
                         transactionId: tran1.TranscationId());
 
                 tran1.AddRecord(record1);
-                tran1.Commit();
+                await tran1.Commit();
 
                 // Read the stream from beginning
                 stream.Position = 0;
