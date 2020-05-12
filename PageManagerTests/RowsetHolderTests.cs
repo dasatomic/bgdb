@@ -44,7 +44,12 @@ namespace PageManagerTests
             IRowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
-            byte[] content = holder.Serialize();
+            byte[] content = new byte[holder.StorageSizeInBytes()];
+
+            using (BinaryWriter bw = new BinaryWriter(new MemoryStream(content)))
+            {
+                holder.Serialize(bw);
+            }
 
             IRowsetHolder holder2 = new RowsetHolder(types);
             holder2.Deserialize(new BinaryReader(new MemoryStream(content)), holder.GetRowCount());

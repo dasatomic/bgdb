@@ -14,8 +14,7 @@ namespace PageManager
         public long[] GetPagePointerColumn(int columnId);
         public void SetColumns(int[][] intColumns, double[][] doubleColumns, PagePointerOffsetPair[][] pagePointerOffsetColumns, long[][] pagePointerColumns);
         public uint StorageSizeInBytes();
-        public byte[] Serialize();
-        public void SerializeInto(BinaryWriter content);
+        public void Serialize(BinaryWriter content);
         public void Deserialize(BinaryReader source, uint elemCount);
         public uint GetRowCount();
         public void Merge(RowsetHolder rowsetHolder);
@@ -218,7 +217,7 @@ namespace PageManager
                 sizeof(long) * this.pagePointerColumns.Length);
         }
 
-        public void SerializeInto(BinaryWriter destination)
+        public void Serialize(BinaryWriter destination)
         {
             if (destination.BaseStream.Length < this.StorageSizeInBytes())
             {
@@ -257,15 +256,6 @@ namespace PageManager
                     destination.Write(ppVal.PageId);
                 }
             }
-        }
-
-        public byte[] Serialize()
-        {
-            uint sizeNeeded = StorageSizeInBytes();
-            byte[] content = new byte[sizeNeeded];
-            SerializeInto(new BinaryWriter(new MemoryStream(content)));
-
-            return content;
         }
 
         public void Deserialize(BinaryReader source, uint elemCount)

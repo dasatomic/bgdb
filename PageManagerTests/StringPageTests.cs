@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -209,6 +210,33 @@ namespace PageManagerTests
             uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
             Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetOne + 1));
             Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetTwo + 1));
+        }
+
+        [Test]
+        public void VerifyFromStream()
+        {
+            char[][] startArray = new char[][]
+            { 
+                "123".ToCharArray(),
+                "4321".ToCharArray(),
+            };
+
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            strPage.Store(startArray);
+
+            byte[] content = new byte[DefaultSize];
+
+            using (var stream = new MemoryStream(content))
+            {
+                strPage.Persist(stream);
+            }
+
+            var source = new BinaryReader(new MemoryStream(content));
+            StringOnlyPage pageDeserialized = new StringOnlyPage(source);
+            Assert.AreEqual(strPage.PageId(), pageDeserialized.PageId());
+            Assert.AreEqual(strPage.PageType(), pageDeserialized.PageType());
+            Assert.AreEqual(strPage.RowCount(), pageDeserialized.RowCount());
+            Assert.AreEqual(strPage.Fetch(), pageDeserialized.Fetch());
         }
     }
 }

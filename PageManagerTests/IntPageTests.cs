@@ -126,16 +126,19 @@ namespace PageManagerTests
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             intPage.Store(startArray);
 
-            /*
-            byte[] content = intPage.GetContent();
+            byte[] content = new byte[DefaultSize];
+
+            using (var stream = new MemoryStream(content))
+            {
+                intPage.Persist(stream);
+            }
 
             var source = new BinaryReader(new MemoryStream(content));
             IntegerOnlyPage pageDeserialized = new IntegerOnlyPage(source);
             Assert.AreEqual(intPage.PageId(), pageDeserialized.PageId());
             Assert.AreEqual(intPage.PageType(), pageDeserialized.PageType());
             Assert.AreEqual(intPage.RowCount(), pageDeserialized.RowCount());
-            Assert.AreEqual(intPage.GetContent(), pageDeserialized.GetContent());
-            */
+            Assert.AreEqual(intPage.Fetch(), pageDeserialized.Fetch());
         }
     }
 }

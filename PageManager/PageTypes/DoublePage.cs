@@ -26,7 +26,20 @@ namespace PageManager
 
         public override void Persist(Stream destination)
         {
-            throw new NotImplementedException();
+            using (BinaryWriter bw = new BinaryWriter(destination))
+            {
+                bw.Write(this.pageId);
+                bw.Write(this.pageSize);
+                bw.Write((int)this.PageType());
+                bw.Write(this.rowCount);
+                bw.Write(this.prevPageId);
+                bw.Write(this.nextPageId);
+
+                for (int i = 0; i < this.rowCount; i++)
+                {
+                    bw.Write(this.items[i]);
+                }
+            }
         }
     }
 }

@@ -97,7 +97,6 @@ namespace PageManager
             this.rowCount = (uint)items.Length;
         }
 
-
         protected abstract void SerializeInternal(BinaryReader stream);
     }
 }

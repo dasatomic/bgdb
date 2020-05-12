@@ -2,6 +2,7 @@
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Test.Common;
@@ -36,6 +37,40 @@ namespace PageManagerTests
             Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].Concat(intColumns2[1]).ToArray());
             Assert.AreEqual(result.GetDoubleColumn(2), doubleColumns1[0].Concat(doubleColumns2[0]).ToArray());
             Assert.AreEqual(result.GetIntColumn(3), intColumns1[2].Concat(intColumns2[2]).ToArray());
+        }
+
+        [Test]
+        public void VerifyFromStream()
+        {
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage);
+
+            RowsetHolder holder = new RowsetHolder(types1);
+            holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
+
+            page.Store(holder);
+
+            byte[] content = new byte[DefaultSize];
+
+            using (var stream = new MemoryStream(content))
+            {
+                page.Persist(stream);
+            }
+
+            var source = new BinaryReader(new MemoryStream(content));
+            MixedPage pageDeserialized = new MixedPage(source, types1);
+
+            Assert.AreEqual(page.PageId(), pageDeserialized.PageId());
+            Assert.AreEqual(page.PageType(), pageDeserialized.PageType());
+            Assert.AreEqual(page.RowCount(), pageDeserialized.RowCount());
+            Assert.AreEqual(page.NextPageId(), pageDeserialized.NextPageId());
+            Assert.AreEqual(page.PrevPageId(), pageDeserialized.PrevPageId());
+
+            RowsetHolder result = pageDeserialized.Fetch();
+            Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].ToArray());
+            Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].ToArray());
+            Assert.AreEqual(result.GetDoubleColumn(2), doubleColumns1[0].ToArray());
+            Assert.AreEqual(result.GetIntColumn(3), intColumns1[2].ToArray());
         }
     }
 }
