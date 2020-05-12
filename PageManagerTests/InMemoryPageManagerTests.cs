@@ -39,12 +39,12 @@ namespace PageManagerTests
             ulong pageId = page2.PageId();
 
             int[] items = new int[] { 1, 2, 3 };
-            page2.Serialize(items);
+            page2.Store(items);
 
             pageManager.SavePage(page2);
             page2 = pageManager.GetPageInt(pageId);
 
-            Assert.AreEqual(items, page2.Deserialize());
+            Assert.AreEqual(items, page2.Fetch());
         }
 
         [Test]
@@ -93,12 +93,12 @@ namespace PageManagerTests
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-            page.Serialize(holder);
+            page.Store(holder);
 
             pageManager.SavePage(page);
             page = pageManager.GetMixedPage(page.PageId());
 
-            RowsetHolder holder2 = page.Deserialize();
+            RowsetHolder holder2 = page.Fetch();
 
             Assert.AreEqual(holder2.GetIntColumn(0), intColumns[0]);
             Assert.AreEqual(holder2.GetIntColumn(1), intColumns[1]);

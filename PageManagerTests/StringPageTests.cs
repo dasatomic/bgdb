@@ -37,7 +37,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            char[][] content = strPage.Deserialize();
+            char[][] content = strPage.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -51,8 +51,8 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            strPage.Serialize(startArray);
-            char[][] content = strPage.Deserialize();
+            strPage.Store(startArray);
+            char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
 
@@ -73,19 +73,19 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
-            strPage.Serialize(startArray);
-            char[][] content = strPage.Deserialize();
+            strPage.Store(startArray);
+            char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            strPage.Serialize(secondArray);
-            content = strPage.Deserialize();
+            strPage.Store(secondArray);
+            content = strPage.Fetch();
             Assert.AreEqual(secondArray, content);
         }
 
         [Test]
         public void VerifySetMoreThanMax()
         {
-            Assert.Throws<SerializationException>(() => {
+            Assert.Throws<NotEnoughSpaceException>(() => {
                 StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
                 char[][] array = new char[DefaultSize / 4][];
@@ -94,7 +94,7 @@ namespace PageManagerTests
                     array[i] = "0123".ToCharArray();
                 }
 
-                strPage.Serialize(array);
+                strPage.Store(array);
             });
         }
 
@@ -102,15 +102,16 @@ namespace PageManagerTests
         public void VerifySetMax()
         {
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            const int arrLength = 4;
 
-            char[][] array = new char[strPage.MaxRowCount() / 5][];
+            char[][] array = new char[strPage.MaxRowCount() / (arrLength + sizeof(short))][];
             for (int i = 0; i < array.Length; i++)
             {
                 array[i] = "0123".ToCharArray();
             }
 
-            strPage.Serialize(array);
-            char[][] content = strPage.Deserialize();
+            strPage.Store(array);
+            char[][] content = strPage.Fetch();
 
             Assert.AreEqual(array, content);
         }
@@ -131,9 +132,9 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            strPage.Serialize(startArray);
+            strPage.Store(startArray);
             strPage.Merge(secondArray);
-            char[][] result = strPage.Deserialize();
+            char[][] result = strPage.Fetch();
 
             Assert.AreEqual(startArray.Concat(secondArray), result);
         }
@@ -154,7 +155,7 @@ namespace PageManagerTests
             Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne));
             Assert.AreEqual(1, strPage.RowCount());
             uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
-            Assert.AreEqual(IPage.FirstElementPosition + startArray[0].Length + 1, offsetTwo);
+            Assert.AreEqual(IPage.FirstElementPosition + startArray[0].Length + sizeof(short), offsetTwo);
             Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo));
             Assert.AreEqual(2, strPage.RowCount());
         }
@@ -166,7 +167,7 @@ namespace PageManagerTests
             uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
 
             char[] elemToInsert = "one".ToArray();
-            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + 1));
+            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + sizeof(short)));
 
             for (uint i = 0; i < maxElemCount; i++)
             {
@@ -182,7 +183,7 @@ namespace PageManagerTests
             uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
 
             char[] elemToInsert = "one".ToArray();
-            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + 1));
+            uint maxElemCount = (uint)(sizeAvailable / (elemToInsert.Length + sizeof(short)));
 
             for (uint i = 0; i < maxElemCount; i++)
             {

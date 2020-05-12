@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using PageManager;
 using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -38,7 +39,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            int[] content = intPage.Deserialize();
+            int[] content = intPage.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -47,8 +48,8 @@ namespace PageManagerTests
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            intPage.Serialize(startArray);
-            int[] content = intPage.Deserialize();
+            intPage.Store(startArray);
+            int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
 
@@ -58,7 +59,7 @@ namespace PageManagerTests
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             Assert.AreEqual(0, intPage.RowCount());
-            intPage.Serialize(startArray);
+            intPage.Store(startArray);
             Assert.AreEqual(startArray.Length, intPage.RowCount());
         }
 
@@ -69,12 +70,12 @@ namespace PageManagerTests
             int[] secondArray = new int[] { 5, 6 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
-            intPage.Serialize(startArray);
-            int[] content = intPage.Deserialize();
+            intPage.Store(startArray);
+            int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            intPage.Serialize(secondArray);
-            content = intPage.Deserialize();
+            intPage.Store(secondArray);
+            content = intPage.Fetch();
             Assert.AreEqual(secondArray, content);
         }
 
@@ -90,7 +91,7 @@ namespace PageManagerTests
         {
             Assert.Throws<SerializationException>(() => {
                 IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-                intPage.Serialize(new int[intPage.MaxRowCount() + 1]);
+                intPage.Store(new int[intPage.MaxRowCount() + 1]);
             });
         }
 
@@ -99,8 +100,8 @@ namespace PageManagerTests
         {
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             int[] startArray = new int[intPage.MaxRowCount()];
-            intPage.Serialize(startArray);
-            int[] content = intPage.Deserialize();
+            intPage.Store(startArray);
+            int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
 
@@ -111,11 +112,30 @@ namespace PageManagerTests
             int[] secondArray = new int[] { 5, 6 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
-            intPage.Serialize(startArray);
+            intPage.Store(startArray);
             intPage.Merge(secondArray);
 
-            int[] content = intPage.Deserialize();
+            int[] content = intPage.Fetch();
             Assert.AreEqual(startArray.Concat(secondArray).ToArray(), content);
+        }
+
+        [Test]
+        public void VerifyFromStream()
+        {
+            int[] startArray = new int[] { 1, 2, 3, 4 };
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            intPage.Store(startArray);
+
+            /*
+            byte[] content = intPage.GetContent();
+
+            var source = new BinaryReader(new MemoryStream(content));
+            IntegerOnlyPage pageDeserialized = new IntegerOnlyPage(source);
+            Assert.AreEqual(intPage.PageId(), pageDeserialized.PageId());
+            Assert.AreEqual(intPage.PageType(), pageDeserialized.PageType());
+            Assert.AreEqual(intPage.RowCount(), pageDeserialized.RowCount());
+            Assert.AreEqual(intPage.GetContent(), pageDeserialized.GetContent());
+            */
         }
     }
 }

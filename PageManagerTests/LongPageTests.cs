@@ -31,7 +31,7 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2, 3, 4 };
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             Assert.AreEqual(0, page.RowCount());
-            page.Serialize(startArray);
+            page.Store(startArray);
             Assert.AreEqual(startArray.Length, page.RowCount());
         }
 
@@ -46,7 +46,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            long[] content = page.Deserialize();
+            long[] content = page.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -56,8 +56,8 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2 };
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            page.Serialize(startArray);
-            long[] content = page.Deserialize();
+            page.Store(startArray);
+            long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
 
@@ -69,12 +69,12 @@ namespace PageManagerTests
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
-            page.Serialize(startArray);
-            long[] content = page.Deserialize();
+            page.Store(startArray);
+            long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
 
-            page.Serialize(secondArray);
-            content = page.Deserialize();
+            page.Store(secondArray);
+            content = page.Fetch();
             Assert.AreEqual(secondArray, content);
         }
 
@@ -90,7 +90,7 @@ namespace PageManagerTests
                     array[i] = i;
                 }
 
-                page.Serialize(array);
+                page.Store(array);
             });
         }
     }

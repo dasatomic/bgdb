@@ -37,7 +37,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            double[] content = page.Deserialize();
+            double[] content = page.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -46,8 +46,8 @@ namespace PageManagerTests
         {
             double[] startArray = new double[] { 1, 2, 3, 4 };
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-            page.Serialize(startArray);
-            double[] content = page.Deserialize();
+            page.Store(startArray);
+            double[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
 
@@ -58,12 +58,12 @@ namespace PageManagerTests
             double[] secondArray = new double[] { 5, 6 };
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
 
-            doublePage.Serialize(startArray);
-            double[] content = doublePage.Deserialize();
+            doublePage.Store(startArray);
+            double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            doublePage.Serialize(secondArray);
-            content = doublePage.Deserialize();
+            doublePage.Store(secondArray);
+            content = doublePage.Fetch();
             Assert.AreEqual(secondArray, content);
         }
 
@@ -79,7 +79,7 @@ namespace PageManagerTests
         {
             Assert.Throws<SerializationException>(() => {
                 DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
-                doublePage.Serialize(new double[doublePage.MaxRowCount() + 1]);
+                doublePage.Store(new double[doublePage.MaxRowCount() + 1]);
             });
         }
 
@@ -88,8 +88,8 @@ namespace PageManagerTests
         {
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
             double[] startArray = new double[doublePage.MaxRowCount()];
-            doublePage.Serialize(startArray);
-            double[] content = doublePage.Deserialize();
+            doublePage.Store(startArray);
+            double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
         }
     }

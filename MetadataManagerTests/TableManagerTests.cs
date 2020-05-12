@@ -54,7 +54,7 @@ namespace MetadataManager
             MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator);
 
             var tm = mm.GetTableManager();
-            const int repCount = 200;
+            const int repCount = 100;
 
             for (int i = 1; i < repCount; i++)
             {

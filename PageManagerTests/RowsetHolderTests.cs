@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.IO;
 using Test.Common;
 
 namespace PageManagerTests
@@ -46,7 +47,7 @@ namespace PageManagerTests
             byte[] content = holder.Serialize();
 
             IRowsetHolder holder2 = new RowsetHolder(types);
-            holder2.Deserialize(content);
+            holder2.Deserialize(new BinaryReader(new MemoryStream(content)), holder.GetRowCount());
 
             Assert.AreEqual(holder2.GetIntColumn(0), intColumns[0]);
             Assert.AreEqual(holder2.GetIntColumn(1), intColumns[1]);
@@ -54,6 +55,15 @@ namespace PageManagerTests
             Assert.AreEqual(holder2.GetIntColumn(3), intColumns[2]);
             Assert.AreEqual(holder.GetStringPointerColumn(4), pagePointerOffsetColumns[0]);
             Assert.AreEqual(holder.GetPagePointerColumn(5), pagePointerColumns[0]);
+        }
+
+        [Test]
+        public void EmptyRowset()
+        {
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            IRowsetHolder holder = new RowsetHolder(types);
+
+            Assert.IsEmpty(holder.GetIntColumn(0));
         }
     }
 }

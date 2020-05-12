@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -30,9 +31,32 @@ namespace PageManager
             this.nextPageId = nextPageId;
             this.prevPageId = prevPageId;
 
-            this.content = new byte[pageSize];
+            Store(new T[0]);
+        }
 
-            Serialize(new T[0]);
+        public SimpleTypeOnlyPage(BinaryReader stream, PageType pageType)
+        {
+            this.pageId = stream.ReadUInt64();
+            this.pageSize = stream.ReadUInt32();
+
+            PageType pageTypePersisted = (PageType)stream.ReadUInt32();
+
+            if (pageType != pageTypePersisted)
+            {
+                throw new InvalidCastException();
+            }
+
+            this.rowCount = stream.ReadUInt32();
+
+            this.prevPageId = stream.ReadUInt64();
+            this.nextPageId = stream.ReadUInt64();
+
+            if (stream.BaseStream.Position % this.pageSize != IPage.FirstElementPosition)
+            {
+                throw new SerializationException();
+            }
+
+            SerializeInternal(stream);
         }
 
         public override PageType PageType() => pageType;
@@ -52,16 +76,28 @@ namespace PageManager
             return (uint)items.Length * (uint)Marshal.SizeOf(default(T));
         }
 
-        protected override uint GetRowCount(T[] items)
-        {
-            return (uint)items.Length;
-        }
-
         public override void Merge(T[] items)
         {
-            T[] arr = this.Deserialize();
-            arr = arr.Concat(items).ToArray();
-            this.Serialize(arr);
+            this.items = this.items.Concat(items).ToArray();
         }
+
+        public override T[] Fetch()
+        {
+            return this.items;
+        }
+        public override void Store(T[] items)
+        {
+            uint neededSize = this.GetSizeNeeded(items);
+            if (neededSize > this.pageSize - IPage.FirstElementPosition)
+            {
+                throw new SerializationException();
+            }
+
+            this.items = items;
+            this.rowCount = (uint)items.Length;
+        }
+
+
+        protected abstract void SerializeInternal(BinaryReader stream);
     }
 }

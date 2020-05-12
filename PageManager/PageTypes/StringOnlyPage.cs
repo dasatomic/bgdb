@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace PageManager
 {
@@ -28,39 +30,38 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
             this.prevPageId = prevPageId;
-
-            this.content = new byte[pageSize];
-
-            Serialize(new char[0][]);
+            this.items = new char[0][];
         }
 
-        public override char[][] Deserialize()
+        public StringOnlyPage(BinaryReader stream)
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
-            char[][] elementsToReturn = new char[numOfElements][];
+            this.pageId = stream.ReadUInt64();
+            this.pageSize = stream.ReadUInt32();
 
-            uint currentPositionInPage = IPage.FirstElementPosition;
+            PageType pageTypePersisted = (PageType)stream.ReadUInt32();
 
-            for (int elemPosition = 0; elemPosition < elementsToReturn.Length; elemPosition++)
+            if (PageManager.PageType.StringPage != pageTypePersisted)
             {
-                // First iterate to find length.
-                uint i = 0;
-                while (this.content[currentPositionInPage + i] != 0x0) { i++; };
-
-                elementsToReturn[elemPosition] = new char[i];
-
-                i = 0;
-                while (this.content[currentPositionInPage] != 0x0)
-                {
-                    elementsToReturn[elemPosition][i] = (char)this.content[currentPositionInPage];
-                    currentPositionInPage++;
-                    i++;
-                };
-
-                currentPositionInPage++;
+                throw new InvalidCastException();
             }
 
-            return elementsToReturn;
+            this.rowCount = stream.ReadUInt32();
+
+            this.prevPageId = stream.ReadUInt64();
+            this.nextPageId = stream.ReadUInt64();
+
+            if (stream.BaseStream.Position % this.pageSize != IPage.FirstElementPosition)
+            {
+                throw new SerializationException();
+            }
+
+            this.items = new char[this.rowCount][];
+
+            for (int elemCount = 0; elemCount < this.rowCount; elemCount++)
+            {
+                int charLength = stream.ReadInt16();
+                this.items[elemCount] = stream.ReadChars(charLength);
+            }
         }
 
         public override PageType PageType() => PageManager.PageType.StringPage;
@@ -70,26 +71,10 @@ namespace PageManager
             uint byteCount = 0;
             foreach (char[] item in items)
             {
-                byteCount += (uint)item.Length + 1;
+                byteCount += (uint)item.Length + sizeof(short);
             }
 
             return byteCount;
-        }
-
-        protected override void SerializeInternal(char[][] items)
-        {
-            uint contentPosition = IPage.FirstElementPosition;
-
-            foreach (char[] elem in items)
-            {
-                foreach (byte elemBytes in elem)
-                {
-                    content[contentPosition++] = elemBytes;
-                }
-
-                // Separate with null termination.
-                content[contentPosition++] = (byte)'\0';
-            }
         }
 
         public override uint MaxRowCount()
@@ -99,61 +84,41 @@ namespace PageManager
 
         public override bool CanFit(char[][] items)
         {
-            int size = 0;
-            foreach (char[] item in items)
-            {
-                size += item.Length;
-            }
-
-            return this.pageSize - IPage.FirstElementPosition  >= size;
-        }
-
-        protected override uint GetRowCount(char[][] items)
-        {
-            return (uint)items.Length;
+            uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
+            return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
         public override void Merge(char[][] items)
         {
-            char[][] arr = Deserialize();
-            arr = arr.Concat(items).ToArray();
-            this.Serialize(arr);
-        }
-
-        public uint MergeWithOffsetFetch(char[] item)
-        {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
-
-            int endCharFound = 0;
-            uint i = IPage.FirstElementPosition;
-            for (; i <  this.content.Length && endCharFound != numOfElements; i++)
-            {
-                if (content[i] == 0x0)
-                {
-                    endCharFound++;
-                }
-            }
-
-            if (this.pageSize - i < item.Length + 1)
+            uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
+            if (this.pageSize - IPage.FirstElementPosition < size)
             {
                 throw new NotEnoughSpaceException();
             }
 
-            for (int j = 0; j < item.Length; j++)
+            this.items = this.items.Concat(items).ToArray();
+            this.rowCount = (uint)this.items.Length;
+        }
+
+        public uint MergeWithOffsetFetch(char[] item)
+        {
+            uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
+
+            if (this.pageSize - IPage.FirstElementPosition < size)
             {
-                this.content[i + j] = (byte)item[j];
+                throw new NotEnoughSpaceException();
             }
 
-            this.content[item.Length] = 0x0;
+            uint positionInBuffer = IPage.FirstElementPosition;
+            foreach (var arr in this.items)
+            {
+                positionInBuffer += (uint)arr.Length + sizeof(short);
+            }
+
             this.rowCount++;
+            this.items = this.items.Append(item).ToArray();
 
-            uint numofRowsPos = IPage.NumOfRowsPosition;
-            foreach (byte numOfRowsByte in BitConverter.GetBytes(this.rowCount))
-            {
-                content[numofRowsPos++] = numOfRowsByte;
-            }
-
-            return i;
+            return positionInBuffer;
         }
 
         public char[] FetchWithOffset(uint offset)
@@ -163,39 +128,43 @@ namespace PageManager
                 throw new ArgumentException();
             }
 
-            if (offset != IPage.FirstElementPosition && this.content[offset - 1] != 0x0)
+            uint currOfset = IPage.FirstElementPosition;
+            foreach (char[] item in this.items)
             {
-                throw new PageCorruptedException();
-            }
-
-            char[] result;
-
-            uint length = 0;
-            for (; this.content[offset + length] != 0x0; length++) { }
-            result = new char[length];
-            for (int i = 0; i < length; i++)
-            {
-                result[i] = (char)this.content[offset + i];
-            }
-
-            return result;
-        }
-
-        public bool CanFit(char[] item)
-        {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
-
-            int endCharFound = 0;
-            uint i = IPage.FirstElementPosition;
-            for (; i <  this.content.Length && endCharFound != numOfElements; i++)
-            {
-                if (content[i] == 0x0)
+                if (currOfset == offset)
                 {
-                    endCharFound++;
+                    return item;
+                }
+                else
+                {
+                    currOfset += (uint)item.Length + sizeof(short);
                 }
             }
 
-            return this.pageSize - i >= item.Length + 1;
+            throw new PageCorruptedException();
+        }
+
+        public override void Store(char[][] items)
+        {
+            if (!CanFit(items))
+            {
+                throw new NotEnoughSpaceException();
+            }
+
+            this.items = items;
+        }
+
+        public override void Persist(Stream destination)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override char[][] Fetch() => this.items;
+
+        public bool CanFit(char[] item)
+        {
+            uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
+            return this.pageSize - IPage.FirstElementPosition >= size;
         }
     }
 }

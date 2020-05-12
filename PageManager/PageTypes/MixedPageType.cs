@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.Serialization;
 
 namespace PageManager
 {
@@ -22,36 +24,57 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
 
-            this.content = new byte[pageSize];
             this.columnTypes = columnTypes;
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
+            this.items = new RowsetHolder(this.columnTypes);
+        }
+
+        public MixedPage(BinaryReader stream, ColumnType[] columnTypes)
+        {
+            this.columnTypes = columnTypes;
+
+            this.pageId = stream.ReadUInt64();
+            this.pageSize = stream.ReadUInt32();
+
+            PageType pageTypePersisted = (PageType)stream.ReadUInt32();
+
+            if (PageManager.PageType.MixedPage != pageTypePersisted)
+            {
+                throw new InvalidCastException();
+            }
+
+            this.rowCount = stream.ReadUInt32();
+
+            this.prevPageId = stream.ReadUInt64();
+            this.nextPageId = stream.ReadUInt64();
+
+            if (stream.BaseStream.Position % this.pageSize != IPage.FirstElementPosition)
+            {
+                throw new SerializationException();
+            }
+
+            this.items = new RowsetHolder(this.columnTypes);
+
+            this.items.Deserialize(stream, this.rowCount);
+
+            if (this.items.GetRowCount() != this.rowCount)
+            {
+                throw new SerializationException();
+            }
         }
 
         public override PageType PageType() => PageManager.PageType.MixedPage;
 
-        protected override void SerializeInternal(RowsetHolder item)
+        public override RowsetHolder Fetch()
         {
-            item.SerializeInto(this.content.AsSpan((int)IPage.FirstElementPosition));
-        }
-
-        public override RowsetHolder Deserialize()
-        {
-            RowsetHolder rowsetHolder = new RowsetHolder(this.columnTypes);
-
-            int elemCount = BitConverter.ToInt32(this.content, (int)IPage.FirstElementPosition);
-            int size = (int)(elemCount * RowsetHolder.CalculateSizeOfRow(this.columnTypes) + sizeof(int));
-            rowsetHolder.Deserialize(this.content.AsSpan((int)IPage.FirstElementPosition, size));
-
-            return rowsetHolder;
+            return this.items;
         }
 
         public override void Merge(RowsetHolder item)
         {
-            // This deserialize is needlessly expensive...
-            RowsetHolder rowsetHolder = this.Deserialize();
-            rowsetHolder.Merge(item);
-            this.Serialize(rowsetHolder);
+            this.items.Merge(item);
+            this.rowCount = this.items.GetRowCount();
         }
 
         public override uint MaxRowCount()
@@ -70,9 +93,15 @@ namespace PageManager
             return items.StorageSizeInBytes();
         }
 
-        protected override uint GetRowCount(RowsetHolder items)
+        public override void Store(RowsetHolder items)
         {
-            return items.GetRowCount();
+            this.items = items;
+            this.rowCount = this.items.GetRowCount();
+        }
+
+        public override void Persist(Stream destination)
+        {
+            throw new NotImplementedException();
         }
     }
 }

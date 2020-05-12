@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace PageManager
 {
@@ -11,32 +12,21 @@ namespace PageManager
     public class LongOnlyPage : SimpleTypeOnlyPage<long>
     {
         public LongOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.LongPage, prevPageId, nextPageId) { }
+        public LongOnlyPage(BinaryReader stream) : base(stream, PageManager.PageType.LongPage) { }
 
-        public override long[] Deserialize()
+        protected override void SerializeInternal(BinaryReader stream)
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
-            long[] elements = new long[numOfElements];
+            this.items = new long[this.rowCount];
 
-            for (int i = 0; i < elements.Length; i++)
+            for (int i = 0; i < this.items.Length; i++)
             {
-                elements[i] = BitConverter.ToInt64(this.content.AsSpan((int)IPage.FirstElementPosition + i * sizeof(long), sizeof(long)));
+                this.items[i] = stream.ReadInt64();
             }
-
-            return elements;
         }
 
-        protected override void SerializeInternal(long[] items)
+        public override void Persist(Stream destination)
         {
-            uint contentPosition = IPage.FirstElementPosition;
-
-            foreach (long elem in items)
-            {
-                foreach (byte elemBytes in BitConverter.GetBytes(elem))
-                {
-                    content[contentPosition] = elemBytes;
-                    contentPosition++;
-                }
-            }
+            throw new NotImplementedException();
         }
     }
 }

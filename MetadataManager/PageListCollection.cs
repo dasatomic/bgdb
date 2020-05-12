@@ -82,7 +82,7 @@ namespace MetadataManager
             for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
-                RowsetHolder holder = currPage.Deserialize();
+                RowsetHolder holder = currPage.Fetch();
 
                 if (filter(holder))
                 {
@@ -101,7 +101,7 @@ namespace MetadataManager
             for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
-                RowsetHolder holder = currPage.Deserialize();
+                RowsetHolder holder = currPage.Fetch();
 
                 U curr = projector(holder);
 
@@ -120,7 +120,7 @@ namespace MetadataManager
             for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId);
-                PageManager.RowsetHolder holder = currPage.Deserialize();
+                PageManager.RowsetHolder holder = currPage.Fetch();
 
                 yield return holder;
             }

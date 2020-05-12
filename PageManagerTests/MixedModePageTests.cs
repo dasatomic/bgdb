@@ -27,10 +27,10 @@ namespace PageManagerTests
             RowsetHolder holder2 = new RowsetHolder(types1);
             holder2.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
 
-            page.Serialize(holder1);
+            page.Store(holder1);
             page.Merge(holder2);
 
-            RowsetHolder result = page.Deserialize();
+            RowsetHolder result = page.Fetch();
 
             Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].Concat(intColumns2[0]).ToArray());
             Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].Concat(intColumns2[1]).ToArray());

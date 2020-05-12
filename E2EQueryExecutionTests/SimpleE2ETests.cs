@@ -38,7 +38,6 @@ namespace E2EQueryExecutionTests
         [Test]
         public async Task SimpleE2E()
         {
-
             string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
             await this.queryEntryGate.Execute(createTableQuery);
 

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.IO;
 
 namespace PageManager
 {
@@ -12,32 +12,21 @@ namespace PageManager
     public class DoubleOnlyPage : SimpleTypeOnlyPage<double>
     {
         public DoubleOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.DoublePage, prevPageId, nextPageId) { }
+        public DoubleOnlyPage(BinaryReader stream) : base(stream, PageManager.PageType.DoublePage) { }
 
-        public override double[] Deserialize()
+        protected override void SerializeInternal(BinaryReader stream)
         {
-            int numOfElements = BitConverter.ToInt32(this.content.AsSpan((int)IPage.NumOfRowsPosition, sizeof(int)));
-            double[] elements = new double[numOfElements];
+            this.items = new double[this.rowCount];
 
-            for (int i = 0; i < elements.Length; i++)
+            for (int i = 0; i < this.items.Length; i++)
             {
-                elements[i] = BitConverter.ToDouble(this.content.AsSpan((int)IPage.FirstElementPosition + i * sizeof(double), sizeof(double)));
+                this.items[i] = stream.ReadDouble();
             }
-
-            return elements;
         }
 
-        protected override void SerializeInternal(double[] items)
+        public override void Persist(Stream destination)
         {
-            uint contentPosition = IPage.FirstElementPosition;
-
-            foreach (double elem in items)
-            {
-                foreach (byte elemBytes in BitConverter.GetBytes(elem))
-                {
-                    content[contentPosition] = elemBytes;
-                    contentPosition++;
-                }
-            }
+            throw new NotImplementedException();
         }
     }
 }
