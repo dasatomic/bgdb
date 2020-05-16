@@ -2,6 +2,7 @@ using NUnit.Framework;
 using LogManager;
 using System.IO;
 using System.Threading.Tasks;
+using PageManager;
 
 namespace LogManagerTests
 {

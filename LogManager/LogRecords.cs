@@ -1,21 +1,9 @@
-﻿using System;
+﻿using PageManager;
+using System;
 using System.IO;
 
 namespace LogManager
 {
-    public enum LogRecordType
-    {
-        PageModify,
-        Commit,
-        Rollback,
-    }
-
-    public interface ILogRecord
-    {
-        void Serialize(BinaryWriter destination);
-        LogRecordType GetRecordType();
-        ulong TransactionId();
-    }
 
     public struct PageModifyRecord : ILogRecord
     {
