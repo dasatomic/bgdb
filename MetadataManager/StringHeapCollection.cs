@@ -4,8 +4,8 @@ namespace MetadataManager
 {
     public interface HeapWithOffsets<T>
     {
-        PagePointerOffsetPair Add(T item);
-        T Fetch(PagePointerOffsetPair loc);
+        PagePointerOffsetPair Add(T item, ITransaction tran);
+        T Fetch(PagePointerOffsetPair loc, ITransaction tran);
     }
 
     public class StringHeapCollection : HeapWithOffsets<char[]>
@@ -13,10 +13,10 @@ namespace MetadataManager
         IAllocateStringPage allocator;
         private ulong collectionRootPageId;
 
-        public StringHeapCollection(IAllocateStringPage allocator)
+        public StringHeapCollection(IAllocateStringPage allocator, ITransaction tran)
         {
             this.allocator = allocator;
-            this.collectionRootPageId = this.allocator.AllocatePageStr(0, 0).PageId();
+            this.collectionRootPageId = this.allocator.AllocatePageStr(0, 0, tran).PageId();
         }
 
         public StringHeapCollection(IAllocateStringPage allocator, IPage initialPage)
@@ -25,13 +25,13 @@ namespace MetadataManager
             this.collectionRootPageId = initialPage.PageId();
         }
 
-        public PagePointerOffsetPair Add(char[] item)
+        public PagePointerOffsetPair Add(char[] item, ITransaction tran)
         {
             StringOnlyPage currPage = null;
             uint offset;
             for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
             {
-                currPage = allocator.GetPageStr(currPageId);
+                currPage = allocator.GetPageStr(currPageId, tran);
                 if (currPage.CanFit(item))
                 {
                     offset = currPage.MergeWithOffsetFetch(item);
@@ -39,14 +39,14 @@ namespace MetadataManager
                 }
             }
 
-            currPage = this.allocator.AllocatePageStr(currPage.PageId(), 0);
+            currPage = this.allocator.AllocatePageStr(currPage.PageId(), 0, tran);
             offset = currPage.MergeWithOffsetFetch(item);
             return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
         }
 
-        public char[] Fetch(PagePointerOffsetPair loc)
+        public char[] Fetch(PagePointerOffsetPair loc, ITransaction tran)
         {
-            StringOnlyPage page = allocator.GetPageStr((ulong)loc.PageId);
+            StringOnlyPage page = allocator.GetPageStr((ulong)loc.PageId, tran);
             return page.FetchWithOffset((uint)loc.OffsetInPage);
         }
     }

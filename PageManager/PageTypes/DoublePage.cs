@@ -5,8 +5,8 @@ namespace PageManager
 {
     public interface IAllocateDoublePage
     {
-        DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage);
-        DoubleOnlyPage GetPageDouble(ulong pageId);
+        DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran);
+        DoubleOnlyPage GetPageDouble(ulong pageId, ITransaction tran);
     }
 
     public class DoubleOnlyPage : SimpleTypeOnlyPage<double>

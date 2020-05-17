@@ -1,9 +1,11 @@
-﻿using MetadataManager;
+﻿using LogManager;
+using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace QueryProcessingTests
@@ -13,22 +15,28 @@ namespace QueryProcessingTests
         [Test]
         public void ValidateScan()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
             var tm = mm.GetTableManager();
 
+            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
             int id = tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnTypes, 
-            });
+            }, tran);
 
-            var table = tm.GetById(id);
+            tran.Commit();
+
+            tran = new Transaction(logManager, "GET_TABLE");
+            var table = tm.GetById(id, tran);
+            tran.Commit();
 
             Row[] source = new Row[] { 
                 new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes),
@@ -39,12 +47,16 @@ namespace QueryProcessingTests
             };
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
-            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic);
-            op.Invoke();
 
-            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetPage(table.RootPage));
-            PhyOpScan scan = new PhyOpScan(pcl, stringHeap);
-            Row[] result = scan.ToArray();
+            tran = new Transaction(logManager, "INSERT");
+            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
+            op.Invoke();
+            tran.Commit();
+
+            tran = new Transaction(logManager, "SELECT");
+            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetPage(table.RootPage, tran));
+            PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
+            Row[] result = scan.Iterate(tran).ToArray();
 
             Assert.AreEqual(source, result);
         }

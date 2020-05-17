@@ -1,3 +1,4 @@
+using LogManager;
 using MetadataManager;
 using NUnit.Framework;
 using PageManager;
@@ -12,12 +13,12 @@ namespace MetadataManagerTests
         [Test]
         public void InitPageList()
         {
-            IAllocateMixedPage mixedPageAlloc =
-                new InMemoryPageManager(4096);
+            IAllocateMixedPage mixedPageAlloc = new InMemoryPageManager(4096);
+            ITransaction tran = new DummyTran();
             ColumnType[] types = new[] { ColumnType.Int, ColumnType.Int };
 
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
-            Assert.AreEqual(0, collection.Count());
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, new DummyTran());
+            Assert.AreEqual(0, collection.Iterate(tran).Sum(rs => rs.GetRowCount()));
         }
 
         [Test]
@@ -26,14 +27,15 @@ namespace MetadataManagerTests
             IAllocateMixedPage mixedPageAlloc =
                 new InMemoryPageManager(4096);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
+            ITransaction tran = new DummyTran();
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
-            collection.Add(holder);
+            collection.Add(holder, tran);
 
-            Assert.AreEqual(holder.GetRowCount(), collection.Count());
+            Assert.AreEqual(holder.GetRowCount(), collection.Iterate(tran).Sum(rs => rs.GetRowCount()));
         }
 
         [Test]
@@ -42,17 +44,19 @@ namespace MetadataManagerTests
             IAllocateMixedPage mixedPageAlloc =
                 new InMemoryPageManager(4096);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
+            ITransaction tran = new DummyTran();
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder);
+                collection.Add(holder, tran);
             }
 
-            Assert.AreEqual(holder.GetRowCount() * 100, collection.Count());
+            long rowCount = collection.Iterate(tran).Sum(rs => rs.GetRowCount());
+            Assert.AreEqual(holder.GetRowCount() * 100, rowCount);
         }
 
         [Test]
@@ -62,17 +66,18 @@ namespace MetadataManagerTests
             IAllocateMixedPage mixedPageAlloc =
                 new InMemoryPageManager(4096);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
+            ITransaction tran = new DummyTran();
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder);
+                collection.Add(holder, tran);
             }
 
-            Assert.IsEmpty(collection.Where((holder) => holder.GetIntColumn(0).Contains(42)));
+            Assert.IsEmpty(collection.Where((holder) => holder.GetIntColumn(0).Contains(42), tran));
         }
 
         [Test]
@@ -82,17 +87,18 @@ namespace MetadataManagerTests
             IAllocateMixedPage mixedPageAlloc =
                 new InMemoryPageManager(4096);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
+            ITransaction tran = new DummyTran();
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder);
+                collection.Add(holder, tran);
             }
 
-            Assert.IsNotEmpty(collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4])));
+            Assert.IsNotEmpty(collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4]), tran));
         }
 
         [Test]
@@ -101,7 +107,8 @@ namespace MetadataManagerTests
             IAllocateMixedPage mixedPageAlloc =
                 new InMemoryPageManager(4096);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
-            PageListCollection collection = new PageListCollection(mixedPageAlloc, types);
+            ITransaction tran = new DummyTran();
+            PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
@@ -109,7 +116,7 @@ namespace MetadataManagerTests
             List<int> column0Insert = new List<int>();
             for (int i = 0; i < 1000; i++)
             {
-                collection.Add(holder);
+                collection.Add(holder, tran);
                 foreach (int v in holder.GetIntColumn(0))
                 {
                     column0Insert.Add(v);
@@ -117,7 +124,7 @@ namespace MetadataManagerTests
             }
 
             List<int> column0 = new List<int>();
-            foreach (var i in collection)
+            foreach (var i in collection.Iterate(tran))
             {
                 foreach (int v in i.GetIntColumn(0))
                 {

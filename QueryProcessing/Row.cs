@@ -88,7 +88,7 @@ namespace QueryProcessing
                 Enumerable.SequenceEqual(this.stringCols, other.stringCols);
         }
 
-        public RowsetHolder ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc)
+        public RowsetHolder ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
         {
             RowsetHolder rh = new RowsetHolder(columnTypes);
 
@@ -104,7 +104,7 @@ namespace QueryProcessing
                 doubleColsPrep[i] = new double[1] { doubleCols[0] };
             }
 
-            PagePointerOffsetPair[] offsetCols = PushStringsToStringHeap(stringAlloc);
+            PagePointerOffsetPair[] offsetCols = PushStringsToStringHeap(stringAlloc, tran);
             PagePointerOffsetPair[][] offsetPreps = new PagePointerOffsetPair[offsetCols.Length][];
             for (int i = 0; i < offsetCols.Length; i++)
             {
@@ -116,13 +116,13 @@ namespace QueryProcessing
             return rh;
         }
 
-        private PagePointerOffsetPair[] PushStringsToStringHeap(HeapWithOffsets<char[]> stringAloc)
+        private PagePointerOffsetPair[] PushStringsToStringHeap(HeapWithOffsets<char[]> stringAloc, ITransaction tran)
         {
             PagePointerOffsetPair[] locs = new PagePointerOffsetPair[stringCols.Length];
             int i = 0;
             foreach (string str in stringCols)
             {
-                locs[i++] = stringAloc.Add(str.ToCharArray());
+                locs[i++] = stringAloc.Add(str.ToCharArray(), tran);
             }
 
             return locs;

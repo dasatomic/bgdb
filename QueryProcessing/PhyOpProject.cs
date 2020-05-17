@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using PageManager;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace QueryProcessing
@@ -14,9 +15,9 @@ namespace QueryProcessing
             this.columnChooser = columnChooser;
         }
 
-        public IEnumerator<Row> GetEnumerator()
+        public IEnumerable<Row> Iterate(ITransaction tran)
         {
-            foreach (Row row in this.source)
+            foreach (Row row in this.source.Iterate(tran))
             {
                 yield return row.Project(this.columnChooser);
             }
@@ -24,16 +25,6 @@ namespace QueryProcessing
 
         public void Invoke()
         {
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator1();
-        }
-
-        private IEnumerator GetEnumerator1()
-        {
-            return this.GetEnumerator();
         }
     }
 }

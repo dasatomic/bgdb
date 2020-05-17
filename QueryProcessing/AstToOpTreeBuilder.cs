@@ -22,16 +22,16 @@ namespace QueryProcessing
             this.stringHeap = stringHeap;
         }
 
-        public IPhysicalOperator<Row> ParseSqlStatement(Sql.sqlStatement sqlStatement)
+        public IPhysicalOperator<Row> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
             string tableName = sqlStatement.Table;
             string[] columns = sqlStatement.Columns.ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = tableManager.GetByName(tableName);
+            MetadataTable table = tableManager.GetByName(tableName, tran);
 
-            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetMixedPage(table.RootPage));
-            PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap);
+            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetMixedPage(table.RootPage, tran));
+            PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();
             foreach (string columnName in columns)
@@ -44,12 +44,12 @@ namespace QueryProcessing
             return projectOp;
         }
 
-        public PhyOpTableInsert ParseInsertStatement(Sql.insertStatement insertStatement)
+        public PhyOpTableInsert ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran)
         {
             string tableName = insertStatement.Table;
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = tableManager.GetByName(tableName);
+            MetadataTable table = tableManager.GetByName(tableName, tran);
 
             List<int> intCols = new List<int>();
             List<double> doubleCols = new List<double>();
@@ -66,7 +66,7 @@ namespace QueryProcessing
             Row[] source = new Row[] { new Row(intCols.ToArray(), doubleCols.ToArray(), stringCols.ToArray() , table.Columns.Select(c => c.ColumnType).ToArray()) };
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
-            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic);
+            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
             return op;
         }
     }

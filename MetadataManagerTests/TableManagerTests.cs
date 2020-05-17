@@ -3,6 +3,8 @@ using MetadataManager;
 using PageManager;
 using System.Collections.Generic;
 using System.Linq;
+using LogManager;
+using System.IO;
 
 namespace MetadataManager
 {
@@ -11,11 +13,15 @@ namespace MetadataManager
         [Test]
         public void CreateTable()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
 
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator);
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
+            setupTran.Commit();
+
+            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
 
             var tm = mm.GetTableManager();
             int objId = tm.CreateObject(new TableCreateDefinition()
@@ -23,14 +29,18 @@ namespace MetadataManager
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
-            });
+            }, tran);
+
+            tran.Commit();
+
+            tran = new Transaction(logManager, "TABLE_EXISTS");
 
             Assert.True(tm.Exists(new TableCreateDefinition()
             {
                 TableName = "A",
-            }));
+            }, tran));
 
-            MetadataTable table = tm.GetById(objId);
+            MetadataTable table = tm.GetById(objId, tran);
             Assert.AreEqual("A", table.TableName);
 
             Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(t => t.ColumnName));
@@ -38,7 +48,8 @@ namespace MetadataManager
 
             var cm = mm.GetColumnManager();
 
-            foreach (var c in cm)
+            tran = new Transaction(logManager, "TABLE_ITERATE");
+            foreach (var c in cm.Iterate(tran))
             {
                 Assert.Contains(c.ColumnName.ToString(), new[] { "a", "b", "c" });
             }
@@ -47,28 +58,31 @@ namespace MetadataManager
         [Test]
         public void CreateMultiTable()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
-
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
             const int repCount = 100;
 
             for (int i = 1; i < repCount; i++)
             {
+                ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
                 int id = tm.CreateObject(new TableCreateDefinition()
                 {
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
                     ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
-                });
+                }, tran);
+                tran.Commit();
             }
 
             for (int i = 1; i < repCount; i++)
             {
-                var table = tm.GetById(i);
+                ITransaction tran = new Transaction(logManager, "GET_TABLE");
+                var table = tm.GetById(i, tran);
                 Assert.AreEqual("T" + i, table.TableName);
 
                 Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(c => c.ColumnName));
@@ -79,28 +93,31 @@ namespace MetadataManager
         [Test]
         public void CreateWithSameName()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
-
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
+            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
             int objId = tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
-            });
+            }, tran);
+            tran.Commit();
 
             Assert.Throws<ElementWithSameNameExistsException>(() =>
             {
+                tran = new Transaction(logManager, "CREATE_TABLE_TEST2");
                 tm.CreateObject(new TableCreateDefinition()
                 {
                     TableName = "A",
                     ColumnNames = new[] { "a" },
                     ColumnTypes = new[] { ColumnType.Int }
-                });
+                }, tran);
             });
         }
     }

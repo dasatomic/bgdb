@@ -53,9 +53,9 @@ namespace MetadataManager
             this.stringHeap = stringHeap;
         }
 
-        public IEnumerator<MetadataColumn> GetEnumerator()
+        public IEnumerable<MetadataColumn> Iterate(ITransaction tran)
         {
-            foreach (RowsetHolder rh in pageListCollection)
+            foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
             {
                 for (int i = 0; i < rh.GetRowCount(); i++)
                 {
@@ -68,7 +68,7 @@ namespace MetadataManager
                         };
 
                     PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
-                    char[] columnName = this.stringHeap.Fetch(stringPointer);
+                    char[] columnName = this.stringHeap.Fetch(stringPointer, tran);
 
                     mdObj.ColumnName = new string(columnName);
 
@@ -77,36 +77,36 @@ namespace MetadataManager
             }
         }
 
-        public int CreateObject(ColumnCreateDefinition def)
+        public int CreateObject(ColumnCreateDefinition def, ITransaction tran)
         {
-            if (this.Exists(def))
+            if (this.Exists(def, tran))
             {
                 throw new ElementWithSameNameExistsException();
             }
 
             int id = 0;
-            if (!pageListCollection.IsEmpty())
+            if (!pageListCollection.IsEmpty(tran))
             {
-                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos).Max(), startMin: 0);
+                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos).Max(), startMin: 0, tran);
                 id = maxId + 1;
             }
 
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
-            PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.ColumnName.ToCharArray());
+            PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.ColumnName.ToCharArray(), tran);
 
             int[][] intCols = new int[3][];
             intCols[0] = new[] { id };
             intCols[1] = new[] { def.TableId };
             intCols[2] = new[] { (int)def.ColumnType };
             rh.SetColumns(intCols, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
-            pageListCollection.Add(rh);
+            pageListCollection.Add(rh, tran);
 
             return id;
         }
 
-        public bool Exists(ColumnCreateDefinition def)
+        public bool Exists(ColumnCreateDefinition def, ITransaction tran)
         {
-            foreach (RowsetHolder rh in pageListCollection)
+            foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
             {
                 int[] tableIds = rh.GetIntColumn(MetadataColumn.TableIdColumnPos);
 
@@ -116,7 +116,7 @@ namespace MetadataManager
                     {
                         PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
 
-                        if (def.ColumnName == new string(stringHeap.Fetch(stringPointer)))
+                        if (def.ColumnName == new string(stringHeap.Fetch(stringPointer, tran)))
                         {
                             return true;
                         }
@@ -127,9 +127,9 @@ namespace MetadataManager
             return false;
         }
 
-        public MetadataColumn GetById(int id)
+        public MetadataColumn GetById(int id, ITransaction tran)
         {
-            foreach (var column in this)
+            foreach (var column in this.Iterate(tran))
             {
                 if (column.ColumnId == id)
                 {
@@ -138,16 +138,6 @@ namespace MetadataManager
             }
 
             throw new KeyNotFoundException();
-        }
-
-        private IEnumerator GetEnumerator1()
-        {
-            return this.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator1();
         }
     }
 }

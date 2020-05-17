@@ -7,8 +7,8 @@ namespace PageManager
 {
     public interface IAllocateStringPage
     {
-        StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage);
-        StringOnlyPage GetPageStr(ulong pageId);
+        StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran);
+        StringOnlyPage GetPageStr(ulong pageId, ITransaction tran);
     }
 
     public interface IPageWithOffsets<T>

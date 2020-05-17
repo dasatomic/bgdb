@@ -16,7 +16,7 @@ namespace LogManagerTests
             {
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                ITransaction tran1 = new Transaction(manager);
+                ITransaction tran1 = new Transaction(manager, "TRAN_TEST");
 
                 ILogRecord record1 =
                     new PageModifyRecord(

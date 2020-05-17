@@ -6,8 +6,8 @@ namespace PageManager
 {
     public interface IAllocateMixedPage
     {
-        MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage);
-        MixedPage GetMixedPage(ulong pageId);
+        MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
+        MixedPage GetMixedPage(ulong pageId, ITransaction tran);
     }
 
     public class MixedPage : PageSerializerBase<RowsetHolder>

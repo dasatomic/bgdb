@@ -1,5 +1,6 @@
 ﻿using FSharp.Text.Lexing;
 using Microsoft.FSharp.Core;
+using PageManager;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace QueryProcessing
             return SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
         }
 
-        public async Task<IEnumerable<Row>> Execute(string queryText)
+        public async Task<IEnumerable<Row>> Execute(string queryText, ITransaction tran)
         {
             Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
 
@@ -30,7 +31,7 @@ namespace QueryProcessing
             {
                 if (handler.ShouldExecute(statement))
                 {
-                    return await handler.Execute(statement);
+                    return await handler.Execute(statement, tran);
                 }
             }
 

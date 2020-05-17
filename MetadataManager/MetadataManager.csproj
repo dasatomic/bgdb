@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LogManager\LogManager.csproj" />
     <ProjectReference Include="..\PageManager\PageManager.csproj" />
   </ItemGroup>
 

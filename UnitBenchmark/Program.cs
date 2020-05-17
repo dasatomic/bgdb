@@ -1,8 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using LogManager;
 using MetadataManager;
 using PageManager;
 using QueryProcessing;
+using System.IO;
 
 namespace UnitBenchmark
 {
@@ -17,44 +19,50 @@ namespace UnitBenchmark
         [Benchmark]
         public void CreateTable()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
 
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
 
             for (int i = 1; i < TableNumber; i++)
             {
+                ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
                 tm.CreateObject(new TableCreateDefinition()
                 {
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
                     ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
-                });
+                }, tran);
             }
         }
 
         [Benchmark]
         public void InsertIntoTable()
         {
-            var allocator =
-                new InMemoryPageManager(4096);
+            var allocator = new InMemoryPageManager(4096);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = new Transaction(logManager, "SETUP");
 
-            StringHeapCollection stringHeap = new StringHeapCollection(allocator);
-            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator);
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
             var tm = mm.GetTableManager();
 
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
+            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
             int id = tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnTypes,
-            });
+            }, tran);
 
-            var table = tm.GetById(id);
+            tran = new Transaction(logManager, "FETCH_TABLE");
+            var table = tm.GetById(id, tran);
+            tran.Commit();
 
             Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes) };
 
@@ -62,8 +70,10 @@ namespace UnitBenchmark
             {
                 PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
-                PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic);
+                tran = new Transaction(logManager, "INSERT");
+                PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
                 op.Invoke();
+                tran.Commit();
             }
         }
     }

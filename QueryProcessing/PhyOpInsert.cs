@@ -13,34 +13,31 @@ namespace QueryProcessing
         private IAllocateMixedPage pageAllocator;
         private HeapWithOffsets<char[]> stringHeap;
         private IPhysicalOperator<Row> input;
+        private ITransaction tran;
 
-        public PhyOpTableInsert(MetadataTable mdTable, IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IPhysicalOperator<Row> input)
+        public PhyOpTableInsert(MetadataTable mdTable, IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IPhysicalOperator<Row> input, ITransaction tran)
         {
             this.mdTable = mdTable;
             this.pageAllocator = pageAllocator;
 
-            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage);
+            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran);
             this.pageCollection = new PageListCollection(this.pageAllocator, mdTable.Columns.Select(c => c.ColumnType).ToArray(), rootPage);
             this.stringHeap = stringHeap;
             this.input = input;
+            this.tran = tran;
         }
 
         public void Invoke()
         {
-            foreach (Row row in this.input)
+            foreach (Row row in this.input.Iterate(this.tran))
             {
-                this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap));
+                this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap, tran), tran);
             }
         }
 
-        public IEnumerator<Row> GetEnumerator()
+        public IEnumerable<Row> Iterate(ITransaction tran)
         {
-            yield break;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            yield break;
+            return Enumerable.Empty<Row>();
         }
     }
 }

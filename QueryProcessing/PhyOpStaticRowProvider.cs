@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PageManager;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -13,18 +14,13 @@ namespace QueryProcessing
             this.source = rows;
         }
 
-        public IEnumerator<Row> GetEnumerator()
+        public IEnumerable<Row> Iterate(ITransaction _)
         {
-            return source.GetEnumerator();
+            return source;
         }
 
         public void Invoke()
         {
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return source.GetEnumerator();
         }
     }
 }

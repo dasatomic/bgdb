@@ -10,23 +10,26 @@ namespace QueryProcessing
     {
         private PageListCollection source;
         private HeapWithOffsets<char[]> strHeap = null;
+        private ITransaction tran;
 
-        public PhyOpScan(PageListCollection collection, HeapWithOffsets<char[]> strHeap)
+        public PhyOpScan(PageListCollection collection, HeapWithOffsets<char[]> strHeap, ITransaction tran)
         {
             this.source = collection;
             this.strHeap = strHeap;
+            this.tran = tran;
         }
 
-        public IEnumerator<Row> GetEnumerator()
+        public IEnumerable<Row> Iterate(ITransaction tran)
         {
-            foreach (var rowsetHolder in this.source)
+            // TODO: Need transaction here.
+            foreach (var rowsetHolder in this.source.Iterate(tran))
             {
                 foreach (RowHolder rowHolder in rowsetHolder)
                 {
                     string[] strVals = new string[rowHolder.strPRow.Length];
                     for (int i = 0; i < strVals.Length; i++)
                     {
-                        strVals[i] = new string(strHeap.Fetch(rowHolder.strPRow[i]));
+                        strVals[i] = new string(strHeap.Fetch(rowHolder.strPRow[i], this.tran));
                     }
 
                     Row row = new Row(rowHolder.iRow, rowHolder.dRow, strVals, rowsetHolder.GetColumnTypes());
@@ -38,16 +41,6 @@ namespace QueryProcessing
         public void Invoke()
         {
             throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator1();
-        }
-
-        private IEnumerator GetEnumerator1()
-        {
-            return this.GetEnumerator();
         }
     }
 }

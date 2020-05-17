@@ -5,8 +5,8 @@ namespace PageManager
 {
     public interface IAllocateIntegerPage
     {
-        IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage);
-        IntegerOnlyPage GetPageInt(ulong pageId);
+        IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction transaction);
+        IntegerOnlyPage GetPageInt(ulong pageId, ITransaction transaction);
     }
 
     public class IntegerOnlyPage : SimpleTypeOnlyPage<int>

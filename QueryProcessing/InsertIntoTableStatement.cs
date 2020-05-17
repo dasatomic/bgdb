@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PageManager;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async Task<IEnumerable<Row>> Execute(Sql.DmlDdlSqlStatement statement)
+        public async Task<IEnumerable<Row>> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsInsert)
             {
@@ -22,7 +23,7 @@ namespace QueryProcessing
             }
 
             Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
-            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseInsertStatement(insertStatement.Item);
+            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran);
             rootOp.Invoke();
 
             return Enumerable.Empty<Row>();

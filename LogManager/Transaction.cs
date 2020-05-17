@@ -12,12 +12,14 @@ namespace LogManager
         private readonly ulong transactionId;
         private List<ILogRecord> logRecords;
         private readonly ILogManager logManager;
+        private readonly string name;
 
-        public Transaction(ILogManager logManager)
+        public Transaction(ILogManager logManager, string name)
         {
             transactionId = lastTransactionId++;
             logRecords = new List<ILogRecord>();
             this.logManager = logManager;
+            this.name = name;
         }
 
         public void AddRecord(ILogRecord logRecord)

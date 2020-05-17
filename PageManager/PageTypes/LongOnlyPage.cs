@@ -5,8 +5,8 @@ namespace PageManager
 {
     public interface IAllocateLongPage
     {
-        LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage);
-        LongOnlyPage GetPageLong(ulong pageId);
+        LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran);
+        LongOnlyPage GetPageLong(ulong pageId, ITransaction tran);
     }
 
     public class LongOnlyPage : SimpleTypeOnlyPage<long>
