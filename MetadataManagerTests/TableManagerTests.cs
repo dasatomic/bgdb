@@ -16,12 +16,12 @@ namespace MetadataManager
             var allocator = new InMemoryPageManager(4096);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
 
-            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
             setupTran.Commit();
 
-            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
+            ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
 
             var tm = mm.GetTableManager();
             int objId = tm.CreateObject(new TableCreateDefinition()
@@ -33,7 +33,7 @@ namespace MetadataManager
 
             tran.Commit();
 
-            tran = new Transaction(logManager, "TABLE_EXISTS");
+            tran = new Transaction(logManager, allocator, "TABLE_EXISTS");
 
             Assert.True(tm.Exists(new TableCreateDefinition()
             {
@@ -48,7 +48,7 @@ namespace MetadataManager
 
             var cm = mm.GetColumnManager();
 
-            tran = new Transaction(logManager, "TABLE_ITERATE");
+            tran = new Transaction(logManager, allocator, "TABLE_ITERATE");
             foreach (var c in cm.Iterate(tran))
             {
                 Assert.Contains(c.ColumnName.ToString(), new[] { "a", "b", "c" });
@@ -60,7 +60,7 @@ namespace MetadataManager
         {
             var allocator = new InMemoryPageManager(4096);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
 
@@ -69,7 +69,7 @@ namespace MetadataManager
 
             for (int i = 1; i < repCount; i++)
             {
-                ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
+                ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
                 int id = tm.CreateObject(new TableCreateDefinition()
                 {
                     TableName = "T" + i,
@@ -81,7 +81,7 @@ namespace MetadataManager
 
             for (int i = 1; i < repCount; i++)
             {
-                ITransaction tran = new Transaction(logManager, "GET_TABLE");
+                ITransaction tran = new Transaction(logManager, allocator, "GET_TABLE");
                 var table = tm.GetById(i, tran);
                 Assert.AreEqual("T" + i, table.TableName);
 
@@ -95,12 +95,12 @@ namespace MetadataManager
         {
             var allocator = new InMemoryPageManager(4096);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
-            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
+            ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
             int objId = tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "A",
@@ -111,7 +111,7 @@ namespace MetadataManager
 
             Assert.Throws<ElementWithSameNameExistsException>(() =>
             {
-                tran = new Transaction(logManager, "CREATE_TABLE_TEST2");
+                tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST2");
                 tm.CreateObject(new TableCreateDefinition()
                 {
                     TableName = "A",

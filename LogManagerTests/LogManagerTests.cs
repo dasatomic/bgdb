@@ -14,9 +14,10 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
+                IPageManager pageManager = new InMemoryPageManager(4096);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, "TRAN_TEST");
+                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 ILogRecord record1 =
                     new PageModifyRecord(

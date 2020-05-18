@@ -17,13 +17,13 @@ namespace QueryProcessingTests
         {
             var allocator = new InMemoryPageManager(4096);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            ITransaction setupTran = new Transaction(logManager, "SETUP");
+            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
 
-            ITransaction tran = new Transaction(logManager, "CREATE_TABLE_TEST");
+            ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
             int id = tm.CreateObject(new TableCreateDefinition()
             {
@@ -34,7 +34,7 @@ namespace QueryProcessingTests
 
             tran.Commit();
 
-            tran = new Transaction(logManager, "GET_TABLE");
+            tran = new Transaction(logManager, allocator, "GET_TABLE");
             var table = tm.GetById(id, tran);
             tran.Commit();
 
@@ -48,12 +48,12 @@ namespace QueryProcessingTests
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
 
-            tran = new Transaction(logManager, "INSERT");
+            tran = new Transaction(logManager, allocator, "INSERT");
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
             op.Invoke();
             tran.Commit();
 
-            tran = new Transaction(logManager, "SELECT");
+            tran = new Transaction(logManager, allocator, "SELECT");
             PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetPage(table.RootPage, tran));
             PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
             Row[] result = scan.Iterate(tran).ToArray();

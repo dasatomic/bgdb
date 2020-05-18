@@ -14,5 +14,7 @@ namespace PageManager
         void Serialize(BinaryWriter destination);
         LogRecordType GetRecordType();
         ulong TransactionId();
+        void Redo(IPageManager pageManager);
+        void Undo(IPageManager pageManager);
     }
 }

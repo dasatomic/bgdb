@@ -7,7 +7,7 @@ namespace MetadataManager
 {
     public class MetadataManager
     {
-        private IAllocateMixedPage pageAllocator;
+        private IPageManager pageAllocator;
 
         private readonly ColumnType[] masterPageColumnDefinition = new ColumnType[]
         {
@@ -25,7 +25,7 @@ namespace MetadataManager
 
         private LogManager.ILogManager logManager;
 
-        public MetadataManager(IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IBootPageAllocator bootPageAllocator, ILogManager logManager)
+        public MetadataManager(IPageManager pageAllocator, HeapWithOffsets<char[]> stringHeap, IBootPageAllocator bootPageAllocator, ILogManager logManager)
         {
             this.pageAllocator = pageAllocator;
             this.stringHeap = stringHeap;
@@ -33,7 +33,7 @@ namespace MetadataManager
 
             if (!bootPageAllocator.BootPageInitialized())
             {
-                using ITransaction tran = new Transaction(logManager, "SETUP_BOOT_PAGE");
+                using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "SETUP_BOOT_PAGE");
                 bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
                 this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran));
                 tran.Commit();
@@ -42,7 +42,7 @@ namespace MetadataManager
             }
             else
             {
-                using ITransaction tran = new Transaction(logManager, "GET_BOOT_PAGE");
+                using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "GET_BOOT_PAGE");
                 this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran));
                 tran.Commit();
             }
@@ -50,7 +50,7 @@ namespace MetadataManager
 
         private void MetadataInitialSetup()
         {
-            using ITransaction tran = new Transaction(logManager, "MetadataSetup");
+            using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "MetadataSetup");
             RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
 
             var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), 0, 0, tran);

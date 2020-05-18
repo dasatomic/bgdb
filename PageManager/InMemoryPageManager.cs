@@ -4,20 +4,7 @@ using System.Linq;
 
 namespace PageManager
 {
-    public interface IBootPageAllocator
-    {
-        IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran);
-        bool BootPageInitialized();
-
-        public const ulong BootPageId = ulong.MaxValue;
-    }
-
-    public interface ITranAlloc
-    {
-        ITransaction CreateTranscation();
-    }
-
-    public class InMemoryPageManager : IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator, ITranAlloc
+    public class InMemoryPageManager : IPageManager
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
@@ -212,11 +199,6 @@ namespace PageManager
         public bool BootPageInitialized()
         {
             return pages.Any(p => p.PageId() == IBootPageAllocator.BootPageId);
-        }
-
-        public ITransaction CreateTranscation()
-        {
-            throw new NotImplementedException();
         }
     }
 }

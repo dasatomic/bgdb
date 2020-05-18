@@ -13,22 +13,23 @@ namespace E2EQueryExecutionTests
     {
         private QueryEntryGate queryEntryGate;
         private ILogManager logManager;
+        private IPageManager pageManager;
 
         [SetUp]
         public async Task Setup()
         {
-            var allocator = new InMemoryPageManager(4096);
+            var pageManager = new InMemoryPageManager(4096);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 
-            using (Transaction tran = new Transaction(logManager, "SETUP"))
+            using (Transaction tran = new Transaction(logManager, pageManager, "SETUP"))
             {
-                stringHeap = new StringHeapCollection(allocator, tran);
+                stringHeap = new StringHeapCollection(pageManager, tran);
                 await tran.Commit();
             }
 
-            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, allocator);
+            var mm = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(mm, stringHeap, pageManager);
 
             this.queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]
@@ -43,7 +44,7 @@ namespace E2EQueryExecutionTests
         public async Task CreateTableE2E()
         {
             string query = @"CREATE TABLE MyTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
-            using (Transaction tran = new Transaction(logManager, "CREATE_TABLE"))
+            using (Transaction tran = new Transaction(logManager, pageManager, "CREATE_TABLE"))
             {
                 await this.queryEntryGate.Execute(query, tran);
                 await tran.Commit();
@@ -53,14 +54,14 @@ namespace E2EQueryExecutionTests
         [Test]
         public async Task SimpleE2E()
         {
-            using (Transaction tran = new Transaction(logManager, "CREATE_TABLE"))
+            using (Transaction tran = new Transaction(logManager, pageManager, "CREATE_TABLE"))
             {
                 string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran);
                 await tran.Commit();
             }
 
-            using (Transaction tran = new Transaction(logManager, "INSERT"))
+            using (Transaction tran = new Transaction(logManager, pageManager, "INSERT"))
             {
                 string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
                 await this.queryEntryGate.Execute(insertQuery, tran);
@@ -71,7 +72,7 @@ namespace E2EQueryExecutionTests
             }
 
 
-            using (Transaction tran = new Transaction(logManager, "GET_ROWS"))
+            using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
                 Row[] result = (await this.queryEntryGate.Execute(query, tran)).ToArray();

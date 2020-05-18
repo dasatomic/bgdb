@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
-
-namespace PageManager
+﻿namespace PageManager
 {
-    public interface IPageManager<T>
+    public interface IBootPageAllocator
     {
-        IPage GetPage(ulong pageId);
-        void SavePage(IPage page);
-        IPage AllocatePage(PageType pageType);
-        T AllocatePageSerializer<T>();
-        T GetPageSerializer<T>(ulong pageId);
+        IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran);
+        bool BootPageInitialized();
+
+        public const ulong BootPageId = ulong.MaxValue;
+    }
+
+    public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator
+    {
     }
 }

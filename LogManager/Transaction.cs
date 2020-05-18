@@ -11,17 +11,19 @@ namespace LogManager
 
         private readonly ulong transactionId;
         private List<ILogRecord> logRecords;
+        private IPageManager pageManager;
         private readonly ILogManager logManager;
         private readonly string name;
         private TransactionState state;
 
-        public Transaction(ILogManager logManager, string name)
+        public Transaction(ILogManager logManager, IPageManager pageManager, string name)
         {
             transactionId = lastTransactionId++;
             logRecords = new List<ILogRecord>();
             this.logManager = logManager;
             this.name = name;
             this.state = TransactionState.Open;
+            this.pageManager = pageManager;
         }
 
         public void AddRecord(ILogRecord logRecord)
@@ -37,8 +39,12 @@ namespace LogManager
 
         public void Rollback()
         {
-            // No op while content is in memory.
-            // once we start pushing log to disk before commit this needs to change.
+            this.logRecords.Reverse();
+            foreach (ILogRecord record in this.logRecords)
+            {
+                record.Undo(this.pageManager);
+            }
+
             this.state = TransactionState.RollBacked;
         }
 

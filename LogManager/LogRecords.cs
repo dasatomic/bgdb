@@ -51,5 +51,15 @@ namespace LogManager
         public LogRecordType GetRecordType() => LogRecordType.PageModify;
 
         public ulong TransactionId() => this.TranscationId;
+
+        public void Redo(IPageManager pageManager)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Undo(IPageManager pageManager)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
