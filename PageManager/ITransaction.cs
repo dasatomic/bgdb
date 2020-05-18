@@ -1,14 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PageManager
 {
-    public interface ITransaction 
+    public enum TransactionState
+    {
+        Open,
+        Committed,
+        RollBacked,
+    }
+
+    public interface ITransaction : IDisposable
     {
         ulong TranscationId();
         void Rollback();
         Task Commit();
         void AddRecord(ILogRecord logRecord);
         IEnumerable<ILogRecord> GetRecords();
+        TransactionState GetTransactionState();
     }
 }

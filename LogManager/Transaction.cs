@@ -13,6 +13,7 @@ namespace LogManager
         private List<ILogRecord> logRecords;
         private readonly ILogManager logManager;
         private readonly string name;
+        private TransactionState state;
 
         public Transaction(ILogManager logManager, string name)
         {
@@ -20,6 +21,7 @@ namespace LogManager
             logRecords = new List<ILogRecord>();
             this.logManager = logManager;
             this.name = name;
+            this.state = TransactionState.Open;
         }
 
         public void AddRecord(ILogRecord logRecord)
@@ -30,12 +32,14 @@ namespace LogManager
         public async Task Commit()
         {
             await this.logManager.CommitTransaction(this);
+            this.state = TransactionState.Committed;
         }
 
         public void Rollback()
         {
             // No op while content is in memory.
             // once we start pushing log to disk before commit this needs to change.
+            this.state = TransactionState.RollBacked;
         }
 
         public ulong TranscationId() => this.transactionId;
@@ -43,6 +47,16 @@ namespace LogManager
         public IEnumerable<ILogRecord> GetRecords()
         {
             return this.logRecords.AsEnumerable();
+        }
+
+        public TransactionState GetTransactionState() => this.state;
+
+        public void Dispose()
+        {
+            if (this.state == TransactionState.Open)
+            {
+                this.Rollback();
+            }
         }
     }
 }

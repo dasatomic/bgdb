@@ -16,9 +16,18 @@ namespace Test.Common
             return Task.CompletedTask;
         }
 
+        public void Dispose()
+        {
+        }
+
         public IEnumerable<ILogRecord> GetRecords()
         {
             return Enumerable.Empty<ILogRecord>();
+        }
+
+        public TransactionState GetTransactionState()
+        {
+            return TransactionState.Committed;
         }
 
         public void Rollback()
