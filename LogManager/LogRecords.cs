@@ -1,6 +1,7 @@
 ﻿using PageManager;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace LogManager
 {
@@ -52,14 +53,27 @@ namespace LogManager
 
         public ulong TransactionId() => this.TranscationId;
 
-        public void Redo(IPageManager pageManager)
+        public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            throw new NotImplementedException();
+            // TODO log interaction should be page type agnostic.
+            IPage page = pageManager.GetPage(this.PageId, tran);
+            page.RedoLog(this, tran);
         }
 
-        public void Undo(IPageManager pageManager)
+        public async Task Undo(IPageManager pageManager, ITransaction tran)
         {
-            throw new NotImplementedException();
+            IPage page = pageManager.GetPage(this.PageId, tran);
+            page.UndoLog(this, tran);
+        }
+
+        public RedoContent GetRedoContent()
+        {
+            return new RedoContent(this.DiffNewValue, this.PageOffsetDiffStart);
+        }
+
+        public UndoContent GetUndoContent()
+        {
+            return new UndoContent(this.DiffOldValue, this.PageOffsetDiffStart);
         }
     }
 }

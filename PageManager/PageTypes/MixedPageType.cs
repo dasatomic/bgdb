@@ -113,5 +113,39 @@ namespace PageManager
                 this.items.Serialize(bw);
             }
         }
+
+        private void ApplyLog(byte[] data, ushort offset)
+        {
+            // TODO: this is not efficient.
+            byte[] content = new byte[this.pageSize];
+            using (MemoryStream ms = new MemoryStream(content))
+            {
+                this.Persist(ms);
+                // Overwrite.
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    bw.Seek(offset, SeekOrigin.Begin);
+                    bw.Write(data);
+
+                }
+
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    this.items.Deserialize(br, this.rowCount);
+                }
+            }
+        }
+
+        public override void RedoLog(ILogRecord record, ITransaction tran)
+        {
+            var redoContent = record.GetRedoContent();
+            ApplyLog(redoContent.DataToApply, redoContent.DiffStart);
+        }
+
+        public override void UndoLog(ILogRecord record, ITransaction tran)
+        {
+            var undoContent = record.GetUndoContent();
+            ApplyLog(undoContent.DataToUndo, undoContent.DiffStart);
+        }
     }
 }

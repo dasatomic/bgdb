@@ -71,7 +71,6 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
 
-
             using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
@@ -86,7 +85,7 @@ namespace E2EQueryExecutionTests
                 Assert.AreEqual("mystring2", result[1].StringCols[0]);
 
                 // TODO: If this is readonly tran I don't need to commit.
-                // It should be enough to just relese the resources.
+                // It should be enough to just release the resources.
                 await tran.Commit();
             }
         }

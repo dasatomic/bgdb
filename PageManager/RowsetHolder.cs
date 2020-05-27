@@ -262,7 +262,6 @@ namespace PageManager
         {
             this.rowsetCount = elemCount;
 
-            // TODO: Use memory stream for this.
             for (int i = 0; i < intColumns.Length; i++)
             {
                 intColumns[i] = new int[this.rowsetCount];

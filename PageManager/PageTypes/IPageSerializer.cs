@@ -44,5 +44,7 @@ namespace PageManager
         public abstract PageType PageType();
         public abstract void Persist(Stream destination);
         public abstract T Fetch();
+        public abstract void RedoLog(ILogRecord record, ITransaction tran);
+        public abstract void UndoLog(ILogRecord record, ITransaction tran);
     }
 }

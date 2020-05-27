@@ -10,5 +10,6 @@
 
     public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator
     {
+        public IPage GetPage(ulong pageId, ITransaction tran);
     }
 }

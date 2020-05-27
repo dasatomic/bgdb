@@ -181,5 +181,57 @@ namespace PageManager
             uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
+
+        private void ApplyDiff(byte[] data, int diffStart)
+        {
+            ushort position = (ushort)IPage.FirstElementPosition;
+
+            for (int elemPos = 0; elemPos < this.items.Length; elemPos++)
+            {
+                if (position == diffStart)
+                {
+                    using (MemoryStream ms = new MemoryStream(data))
+                    using (BinaryReader br = new BinaryReader(ms))
+                    {
+                        while (ms.Length != ms.Position)
+                        {
+                            int elemSize = br.ReadUInt16();
+                            this.items[elemPos] = br.ReadChars(elemSize);
+                            elemPos++;
+                        }
+                    }
+
+                    break;
+                }
+
+                position += (ushort)(this.items[elemPos].Length + 1);
+            }
+        }
+
+        public override void RedoLog(ILogRecord record, ITransaction tran)
+        {
+            if (record.GetRecordType() == LogRecordType.PageModify)
+            {
+                var redoContent = record.GetRedoContent();
+                ApplyDiff(redoContent.DataToApply, redoContent.DiffStart);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public override void UndoLog(ILogRecord record, ITransaction tran)
+        {
+            if (record.GetRecordType() == LogRecordType.PageModify)
+            {
+                var undoContent = record.GetUndoContent();
+                ApplyDiff(undoContent.DataToUndo, undoContent.DiffStart);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }

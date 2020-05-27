@@ -14,7 +14,7 @@ namespace PageManager
     public interface ITransaction : IDisposable
     {
         ulong TranscationId();
-        void Rollback();
+        Task Rollback();
         Task Commit();
         void AddRecord(ILogRecord logRecord);
         IEnumerable<ILogRecord> GetRecords();

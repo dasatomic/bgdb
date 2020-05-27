@@ -25,5 +25,10 @@ namespace LogManager
 
             await storage.BaseStream.FlushAsync();
         }
+
+        public async Task Flush()
+        {
+            await this.storage.BaseStream.FlushAsync();
+        }
     }
 }

@@ -30,8 +30,9 @@ namespace Test.Common
             return TransactionState.Committed;
         }
 
-        public void Rollback()
+        public Task Rollback()
         {
+            return Task.CompletedTask;
         }
 
         public ulong TranscationId()

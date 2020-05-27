@@ -41,5 +41,43 @@ namespace PageManager
                 }
             }
         }
+
+        public override void RedoLog(ILogRecord record, ITransaction tran)
+        {
+            if (record.GetRecordType() == LogRecordType.PageModify)
+            {
+                var redoContent = record.GetRedoContent();
+                int elemDiffPosition = (redoContent.DiffStart - (ushort)IPage.FirstElementPosition) / sizeof(long);
+                int elemDiffCount = redoContent.DataToApply.Length / sizeof(long);
+
+                for (int i = 0; i < elemDiffCount; i++)
+                {
+                    this.items[i + elemDiffPosition] = BitConverter.ToInt64(redoContent.DataToApply, i * sizeof(long));
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public override void UndoLog(ILogRecord record, ITransaction tran)
+        {
+            if (record.GetRecordType() == LogRecordType.PageModify)
+            {
+                var redoContent = record.GetUndoContent();
+                int elemDiffPosition = (redoContent.DiffStart - (ushort)IPage.FirstElementPosition) / sizeof(long);
+                int elemDiffCount = redoContent.DataToUndo.Length / sizeof(long);
+
+                for (int i = 0; i < elemDiffCount; i++)
+                {
+                    this.items[i + elemDiffPosition] = BitConverter.ToInt64(redoContent.DataToUndo, i * sizeof(long));
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }

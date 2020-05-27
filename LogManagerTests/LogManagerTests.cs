@@ -33,6 +33,8 @@ namespace LogManagerTests
                 // Read the stream from beginning
                 stream.Position = 0;
 
+                Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
+
                 using (BinaryReader br = new BinaryReader(stream))
                 {
                     LogRecordType lrType = (LogRecordType)br.ReadByte();
@@ -44,7 +46,42 @@ namespace LogManagerTests
                     Assert.AreEqual(2, recordFromLog.PageOffsetDiffStart);
                     Assert.AreEqual(new byte[] { 1, 2, 3 }, recordFromLog.DiffOldValue);
                     Assert.AreEqual(new byte[] { 3, 2, 1 }, recordFromLog.DiffNewValue);
+
+                    lrType = (LogRecordType)br.ReadByte();
+                    Assert.AreEqual(LogRecordType.Commit, lrType);
+                    ulong tranId = br.ReadUInt64();
+                    Assert.AreEqual(tran1.TranscationId(), tranId);
                 }
+            }
+        }
+
+        [Test]
+        public async Task Rollback()
+        {
+            using (Stream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                IPageManager pageManager = new InMemoryPageManager(4096);
+                ILogManager manager = new LogManager.LogManager(writer);
+
+
+                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+
+                var page = pageManager.AllocatePageInt(0, 0, tran1);
+                page.Store(new[] { 3, 2, 1 });
+
+                ILogRecord record1 =
+                    new PageModifyRecord(
+                        pageId: page.PageId(),
+                        pageOffsetDiffStart: 2,
+                        diffOldValue: new byte[] { 1, 2, 3 },
+                        diffNewValue: new byte[] { 3, 2, 1 },
+                        transactionId: tran1.TranscationId());
+
+                tran1.AddRecord(record1);
+                await tran1.Rollback();
+
+                Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
             }
         }
     }

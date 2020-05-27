@@ -6,5 +6,6 @@ namespace LogManager
     public interface ILogManager
     {
         public Task CommitTransaction(ITransaction tran);
+        public Task Flush();
     }
 }

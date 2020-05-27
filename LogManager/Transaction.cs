@@ -37,12 +37,12 @@ namespace LogManager
             this.state = TransactionState.Committed;
         }
 
-        public void Rollback()
+        public async Task Rollback()
         {
             this.logRecords.Reverse();
             foreach (ILogRecord record in this.logRecords)
             {
-                record.Undo(this.pageManager);
+                await record.Undo(this.pageManager, this);
             }
 
             this.state = TransactionState.RollBacked;

@@ -14,6 +14,8 @@ namespace PageManager
         public void SetPrevPageId(ulong prevPageId);
         public uint RowCount();
         public uint MaxRowCount();
+        public void RedoLog(ILogRecord record, ITransaction tran);
+        public void UndoLog(ILogRecord record, ITransaction tran);
 
         internal const uint PageIdPosition = 0;
         internal const uint PageSizePosition = 8;
