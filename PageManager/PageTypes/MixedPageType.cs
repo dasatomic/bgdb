@@ -76,7 +76,7 @@ namespace PageManager
             return this.items;
         }
 
-        public override void Merge(RowsetHolder item)
+        public override void Merge(RowsetHolder item, ITransaction transaction)
         {
             this.items.Merge(item);
             this.rowCount = this.items.GetRowCount();

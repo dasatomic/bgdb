@@ -33,7 +33,7 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2, 3, 4 };
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, page.RowCount());
-            page.Merge(startArray);
+            page.Merge(startArray, new DummyTran());
             Assert.AreEqual(startArray.Length, page.RowCount());
         }
 
@@ -58,7 +58,7 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2 };
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            page.Merge(startArray);
+            page.Merge(startArray, new DummyTran());
             long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -71,11 +71,11 @@ namespace PageManagerTests
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            page.Merge(startArray);
+            page.Merge(startArray, new DummyTran());
             long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
 
-            page.Merge(secondArray);
+            page.Merge(secondArray, new DummyTran());
             content = page.Fetch();
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
@@ -92,7 +92,7 @@ namespace PageManagerTests
                     array[i] = i;
                 }
 
-                page.Merge(array);
+                page.Merge(array, new DummyTran());
             });
         }
     }

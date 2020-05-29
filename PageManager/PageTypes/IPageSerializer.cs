@@ -9,7 +9,7 @@ namespace PageManager
         public void Persist(Stream destination);
         public bool CanFit(T items);
         public uint GetSizeNeeded(T items);
-        public void Merge(T items);
+        public void Merge(T items, ITransaction transaction);
         public T Fetch();
     }
 
@@ -34,7 +34,7 @@ namespace PageManager
         // Abstract fields.
         public abstract uint MaxRowCount();
 
-        public abstract void Merge(T items);
+        public abstract void Merge(T items, ITransaction transaction);
         public abstract uint GetSizeNeeded(T items);
         public abstract bool CanFit(T items);
         public abstract PageType PageType();

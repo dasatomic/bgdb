@@ -93,7 +93,7 @@ namespace PageManager
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
-        public override void Merge(char[][] items)
+        public override void Merge(char[][] items, ITransaction transaction)
         {
             uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
             if (this.pageSize - IPage.FirstElementPosition < size)

@@ -53,7 +53,7 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray);
+            strPage.Merge(startArray, new DummyTran());
             char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -75,11 +75,11 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            strPage.Merge(startArray);
+            strPage.Merge(startArray, new DummyTran());
             char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            strPage.Merge(secondArray);
+            strPage.Merge(secondArray, new DummyTran());
             content = strPage.Fetch();
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
@@ -96,7 +96,7 @@ namespace PageManagerTests
                     array[i] = "0123".ToCharArray();
                 }
 
-                strPage.Merge(array);
+                strPage.Merge(array, new DummyTran());
             });
         }
 
@@ -112,7 +112,7 @@ namespace PageManagerTests
                 array[i] = "0123".ToCharArray();
             }
 
-            strPage.Merge(array);
+            strPage.Merge(array, new DummyTran());
             char[][] content = strPage.Fetch();
 
             Assert.AreEqual(array, content);
@@ -134,8 +134,8 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray);
-            strPage.Merge(secondArray);
+            strPage.Merge(startArray, new DummyTran());
+            strPage.Merge(secondArray, new DummyTran());
             char[][] result = strPage.Fetch();
 
             Assert.AreEqual(startArray.Concat(secondArray), result);
@@ -223,7 +223,7 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray);
+            strPage.Merge(startArray, new DummyTran());
 
             byte[] content = new byte[DefaultSize];
 

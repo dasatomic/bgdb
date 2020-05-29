@@ -80,7 +80,7 @@ namespace PageManager
             return (uint)items.Length * (uint)Marshal.SizeOf(default(T));
         }
 
-        public override void Merge(T[] items)
+        public override void Merge(T[] items, ITransaction transaction)
         {
             if (!CanFit(items))
             {
@@ -89,6 +89,8 @@ namespace PageManager
 
             this.items = this.items.Concat(items).ToArray();
             this.rowCount = (uint)this.items.Length;
+
+            // TODO: Need to fire transaction here.
         }
 
         public override T[] Fetch()

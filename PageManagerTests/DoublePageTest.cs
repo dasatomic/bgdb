@@ -48,7 +48,7 @@ namespace PageManagerTests
         {
             double[] startArray = new double[] { 1, 2, 3, 4 };
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); ;
-            page.Merge(startArray);
+            page.Merge(startArray, new DummyTran());
             double[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -60,11 +60,11 @@ namespace PageManagerTests
             double[] secondArray = new double[] { 5, 6 };
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            doublePage.Merge(startArray);
+            doublePage.Merge(startArray, new DummyTran());
             double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            doublePage.Merge(secondArray);
+            doublePage.Merge(secondArray, new DummyTran());
             content = doublePage.Fetch();
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
@@ -81,7 +81,7 @@ namespace PageManagerTests
         {
             Assert.Throws<SerializationException>(() => {
                 DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-                doublePage.Merge(new double[doublePage.MaxRowCount() + 1]);
+                doublePage.Merge(new double[doublePage.MaxRowCount() + 1], new DummyTran());
             });
         }
 
@@ -90,7 +90,7 @@ namespace PageManagerTests
         {
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             double[] startArray = new double[doublePage.MaxRowCount()];
-            doublePage.Merge(startArray);
+            doublePage.Merge(startArray, new DummyTran());
             double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
         }

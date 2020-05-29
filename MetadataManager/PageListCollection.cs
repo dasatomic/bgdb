@@ -67,13 +67,13 @@ namespace MetadataManager
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 if (currPage.CanFit(item))
                 {
-                    currPage.Merge(item);
+                    currPage.Merge(item, tran);
                     return;
                 }
             }
 
             currPage = this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), 0, tran);
-            currPage.Merge(item);
+            currPage.Merge(item, tran);
         }
 
         public List<RowsetHolder> Where(Func<RowsetHolder, bool> filter, ITransaction tran)

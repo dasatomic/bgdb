@@ -40,7 +40,7 @@ namespace PageManagerTests
             ulong pageId = page2.PageId();
 
             int[] items = new int[] { 1, 2, 3 };
-            page2.Merge(items);
+            page2.Merge(items, new DummyTran());
 
             pageManager.SavePage(page2, tran);
             page2 = pageManager.GetPageInt(pageId, tran);
@@ -94,7 +94,7 @@ namespace PageManagerTests
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-            page.Merge(holder);
+            page.Merge(holder, new DummyTran());
 
             pageManager.SavePage(page, tran);
 
