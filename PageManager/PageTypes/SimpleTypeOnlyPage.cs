@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogManager;
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -13,7 +14,7 @@ namespace PageManager
 
         protected virtual uint FooterLenght() => 0;
 
-        public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType, ulong prevPageId, ulong nextPageId)
+        public SimpleTypeOnlyPage(uint pageSize, ulong pageId, PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction transaction)
         {
             if (pageSize < IPage.FirstElementPosition + (uint)Marshal.SizeOf(default(T)))
             {
@@ -30,6 +31,9 @@ namespace PageManager
             this.pageType = pageType;
             this.nextPageId = nextPageId;
             this.prevPageId = prevPageId;
+
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, transaction.TranscationId(), pageType, pageSize, nextPageId, prevPageId);
+            transaction.AddRecord(logRecord);
 
             Store(new T[0]);
         }

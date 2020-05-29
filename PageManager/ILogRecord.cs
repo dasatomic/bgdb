@@ -8,6 +8,7 @@ namespace PageManager
         RowModify,
         Commit,
         Rollback,
+        AllocatePage,
     }
 
     public struct RedoContent

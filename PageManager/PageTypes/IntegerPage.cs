@@ -11,7 +11,8 @@ namespace PageManager
 
     public class IntegerOnlyPage : SimpleTypeOnlyPage<int>
     {
-        public IntegerOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.IntPage, prevPageId, nextPageId) { }
+        public IntegerOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction transaction) 
+            : base(pageSize, pageId, PageManager.PageType.IntPage, prevPageId, nextPageId, transaction) { }
         public IntegerOnlyPage(BinaryReader stream) : base(stream, PageManager.PageType.IntPage) { }
 
         protected override void SerializeInternal(BinaryReader stream)

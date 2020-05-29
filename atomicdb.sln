@@ -27,9 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ParserLexerTests", "ParserL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "E2EQueryExecutionTests", "E2EQueryExecutionTests\E2EQueryExecutionTests.csproj", "{3F86B6C5-CB0C-48DF-B5E1-3774E0D25993}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogManager", "LogManager\LogManager.csproj", "{8CEB632B-E09A-4538-A477-37216C0E4925}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogManagerTests", "LogManagerTests\LogManagerTests.csproj", "{208A950E-058F-4765-B7FE-945B5F05E669}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogManagerTests", "LogManagerTests\LogManagerTests.csproj", "{208A950E-058F-4765-B7FE-945B5F05E669}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,10 +83,6 @@ Global
 		{3F86B6C5-CB0C-48DF-B5E1-3774E0D25993}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F86B6C5-CB0C-48DF-B5E1-3774E0D25993}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F86B6C5-CB0C-48DF-B5E1-3774E0D25993}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8CEB632B-E09A-4538-A477-37216C0E4925}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8CEB632B-E09A-4538-A477-37216C0E4925}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8CEB632B-E09A-4538-A477-37216C0E4925}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8CEB632B-E09A-4538-A477-37216C0E4925}.Release|Any CPU.Build.0 = Release|Any CPU
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Release|Any CPU.ActiveCfg = Release|Any CPU

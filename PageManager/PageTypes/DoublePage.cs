@@ -11,7 +11,8 @@ namespace PageManager
 
     public class DoubleOnlyPage : SimpleTypeOnlyPage<double>
     {
-        public DoubleOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId) : base(pageSize, pageId, PageManager.PageType.DoublePage, prevPageId, nextPageId) { }
+        public DoubleOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction tran) : 
+            base(pageSize, pageId, PageManager.PageType.DoublePage, prevPageId, nextPageId, tran) { }
         public DoubleOnlyPage(BinaryReader stream) : base(stream, PageManager.PageType.DoublePage) { }
 
         protected override void SerializeInternal(BinaryReader stream)

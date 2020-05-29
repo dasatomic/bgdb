@@ -36,11 +36,11 @@ namespace PageManager
 
             if (pageType == PageType.IntPage)
             {
-                page = new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId);
+                page = new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
             }
             else if (pageType == PageType.DoublePage)
             {
-                page = new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId);
+                page = new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
             }
             else if (pageType == PageType.StringPage)
             {
@@ -52,7 +52,7 @@ namespace PageManager
             }
             else if (pageType == PageType.LongPage)
             {
-                page = new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId);
+                page = new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
             }
             else
             {

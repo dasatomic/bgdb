@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using Test.Common;
 
 namespace PageManagerTests
 {
@@ -17,28 +18,28 @@ namespace PageManagerTests
         [Test]
         public void VerifyPageId()
         {
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(42, intPage.PageId());
         }
 
         [Test]
         public void VerifyPageType()
         {
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
         }
 
         [Test]
         public void VerifySizeInBytes()
         {
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(4096, intPage.SizeInBytes());
         }
 
         [Test]
         public void VerifyDeserializationEmpty()
         {
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             int[] content = intPage.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
@@ -47,7 +48,7 @@ namespace PageManagerTests
         public void VerifySerializeDeserialize()
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             intPage.Store(startArray);
             int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
@@ -57,7 +58,7 @@ namespace PageManagerTests
         public void VerifyRowCount()
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, intPage.RowCount());
             intPage.Store(startArray);
             Assert.AreEqual(startArray.Length, intPage.RowCount());
@@ -68,7 +69,7 @@ namespace PageManagerTests
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
             int[] secondArray = new int[] { 5, 6 };
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             intPage.Store(startArray);
             int[] content = intPage.Fetch();
@@ -82,15 +83,15 @@ namespace PageManagerTests
         [Test]
         public void VerifyInvalidParams()
         {
-            Assert.Throws<ArgumentException>(() => { IntegerOnlyPage intPage = new IntegerOnlyPage(0, DefaultPageId, DefaultPrevPage, DefaultNextPage); });
-            Assert.Throws<ArgumentException>(() => { IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultPageId + 1, DefaultPageId, DefaultPrevPage, DefaultNextPage); });
+            Assert.Throws<ArgumentException>(() => { IntegerOnlyPage intPage = new IntegerOnlyPage(0, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); });
+            Assert.Throws<ArgumentException>(() => { IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultPageId + 1, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); });
         }
 
         [Test]
         public void VerifySetMoreThanMax()
         {
             Assert.Throws<SerializationException>(() => {
-                IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+                IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
                 intPage.Store(new int[intPage.MaxRowCount() + 1]);
             });
         }
@@ -98,7 +99,7 @@ namespace PageManagerTests
         [Test]
         public void VerifySetMax()
         {
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             int[] startArray = new int[intPage.MaxRowCount()];
             intPage.Store(startArray);
             int[] content = intPage.Fetch();
@@ -110,7 +111,7 @@ namespace PageManagerTests
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
             int[] secondArray = new int[] { 5, 6 };
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             intPage.Store(startArray);
             intPage.Merge(secondArray);
@@ -123,7 +124,7 @@ namespace PageManagerTests
         public void VerifyFromStream()
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
-            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             intPage.Store(startArray);
 
             byte[] content = new byte[DefaultSize];
