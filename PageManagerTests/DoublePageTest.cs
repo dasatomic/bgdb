@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using PageManager;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using Test.Common;
 
@@ -47,7 +48,7 @@ namespace PageManagerTests
         {
             double[] startArray = new double[] { 1, 2, 3, 4 };
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); ;
-            page.Store(startArray);
+            page.Merge(startArray);
             double[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -59,13 +60,13 @@ namespace PageManagerTests
             double[] secondArray = new double[] { 5, 6 };
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            doublePage.Store(startArray);
+            doublePage.Merge(startArray);
             double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            doublePage.Store(secondArray);
+            doublePage.Merge(secondArray);
             content = doublePage.Fetch();
-            Assert.AreEqual(secondArray, content);
+            Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
         [Test]
@@ -80,7 +81,7 @@ namespace PageManagerTests
         {
             Assert.Throws<SerializationException>(() => {
                 DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-                doublePage.Store(new double[doublePage.MaxRowCount() + 1]);
+                doublePage.Merge(new double[doublePage.MaxRowCount() + 1]);
             });
         }
 
@@ -89,7 +90,7 @@ namespace PageManagerTests
         {
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             double[] startArray = new double[doublePage.MaxRowCount()];
-            doublePage.Store(startArray);
+            doublePage.Merge(startArray);
             double[] content = doublePage.Fetch();
             Assert.AreEqual(startArray, content);
         }

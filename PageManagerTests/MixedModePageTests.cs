@@ -28,7 +28,7 @@ namespace PageManagerTests
             RowsetHolder holder2 = new RowsetHolder(types1);
             holder2.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
 
-            page.Store(holder1);
+            page.Merge(holder1);
             page.Merge(holder2);
 
             RowsetHolder result = page.Fetch();
@@ -48,7 +48,7 @@ namespace PageManagerTests
             RowsetHolder holder = new RowsetHolder(types1);
             holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
 
-            page.Store(holder);
+            page.Merge(holder);
 
             byte[] content = new byte[DefaultSize];
 

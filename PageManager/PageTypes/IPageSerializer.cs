@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Runtime.Serialization;
 
 namespace PageManager
 {
     public interface IPageSerializer<T> : IPage
     {
-        public void Store(T items);
         public void Persist(Stream destination);
         public bool CanFit(T items);
         public uint GetSizeNeeded(T items);
@@ -40,7 +36,6 @@ namespace PageManager
 
         public abstract void Merge(T items);
         public abstract uint GetSizeNeeded(T items);
-        public abstract void Store(T items);
         public abstract bool CanFit(T items);
         public abstract PageType PageType();
         public abstract void Persist(Stream destination);

@@ -49,7 +49,7 @@ namespace PageManagerTests
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
             int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -60,7 +60,7 @@ namespace PageManagerTests
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, intPage.RowCount());
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
             Assert.AreEqual(startArray.Length, intPage.RowCount());
         }
 
@@ -71,13 +71,13 @@ namespace PageManagerTests
             int[] secondArray = new int[] { 5, 6 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
             int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            intPage.Store(secondArray);
+            intPage.Merge(secondArray);
             content = intPage.Fetch();
-            Assert.AreEqual(secondArray, content);
+            Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace PageManagerTests
         {
             Assert.Throws<SerializationException>(() => {
                 IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-                intPage.Store(new int[intPage.MaxRowCount() + 1]);
+                intPage.Merge(new int[intPage.MaxRowCount() + 1]);
             });
         }
 
@@ -101,7 +101,7 @@ namespace PageManagerTests
         {
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             int[] startArray = new int[intPage.MaxRowCount()];
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
             int[] content = intPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -113,7 +113,7 @@ namespace PageManagerTests
             int[] secondArray = new int[] { 5, 6 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
             intPage.Merge(secondArray);
 
             int[] content = intPage.Fetch();
@@ -125,7 +125,7 @@ namespace PageManagerTests
         {
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            intPage.Store(startArray);
+            intPage.Merge(startArray);
 
             byte[] content = new byte[DefaultSize];
 

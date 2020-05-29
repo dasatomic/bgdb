@@ -98,12 +98,6 @@ namespace PageManager
             return items.StorageSizeInBytes();
         }
 
-        public override void Store(RowsetHolder items)
-        {
-            this.items = items;
-            this.rowCount = this.items.GetRowCount();
-        }
-
         public override void Persist(Stream destination)
         {
             using (BinaryWriter bw = new BinaryWriter(destination))

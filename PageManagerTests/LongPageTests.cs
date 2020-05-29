@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.Linq;
 using System.Runtime.Serialization;
 using Test.Common;
 
@@ -32,7 +33,7 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2, 3, 4 };
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, page.RowCount());
-            page.Store(startArray);
+            page.Merge(startArray);
             Assert.AreEqual(startArray.Length, page.RowCount());
         }
 
@@ -57,7 +58,7 @@ namespace PageManagerTests
             long[] startArray = new long[] { 1, 2 };
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            page.Store(startArray);
+            page.Merge(startArray);
             long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -70,13 +71,13 @@ namespace PageManagerTests
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            page.Store(startArray);
+            page.Merge(startArray);
             long[] content = page.Fetch();
             Assert.AreEqual(startArray, content);
 
-            page.Store(secondArray);
+            page.Merge(secondArray);
             content = page.Fetch();
-            Assert.AreEqual(secondArray, content);
+            Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
         [Test]
@@ -91,7 +92,7 @@ namespace PageManagerTests
                     array[i] = i;
                 }
 
-                page.Store(array);
+                page.Merge(array);
             });
         }
     }

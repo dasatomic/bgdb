@@ -149,17 +149,6 @@ namespace PageManager
             throw new PageCorruptedException();
         }
 
-        public override void Store(char[][] items)
-        {
-            if (!CanFit(items))
-            {
-                throw new NotEnoughSpaceException();
-            }
-
-            this.items = items;
-            this.rowCount = (uint)items.Length;
-        }
-
         public override void Persist(Stream destination)
         {
             using (BinaryWriter bw = new BinaryWriter(destination))

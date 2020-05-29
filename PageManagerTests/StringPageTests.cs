@@ -53,7 +53,7 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Store(startArray);
+            strPage.Merge(startArray);
             char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
         }
@@ -75,13 +75,13 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            strPage.Store(startArray);
+            strPage.Merge(startArray);
             char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
 
-            strPage.Store(secondArray);
+            strPage.Merge(secondArray);
             content = strPage.Fetch();
-            Assert.AreEqual(secondArray, content);
+            Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace PageManagerTests
                     array[i] = "0123".ToCharArray();
                 }
 
-                strPage.Store(array);
+                strPage.Merge(array);
             });
         }
 
@@ -112,7 +112,7 @@ namespace PageManagerTests
                 array[i] = "0123".ToCharArray();
             }
 
-            strPage.Store(array);
+            strPage.Merge(array);
             char[][] content = strPage.Fetch();
 
             Assert.AreEqual(array, content);
@@ -134,7 +134,7 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Store(startArray);
+            strPage.Merge(startArray);
             strPage.Merge(secondArray);
             char[][] result = strPage.Fetch();
 
@@ -223,7 +223,7 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Store(startArray);
+            strPage.Merge(startArray);
 
             byte[] content = new byte[DefaultSize];
 

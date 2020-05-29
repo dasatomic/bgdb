@@ -71,7 +71,7 @@ namespace LogManagerTests
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 var page = pageManager.AllocatePageInt(0, 0, tran1);
-                page.Store(new[] { 3, 2, 1 });
+                page.Merge(new[] { 3, 2, 1 });
 
                 ILogRecord record1 =
                     new ModifyRowRecord(
@@ -102,7 +102,7 @@ namespace LogManagerTests
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 var page = pageManager.AllocatePageStr(0, 0, tran1);
-                page.Store(new[] { "TEST1".ToCharArray(), "TEST2".ToCharArray(), "TEST3".ToCharArray() });
+                page.Merge(new[] { "TEST1".ToCharArray(), "TEST2".ToCharArray(), "TEST3".ToCharArray() });
 
                 ILogRecord record1 =
                     new ModifyRowRecord(
@@ -138,7 +138,7 @@ namespace LogManagerTests
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
 
-                page.Store(holder);
+                page.Merge(holder);
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);

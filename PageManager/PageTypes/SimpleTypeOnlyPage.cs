@@ -35,7 +35,7 @@ namespace PageManager
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, transaction.TranscationId(), pageType, pageSize, nextPageId, prevPageId, null);
             transaction.AddRecord(logRecord);
 
-            Store(new T[0]);
+            this.items = new T[0];
         }
 
         public SimpleTypeOnlyPage(BinaryReader stream, PageType pageType)
@@ -72,7 +72,7 @@ namespace PageManager
 
         public override bool CanFit(T[] items)
         {
-            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() >= (uint)Marshal.SizeOf(default(T)) * items.Length;
+            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T)) * items.Length;
         }
 
         public override uint GetSizeNeeded(T[] items)
@@ -82,23 +82,18 @@ namespace PageManager
 
         public override void Merge(T[] items)
         {
+            if (!CanFit(items))
+            {
+                throw new SerializationException();
+            }
+
             this.items = this.items.Concat(items).ToArray();
+            this.rowCount = (uint)this.items.Length;
         }
 
         public override T[] Fetch()
         {
             return this.items;
-        }
-        public override void Store(T[] items)
-        {
-            uint neededSize = this.GetSizeNeeded(items);
-            if (neededSize > this.pageSize - IPage.FirstElementPosition)
-            {
-                throw new SerializationException();
-            }
-
-            this.items = items;
-            this.rowCount = (uint)items.Length;
         }
 
         protected abstract void SerializeInternal(BinaryReader stream);
