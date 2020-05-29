@@ -114,38 +114,44 @@ namespace PageManager
             }
         }
 
-        private void ApplyLog(byte[] data, ushort offset)
-        {
-            // TODO: this is not efficient.
-            byte[] content = new byte[this.pageSize];
-            using (MemoryStream ms = new MemoryStream(content))
-            {
-                this.Persist(ms);
-                // Overwrite.
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Seek(offset, SeekOrigin.Begin);
-                    bw.Write(data);
-
-                }
-
-                using (BinaryReader br = new BinaryReader(ms))
-                {
-                    this.items.Deserialize(br, this.rowCount);
-                }
-            }
-        }
-
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            var redoContent = record.GetRedoContent();
-            ApplyLog(redoContent.DataToApply, redoContent.DiffStart);
+            if (record.GetRecordType() == LogRecordType.RowModify)
+            {
+                var redoContent = record.GetRedoContent();
+
+                using (MemoryStream ms = new MemoryStream(redoContent.DataToApply))
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    var rs = new RowsetHolder(this.columnTypes);
+                    rs.Deserialize(br, 1);
+                    this.items.ModifyRow(redoContent.RowPosition, rs);
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
-            var undoContent = record.GetUndoContent();
-            ApplyLog(undoContent.DataToUndo, undoContent.DiffStart);
+            if (record.GetRecordType() == LogRecordType.RowModify)
+            {
+                var undoContent = record.GetUndoContent();
+
+                using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
+                using (BinaryReader br = new BinaryReader(ms))
+                {
+                    var rs = new RowsetHolder(this.columnTypes);
+                    rs.Deserialize(br, 1);
+                    this.items.ModifyRow(undoContent.RowPosition, rs);
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

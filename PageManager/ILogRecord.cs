@@ -5,7 +5,7 @@ namespace PageManager
 {
     public enum LogRecordType
     {
-        PageModify,
+        RowModify,
         Commit,
         Rollback,
     }
@@ -13,17 +13,17 @@ namespace PageManager
     public struct RedoContent
     {
         public readonly byte[] DataToApply;
-        public readonly ushort DiffStart;
+        public readonly ushort RowPosition;
 
-        public RedoContent(byte[] dataToApply, ushort diffStart) => (DataToApply, DiffStart) = (dataToApply, diffStart);
+        public RedoContent(byte[] dataToApply, ushort rowPosition) => (DataToApply, RowPosition) = (dataToApply, rowPosition);
     }
 
     public struct UndoContent
     {
         public readonly byte[] DataToUndo;
-        public readonly ushort DiffStart;
+        public readonly ushort RowPosition;
 
-        public UndoContent(byte[] dataToUndo, ushort diffStart) => (DataToUndo, DiffStart) = (dataToUndo, diffStart);
+        public UndoContent(byte[] dataToUndo, ushort rowPosition) => (DataToUndo, RowPosition) = (dataToUndo, rowPosition);
     }
 
     public interface ILogRecord

@@ -44,16 +44,10 @@ namespace PageManager
 
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.PageModify)
+            if (record.GetRecordType() == LogRecordType.RowModify)
             {
                 var redoContent = record.GetRedoContent();
-                int elemDiffPosition = (redoContent.DiffStart - (ushort)IPage.FirstElementPosition) / sizeof(double);
-                int elemDiffCount = redoContent.DataToApply.Length / sizeof(double);
-
-                for (int i = 0; i < elemDiffCount; i++)
-                {
-                    this.items[i + elemDiffPosition] = BitConverter.ToDouble(redoContent.DataToApply, i * sizeof(double));
-                }
+                this.items[redoContent.RowPosition] = BitConverter.ToDouble(redoContent.DataToApply);
             }
             else
             {
@@ -63,16 +57,10 @@ namespace PageManager
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.PageModify)
+            if (record.GetRecordType() == LogRecordType.RowModify)
             {
-                var redoContent = record.GetUndoContent();
-                int elemDiffPosition = (redoContent.DiffStart - (ushort)IPage.FirstElementPosition) / sizeof(double);
-                int elemDiffCount = redoContent.DataToUndo.Length / sizeof(double);
-
-                for (int i = 0; i < elemDiffCount; i++)
-                {
-                    this.items[i + elemDiffPosition] = BitConverter.ToDouble(redoContent.DataToUndo, i * sizeof(double));
-                }
+                var undoContent = record.GetUndoContent();
+                this.items[undoContent.RowPosition] = BitConverter.ToDouble(undoContent.DataToUndo);
             }
             else
             {

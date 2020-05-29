@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 namespace LogManager
 {
 
-    public struct PageModifyRecord : ILogRecord
+    public struct ModifyRowRecord : ILogRecord
     {
         public readonly ulong PageId;
-        public readonly ushort PageOffsetDiffStart;
+        public readonly ushort RowPosition;
         public readonly byte[] DiffOldValue;
         public readonly byte[] DiffNewValue;
         public readonly ulong TranscationId;
 
-        public PageModifyRecord(ulong pageId, ushort pageOffsetDiffStart, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId)
+        public ModifyRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId)
         {
             if (diffOldValue.Length != diffNewValue.Length)
             {
@@ -22,17 +22,17 @@ namespace LogManager
             }
 
             this.PageId = pageId;
-            this.PageOffsetDiffStart = pageOffsetDiffStart;
+            this.RowPosition = rowPosition;
             this.DiffOldValue = diffOldValue;
             this.DiffNewValue = diffNewValue;
             this.TranscationId = transactionId;
         }
 
-        public PageModifyRecord(BinaryReader source)
+        public ModifyRowRecord(BinaryReader source)
         {
             this.TranscationId = source.ReadUInt64();
             this.PageId = source.ReadUInt64();
-            this.PageOffsetDiffStart = source.ReadUInt16();
+            this.RowPosition = source.ReadUInt16();
             int bc = source.ReadUInt16();
             this.DiffOldValue = source.ReadBytes(bc);
             this.DiffNewValue = source.ReadBytes(bc);
@@ -40,16 +40,16 @@ namespace LogManager
 
         public void Serialize(BinaryWriter destination)
         {
-            destination.Write((byte)LogRecordType.PageModify);
+            destination.Write((byte)LogRecordType.RowModify);
             destination.Write(this.TranscationId);
             destination.Write(this.PageId);
-            destination.Write(this.PageOffsetDiffStart);
+            destination.Write(this.RowPosition);
             destination.Write((ushort)this.DiffOldValue.Length);
             destination.Write(this.DiffOldValue);
             destination.Write(this.DiffNewValue);
         }
 
-        public LogRecordType GetRecordType() => LogRecordType.PageModify;
+        public LogRecordType GetRecordType() => LogRecordType.RowModify;
 
         public ulong TransactionId() => this.TranscationId;
 
@@ -68,12 +68,12 @@ namespace LogManager
 
         public RedoContent GetRedoContent()
         {
-            return new RedoContent(this.DiffNewValue, this.PageOffsetDiffStart);
+            return new RedoContent(this.DiffNewValue, this.RowPosition);
         }
 
         public UndoContent GetUndoContent()
         {
-            return new UndoContent(this.DiffOldValue, this.PageOffsetDiffStart);
+            return new UndoContent(this.DiffOldValue, this.RowPosition);
         }
     }
 }

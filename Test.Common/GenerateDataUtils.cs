@@ -10,7 +10,8 @@ namespace Test.Common
             out int[][] intColumns,
             out double[][] doubleColumns,
             out long[][] pagePointerColumns,
-            out PagePointerOffsetPair[][] pagePointerOffsetColumns)
+            out PagePointerOffsetPair[][] pagePointerOffsetColumns,
+            int rowCount = 5)
         {
             types = new ColumnType[]
             {
@@ -26,8 +27,6 @@ namespace Test.Common
             int doubleColumnCount = types.Count(t => t == ColumnType.Double);
             int pagePointerOffsetCount = types.Count(t => t == ColumnType.StringPointer);
             int pagePointerCount = types.Count(t => t == ColumnType.PagePointer);
-
-            const int rowCount = 5;
 
             intColumns = new int[intColumnCount][];
             for (int i = 0; i < intColumns.Length; i++)

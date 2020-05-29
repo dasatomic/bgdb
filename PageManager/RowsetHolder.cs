@@ -19,6 +19,7 @@ namespace PageManager
         public uint GetRowCount();
         public void Merge(RowsetHolder rowsetHolder);
         public ColumnType[] GetColumnTypes();
+        public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder);
     }
 
     public struct RowHolder
@@ -354,7 +355,6 @@ namespace PageManager
                 {
                     this.pagePointerOffsetColumns[i] = this.pagePointerOffsetColumns[i].Concat(rowsetHolder.pagePointerOffsetColumns[i]).ToArray();
                 }
-
             }
 
             for (int i = 0; i < this.intColumns.Length; i++)
@@ -367,7 +367,6 @@ namespace PageManager
                 {
                     this.intColumns[i] = this.intColumns[i].Concat(rowsetHolder.intColumns[i]).ToArray();
                 }
-
             }
 
             for (int i = 0; i < this.doubleColumns.Length; i++)
@@ -395,6 +394,47 @@ namespace PageManager
             }
 
             this.rowsetCount += rowsetHolder.rowsetCount;
+        }
+
+        public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder)
+        {
+            if (rowsetHolder.Count() != 1)
+            {
+                throw new ArgumentException();
+            }
+
+            if (this.columnIdToTypeIdMappers.Length != rowsetHolder.columnIdToTypeIdMappers.Length)
+            {
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < this.columnIdToTypeIdMappers.Length; i++)
+            {
+                if (this.columnIdToTypeIdMappers[i] != rowsetHolder.columnIdToTypeIdMappers[i])
+                {
+                    throw new ArgumentException();
+                }
+            }
+
+            for (int i = 0; i < this.pagePointerOffsetColumns.Length; i++)
+            {
+                this.pagePointerOffsetColumns[i][rowNumber] = rowsetHolder.pagePointerOffsetColumns[i][0];
+            }
+
+            for (int i = 0; i < this.intColumns.Length; i++)
+            {
+                this.intColumns[i][rowNumber] = rowsetHolder.intColumns[i][0];
+            }
+
+            for (int i = 0; i < this.doubleColumns.Length; i++)
+            {
+                this.doubleColumns[i][rowNumber] = rowsetHolder.doubleColumns[i][0];
+            }
+
+            for (int i = 0; i < this.pagePointerColumns.Length; i++)
+            {
+                this.pagePointerColumns[i][rowNumber] = rowsetHolder.pagePointerColumns[i][0];
+            }
         }
 
         public ColumnType[] GetColumnTypes() => this.columnTypes;

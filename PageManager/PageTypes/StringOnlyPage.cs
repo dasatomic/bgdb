@@ -182,38 +182,22 @@ namespace PageManager
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
-        private void ApplyDiff(byte[] data, int diffStart)
+        private void ApplyDiff(byte[] data, int rowPosition)
         {
-            ushort position = (ushort)IPage.FirstElementPosition;
-
-            for (int elemPos = 0; elemPos < this.items.Length; elemPos++)
+            using (MemoryStream ms = new MemoryStream(data))
+            using (BinaryReader br = new BinaryReader(ms))
             {
-                if (position == diffStart)
-                {
-                    using (MemoryStream ms = new MemoryStream(data))
-                    using (BinaryReader br = new BinaryReader(ms))
-                    {
-                        while (ms.Length != ms.Position)
-                        {
-                            int elemSize = br.ReadUInt16();
-                            this.items[elemPos] = br.ReadChars(elemSize);
-                            elemPos++;
-                        }
-                    }
-
-                    break;
-                }
-
-                position += (ushort)(this.items[elemPos].Length + 1);
+                int elemSize = br.ReadUInt16();
+                this.items[rowPosition] = br.ReadChars(elemSize);
             }
         }
 
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.PageModify)
+            if (record.GetRecordType() == LogRecordType.RowModify)
             {
                 var redoContent = record.GetRedoContent();
-                ApplyDiff(redoContent.DataToApply, redoContent.DiffStart);
+                ApplyDiff(redoContent.DataToApply, redoContent.RowPosition);
             }
             else
             {
@@ -223,10 +207,10 @@ namespace PageManager
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.PageModify)
+            if (record.GetRecordType() == LogRecordType.RowModify)
             {
                 var undoContent = record.GetUndoContent();
-                ApplyDiff(undoContent.DataToUndo, undoContent.DiffStart);
+                ApplyDiff(undoContent.DataToUndo, undoContent.RowPosition);
             }
             else
             {
