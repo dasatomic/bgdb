@@ -43,10 +43,13 @@ namespace LogManager
                         break;
                     case LogRecordType.Rollback: break;
                     case LogRecordType.RowModify:
-                        rc = new ModifyRowRecord(reader);
+                        rc = new UpdateRowRecord(reader);
                         break;
                     case LogRecordType.AllocatePage:
                         rc = new AllocatePageLogRecord(reader);
+                        break;
+                    case LogRecordType.RowInsert:
+                        rc = new InsertRowRecord(reader);
                         break;
                 }
 
@@ -78,7 +81,10 @@ namespace LogManager
                     case LogRecordType.Commit: break;
                     case LogRecordType.Rollback: break;
                     case LogRecordType.RowModify:
-                        rc = new ModifyRowRecord(reader);
+                        rc = new UpdateRowRecord(reader);
+                        break;
+                    case LogRecordType.RowInsert:
+                        rc = new InsertRowRecord(reader);
                         break;
                     case LogRecordType.AllocatePage:
                         rc = new AllocatePageLogRecord(reader);

@@ -24,7 +24,7 @@ namespace LogManagerTests
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 ILogRecord record1 =
-                    new ModifyRowRecord(
+                    new UpdateRowRecord(
                         pageId: 1,
                         rowPosition: 2,
                         diffOldValue: new byte[] { 1, 2, 3 },
@@ -44,7 +44,7 @@ namespace LogManagerTests
                     LogRecordType lrType = (LogRecordType)br.ReadByte();
                     Assert.AreEqual(LogRecordType.RowModify, lrType);
 
-                    ModifyRowRecord recordFromLog = new ModifyRowRecord(br);
+                    UpdateRowRecord recordFromLog = new UpdateRowRecord(br);
                     Assert.AreEqual(LogRecordType.RowModify, recordFromLog.GetRecordType());
                     Assert.AreEqual(tran1.TranscationId(), recordFromLog.TransactionId());
                     Assert.AreEqual(2, recordFromLog.RowPosition);
@@ -74,7 +74,7 @@ namespace LogManagerTests
                 page.Merge(new[] { 3, 2, 1 }, tran1);
 
                 ILogRecord record1 =
-                    new ModifyRowRecord(
+                    new UpdateRowRecord(
                         pageId: page.PageId(),
                         rowPosition: 2,
                         diffOldValue: BitConverter.GetBytes(42),
@@ -105,7 +105,7 @@ namespace LogManagerTests
                 page.Merge(new[] { "TEST1".ToCharArray(), "TEST2".ToCharArray(), "TEST3".ToCharArray() }, tran1);
 
                 ILogRecord record1 =
-                    new ModifyRowRecord(
+                    new UpdateRowRecord(
                         pageId: page.PageId(),
                         rowPosition: 2,
                         diffOldValue: BitConverter.GetBytes((short)9).Concat(Encoding.ASCII.GetBytes("OLD VALUE")).ToArray(),
@@ -152,7 +152,7 @@ namespace LogManagerTests
                 }
 
                 ILogRecord record1 =
-                    new ModifyRowRecord(
+                    new UpdateRowRecord(
                         pageId: page.PageId(),
                         rowPosition: 2,
                         diffOldValue: serializedRow,

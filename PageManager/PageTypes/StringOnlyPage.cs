@@ -178,37 +178,55 @@ namespace PageManager
 
         private void ApplyDiff(byte[] data, int rowPosition)
         {
-            using (MemoryStream ms = new MemoryStream(data))
-            using (BinaryReader br = new BinaryReader(ms))
-            {
-                int elemSize = br.ReadUInt16();
-                this.items[rowPosition] = br.ReadChars(elemSize);
-            }
         }
 
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.RowModify)
+            var redoContent = record.GetRedoContent();
+            using (MemoryStream ms = new MemoryStream(redoContent.DataToApply))
+            using (BinaryReader br = new BinaryReader(ms))
             {
-                var redoContent = record.GetRedoContent();
-                ApplyDiff(redoContent.DataToApply, redoContent.RowPosition);
-            }
-            else
-            {
-                throw new NotImplementedException();
+                if (record.GetRecordType() == LogRecordType.RowModify)
+                {
+                    int elemSize = br.ReadUInt16();
+                    this.items[redoContent.RowPosition] = br.ReadChars(elemSize);
+                }
+                else if (record.GetRecordType() == LogRecordType.RowInsert)
+                {
+                    if (redoContent.RowPosition != items.Length)
+                    {
+                        throw new LogCorruptedException();
+                    }
+
+                    int elemSize = br.ReadUInt16();
+                    this.items = this.items.Concat(new char[][] { br.ReadChars(elemSize) }).ToArray();
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.RowModify)
+            var undoContent = record.GetUndoContent();
+            using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
+            using (BinaryReader br = new BinaryReader(ms))
             {
-                var undoContent = record.GetUndoContent();
-                ApplyDiff(undoContent.DataToUndo, undoContent.RowPosition);
-            }
-            else
-            {
-                throw new NotImplementedException();
+                if (record.GetRecordType() == LogRecordType.RowModify)
+                {
+                    int elemSize = br.ReadUInt16();
+                    this.items[undoContent.RowPosition] = br.ReadChars(elemSize);
+                }
+                else if (record.GetRecordType() == LogRecordType.RowInsert)
+                {
+                    this.items = this.items.Take(this.items.Length - 1).ToArray();
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 

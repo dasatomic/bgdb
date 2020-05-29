@@ -115,29 +115,40 @@ namespace PageManager
 
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            if (record.GetRecordType() == LogRecordType.RowModify)
-            {
-                var redoContent = record.GetRedoContent();
+            var redoContent = record.GetRedoContent();
 
-                using (MemoryStream ms = new MemoryStream(redoContent.DataToApply))
-                using (BinaryReader br = new BinaryReader(ms))
+            using (MemoryStream ms = new MemoryStream(redoContent.DataToApply))
+            using (BinaryReader br = new BinaryReader(ms))
+            {
+                var rs = new RowsetHolder(this.columnTypes);
+                rs.Deserialize(br, 1);
+
+                if (record.GetRecordType() == LogRecordType.RowModify)
                 {
-                    var rs = new RowsetHolder(this.columnTypes);
-                    rs.Deserialize(br, 1);
                     this.items.ModifyRow(redoContent.RowPosition, rs);
                 }
-            }
-            else
-            {
-                throw new NotImplementedException();
+                else if (record.GetRecordType() == LogRecordType.RowInsert)
+                {
+                    if (redoContent.RowPosition != items.GetRowCount())
+                    {
+                        throw new LogCorruptedException();
+                    }
+
+                    this.items.Merge(rs);
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
+            var undoContent = record.GetUndoContent();
+
             if (record.GetRecordType() == LogRecordType.RowModify)
             {
-                var undoContent = record.GetUndoContent();
 
                 using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
                 using (BinaryReader br = new BinaryReader(ms))
@@ -146,6 +157,15 @@ namespace PageManager
                     rs.Deserialize(br, 1);
                     this.items.ModifyRow(undoContent.RowPosition, rs);
                 }
+            }
+            else if (record.GetRecordType() == LogRecordType.RowInsert)
+            {
+                if (undoContent.RowPosition != items.GetRowCount())
+                {
+                    throw new LogCorruptedException();
+                }
+
+                this.items.RemoveRow(undoContent.RowPosition);
             }
             else
             {

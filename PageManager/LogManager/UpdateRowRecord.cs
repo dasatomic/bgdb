@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 namespace LogManager
 {
-
-    public struct ModifyRowRecord : ILogRecord
+    public struct UpdateRowRecord : ILogRecord
     {
         public readonly ulong PageId;
         public readonly ushort RowPosition;
@@ -14,7 +13,7 @@ namespace LogManager
         public readonly byte[] DiffNewValue;
         public readonly ulong TranscationId;
 
-        public ModifyRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId)
+        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId)
         {
             if (diffOldValue.Length != diffNewValue.Length)
             {
@@ -28,7 +27,7 @@ namespace LogManager
             this.TranscationId = transactionId;
         }
 
-        public ModifyRowRecord(BinaryReader source)
+        public UpdateRowRecord(BinaryReader source)
         {
             this.TranscationId = source.ReadUInt64();
             this.PageId = source.ReadUInt64();

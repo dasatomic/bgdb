@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "E2EQueryExecutionTests", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogManagerTests", "LogManagerTests\LogManagerTests.csproj", "{208A950E-058F-4765-B7FE-945B5F05E669}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataStructures", "DataStructures\DataStructures.csproj", "{1172BC1D-A69A-46E5-BF07-EAAFAA2D6976}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{208A950E-058F-4765-B7FE-945B5F05E669}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1172BC1D-A69A-46E5-BF07-EAAFAA2D6976}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1172BC1D-A69A-46E5-BF07-EAAFAA2D6976}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1172BC1D-A69A-46E5-BF07-EAAFAA2D6976}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1172BC1D-A69A-46E5-BF07-EAAFAA2D6976}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

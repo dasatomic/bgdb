@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataStructures;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -22,6 +23,7 @@ namespace PageManager
         public void Merge(RowsetHolder rowsetHolder);
         public ColumnType[] GetColumnTypes();
         public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder);
+        public void RemoveRow(int rowNumber);
     }
 
     public struct RowHolder : IEquatable<RowHolder>
@@ -404,6 +406,29 @@ namespace PageManager
             }
 
             this.rowsetCount += rowsetHolder.rowsetCount;
+        }
+
+        public void RemoveRow(int rowNumber)
+        {
+            for (int i = 0; i < this.pagePointerOffsetColumns.Length; i++)
+            {
+                this.pagePointerOffsetColumns = this.pagePointerOffsetColumns.RemoveAt(rowNumber);
+            }
+
+            for (int i = 0; i < this.intColumns.Length; i++)
+            {
+                this.intColumns= this.intColumns.RemoveAt(rowNumber);
+            }
+
+            for (int i = 0; i < this.doubleColumns.Length; i++)
+            {
+                this.doubleColumns = this.doubleColumns.RemoveAt(rowNumber);
+            }
+
+            for (int i = 0; i < this.pagePointerColumns.Length; i++)
+            {
+                this.pagePointerOffsetColumns = this.pagePointerOffsetColumns.RemoveAt(rowNumber);
+            }
         }
 
         public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder)
