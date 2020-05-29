@@ -5,6 +5,7 @@ namespace PageManager
 {
     public enum LogRecordType
     {
+        NullRecord,
         RowModify,
         Commit,
         Rollback,

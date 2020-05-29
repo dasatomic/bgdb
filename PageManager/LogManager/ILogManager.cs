@@ -1,4 +1,5 @@
 ﻿using PageManager;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LogManager
@@ -7,5 +8,6 @@ namespace LogManager
     {
         public Task CommitTransaction(ITransaction tran);
         public Task Flush();
+        Task Recovery(BinaryReader reader, IPageManager pageManager, ITransaction tran);
     }
 }

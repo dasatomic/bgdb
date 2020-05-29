@@ -55,7 +55,6 @@ namespace LogManager
 
         public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            // TODO log interaction should be page type agnostic.
             IPage page = pageManager.GetPage(this.PageId, tran);
             page.RedoLog(this, tran);
         }

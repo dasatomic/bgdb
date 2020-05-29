@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogManager;
+using System;
 using System.IO;
 using System.Runtime.Serialization;
 
@@ -14,7 +15,7 @@ namespace PageManager
     {
         private readonly ColumnType[] columnTypes;
 
-        public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId)
+        public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
             if (columnTypes == null || columnTypes.Length == 0)
             {
@@ -28,6 +29,9 @@ namespace PageManager
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
             this.items = new RowsetHolder(this.columnTypes);
+
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
+            tran.AddRecord(logRecord);
         }
 
         public MixedPage(BinaryReader stream, ColumnType[] columnTypes)

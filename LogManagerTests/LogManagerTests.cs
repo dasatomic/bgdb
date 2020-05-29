@@ -171,5 +171,41 @@ namespace LogManagerTests
                 Assert.AreEqual(pageContent.GetIntColumn(3)[2], updateRow.GetIntColumn(3)[0]);
             }
         }
+
+        [Test]
+        public async Task PageAllocRedo()
+        {
+            using (Stream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                IPageManager pageManager = new InMemoryPageManager(4096);
+                ILogManager manager = new LogManager.LogManager(writer);
+
+                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+
+                GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
+                const int pageCount = 5;
+
+                for (int i = 0; i < pageCount; i++)
+                {
+                    pageManager.AllocateMixedPage(types1, 0, 0, tran1);
+                }
+
+                await tran1.Commit();
+
+                // Restart page manager.
+                stream.Seek(0, SeekOrigin.Begin);
+                pageManager = new InMemoryPageManager(4096);
+                Assert.AreEqual(0, pageManager.PageCount());
+
+                using (BinaryReader br = new BinaryReader(stream))
+                {
+                    using ITransaction recTran = new DummyTran();
+                    await manager.Recovery(br, pageManager, recTran);
+                }
+
+                Assert.AreEqual(pageCount, pageManager.PageCount());
+            }
+        }
     }
 }

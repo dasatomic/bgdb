@@ -44,11 +44,11 @@ namespace PageManager
             }
             else if (pageType == PageType.StringPage)
             {
-                page = new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId);
+                page = new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
             }
             else if (pageType == PageType.MixedPage)
             {
-                page = new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId);
+                page = new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran);
             }
             else if (pageType == PageType.LongPage)
             {
@@ -200,5 +200,7 @@ namespace PageManager
         {
             return pages.Any(p => p.PageId() == IBootPageAllocator.BootPageId);
         }
+
+        public ulong PageCount() => (ulong)this.pages.Count;
     }
 }

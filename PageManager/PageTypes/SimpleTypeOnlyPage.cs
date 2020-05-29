@@ -32,7 +32,7 @@ namespace PageManager
             this.nextPageId = nextPageId;
             this.prevPageId = prevPageId;
 
-            ILogRecord logRecord = new AllocatePageLogRecord(pageId, transaction.TranscationId(), pageType, pageSize, nextPageId, prevPageId);
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, transaction.TranscationId(), pageType, pageSize, nextPageId, prevPageId, null);
             transaction.AddRecord(logRecord);
 
             Store(new T[0]);

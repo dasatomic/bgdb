@@ -3,6 +3,7 @@ using PageManager;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using Test.Common;
 
 namespace PageManagerTests
 {
@@ -16,28 +17,28 @@ namespace PageManagerTests
         [Test]
         public void VerifyPageId()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); ;
             Assert.AreEqual(42, strPage.PageId());
         }
 
         [Test]
         public void VerifyPageType()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
         }
 
         [Test]
         public void VerifySizeInBytes()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(4096, strPage.SizeInBytes());
         }
 
         [Test]
         public void VerifyDeserializationEmpty()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             char[][] content = strPage.Fetch();
             Assert.IsTrue(content.Length == 0);
         }
@@ -51,7 +52,7 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             strPage.Store(startArray);
             char[][] content = strPage.Fetch();
             Assert.AreEqual(startArray, content);
@@ -72,7 +73,7 @@ namespace PageManagerTests
                 "1234".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             strPage.Store(startArray);
             char[][] content = strPage.Fetch();
@@ -87,7 +88,7 @@ namespace PageManagerTests
         public void VerifySetMoreThanMax()
         {
             Assert.Throws<NotEnoughSpaceException>(() => {
-                StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+                StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
                 char[][] array = new char[DefaultSize / 4][];
                 for (int i = 0; i < array.Length; i++)
@@ -102,7 +103,7 @@ namespace PageManagerTests
         [Test]
         public void VerifySetMax()
         {
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             const int arrLength = 4;
 
             char[][] array = new char[strPage.MaxRowCount() / (arrLength + sizeof(short))][];
@@ -132,7 +133,7 @@ namespace PageManagerTests
                 "1234".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             strPage.Store(startArray);
             strPage.Merge(secondArray);
             char[][] result = strPage.Fetch();
@@ -149,7 +150,7 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, strPage.RowCount());
             uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
             Assert.AreEqual(IPage.FirstElementPosition, offsetOne);
@@ -164,7 +165,7 @@ namespace PageManagerTests
         [Test]
         public void MergeUntilAlmostFull()
         {
-            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
 
             char[] elemToInsert = "one".ToArray();
@@ -180,7 +181,7 @@ namespace PageManagerTests
         [Test]
         public void MergeUntilFull()
         {
-            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            var strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             uint sizeAvailable = strPage.SizeInBytes() - IPage.FirstElementPosition;
 
             char[] elemToInsert = "one".ToArray();
@@ -204,7 +205,7 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, strPage.RowCount());
             uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
             uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
@@ -221,7 +222,7 @@ namespace PageManagerTests
                 "4321".ToCharArray(),
             };
 
-            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage);
+            StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             strPage.Store(startArray);
 
             byte[] content = new byte[DefaultSize];

@@ -21,7 +21,7 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] _, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage);
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             RowsetHolder holder1 = new RowsetHolder(types1);
             holder1.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
@@ -43,7 +43,7 @@ namespace PageManagerTests
         public void VerifyFromStream()
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage);
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             RowsetHolder holder = new RowsetHolder(types1);
             holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);

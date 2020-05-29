@@ -11,5 +11,7 @@
     public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator
     {
         public IPage GetPage(ulong pageId, ITransaction tran);
+        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran);
+        public ulong PageCount();
     }
 }

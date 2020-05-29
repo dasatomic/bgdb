@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogManager;
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -20,7 +21,7 @@ namespace PageManager
 
     public class StringOnlyPage : PageSerializerBase<char[][]>, IPageWithOffsets<char[]>
     {
-        public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId)
+        public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
             if (pageSize < IPage.FirstElementPosition + sizeof(char) * 2)
             {
@@ -31,6 +32,9 @@ namespace PageManager
             this.pageId = pageId;
             this.prevPageId = prevPageId;
             this.items = new char[0][];
+
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
+            tran.AddRecord(logRecord);
         }
 
         public StringOnlyPage(BinaryReader stream)
