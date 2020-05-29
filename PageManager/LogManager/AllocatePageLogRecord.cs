@@ -59,6 +59,7 @@ namespace LogManager
 
         public void Serialize(BinaryWriter destination)
         {
+            destination.Write((byte)LogRecordType.AllocatePage);
             destination.Write(this.PageId);
             destination.Write(this.TranId);
             destination.Write((ushort)this.PageType);

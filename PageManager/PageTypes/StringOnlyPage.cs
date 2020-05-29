@@ -1,5 +1,6 @@
 ﻿using LogManager;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -220,6 +221,44 @@ namespace PageManager
             {
                 throw new NotImplementedException();
             }
+        }
+
+        public override bool Equals([AllowNull] PageSerializerBase<char[][]> other)
+        {
+            if (this.pageId != other.PageId())
+            {
+                return false;
+            }
+
+            if (this.MaxRowCount() != other.MaxRowCount())
+            {
+                return false;
+            }
+
+            if (this.PrevPageId() != other.PrevPageId())
+            {
+                return false;
+            }
+
+            if (this.NextPageId() != other.NextPageId())
+            {
+                return false;
+            }
+
+            if (this.Fetch().Length != other.Fetch().Length)
+            {
+                return false;
+            }
+
+            foreach (var pairs in this.Fetch().Zip(other.Fetch()))
+            {
+                if (Enumerable.SequenceEqual(pairs.First, pairs.Second))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

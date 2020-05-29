@@ -1,6 +1,7 @@
 ﻿using LogManager;
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace PageManager
@@ -156,6 +157,36 @@ namespace PageManager
             {
                 throw new NotImplementedException();
             }
+        }
+
+        public override bool Equals(PageSerializerBase<RowsetHolder> other)
+        {
+            if (this.pageId != other.PageId())
+            {
+                return false;
+            }
+
+            if (this.MaxRowCount() != other.MaxRowCount())
+            {
+                return false;
+            }
+
+            if (this.PrevPageId() != other.PrevPageId())
+            {
+                return false;
+            }
+
+            if (this.NextPageId() != other.NextPageId())
+            {
+                return false;
+            }
+
+            if (!this.Fetch().Equals(other.Fetch()))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 
 namespace PageManager
 {
@@ -22,15 +24,23 @@ namespace PageManager
         public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder);
     }
 
-    public struct RowHolder
+    public struct RowHolder : IEquatable<RowHolder>
     {
         public int[] iRow;
         public double[] dRow;
         public PagePointerOffsetPair[] strPRow;
         public long[] pagePRow;
+
+        public bool Equals([AllowNull] RowHolder other)
+        {
+            return Enumerable.SequenceEqual(iRow, other.iRow) &&
+                Enumerable.SequenceEqual(dRow, other.dRow) &&
+                Enumerable.SequenceEqual(strPRow, other.strPRow) &&
+                Enumerable.SequenceEqual(pagePRow, other.pagePRow);
+        }
     }
 
-    public class RowsetHolder : IRowsetHolder, IEnumerable<RowHolder>
+    public class RowsetHolder : IRowsetHolder, IEnumerable<RowHolder>, IEquatable<RowsetHolder>
     {
         private int[][] intColumns;
         private PagePointerOffsetPair[][] pagePointerOffsetColumns;
@@ -479,6 +489,11 @@ namespace PageManager
         private IEnumerator GetEnumerator1()
         {
             return this.GetEnumerator();
+        }
+
+        public bool Equals([AllowNull] RowsetHolder other)
+        {
+            return Enumerable.SequenceEqual(this, other);
         }
     }
 }

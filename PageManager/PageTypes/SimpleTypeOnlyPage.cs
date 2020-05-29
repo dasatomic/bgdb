@@ -102,5 +102,35 @@ namespace PageManager
         }
 
         protected abstract void SerializeInternal(BinaryReader stream);
+
+        public override bool Equals(PageSerializerBase<T[]> other)
+        {
+            if (this.pageId != other.PageId())
+            {
+                return false;
+            }
+
+            if (this.MaxRowCount() != other.MaxRowCount())
+            {
+                return false;
+            }
+
+            if (this.PrevPageId() != other.PrevPageId())
+            {
+                return false;
+            }
+
+            if (this.NextPageId() != other.NextPageId())
+            {
+                return false;
+            }
+
+            if (!Enumerable.SequenceEqual(this.Fetch(), other.Fetch()))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

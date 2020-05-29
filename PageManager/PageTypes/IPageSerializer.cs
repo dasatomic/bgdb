@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Serialization;
 
@@ -16,7 +17,7 @@ namespace PageManager
         public T Fetch();
     }
 
-    public abstract class PageSerializerBase<T> : IPageSerializer<T>
+    public abstract class PageSerializerBase<T> : IPageSerializer<T>, IEquatable<PageSerializerBase<T>>
     {
         protected uint pageSize;
         protected ulong pageId;
@@ -46,5 +47,6 @@ namespace PageManager
         public abstract T Fetch();
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);
+        public abstract bool Equals([AllowNull] PageSerializerBase<T> other);
     }
 }

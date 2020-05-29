@@ -30,7 +30,7 @@ namespace LogManager
                     break;
                 }
 
-                LogRecordType recordType = (LogRecordType)reader.ReadUInt16();
+                LogRecordType recordType = (LogRecordType)reader.ReadByte();
 
                 ILogRecord rc = null;
                 switch (recordType)
@@ -69,7 +69,7 @@ namespace LogManager
                     break;
                 }
 
-                LogRecordType recordType = (LogRecordType)reader.ReadUInt16();
+                LogRecordType recordType = (LogRecordType)reader.ReadByte();
 
                 ILogRecord rc = null;
                 switch (recordType)
@@ -111,11 +111,10 @@ namespace LogManager
         {
             foreach (ILogRecord record in tran.GetRecords())
             {
-                storage.Write((ushort)record.GetRecordType());
                 record.Serialize(storage);
             }
 
-            storage.Write((ushort)LogRecordType.Commit);
+            storage.Write((byte)LogRecordType.Commit);
             storage.Write(tran.TranscationId());
 
             await storage.BaseStream.FlushAsync();

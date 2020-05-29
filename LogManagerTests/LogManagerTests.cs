@@ -184,12 +184,11 @@ namespace LogManagerTests
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                const int pageCount = 5;
+                const int pageCount = 3;
 
-                for (int i = 0; i < pageCount; i++)
-                {
-                    pageManager.AllocateMixedPage(types1, 0, 0, tran1);
-                }
+                var p1 = pageManager.AllocateMixedPage(types1, 0, 0, tran1);
+                var p2 = pageManager.AllocatePageDouble(2, 2, tran1);
+                var p3 = pageManager.AllocatePageInt(3, 3, tran1);
 
                 await tran1.Commit();
 
@@ -205,6 +204,14 @@ namespace LogManagerTests
                 }
 
                 Assert.AreEqual(pageCount, pageManager.PageCount());
+
+                var np1 = pageManager.GetMixedPage(p1.PageId(), new DummyTran());
+                var np2 = pageManager.GetPageDouble(p2.PageId(), new DummyTran());
+                var np3 = pageManager.GetPageInt(p3.PageId(), new DummyTran());
+
+                Assert.AreEqual(p1, np1);
+                Assert.AreEqual(p2, np2);
+                Assert.AreEqual(p3, np3);
             }
         }
     }
