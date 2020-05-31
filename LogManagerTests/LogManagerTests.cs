@@ -59,8 +59,29 @@ namespace LogManagerTests
             }
         }
 
-        [Test]
-        public async Task RollbackIntPage()
+        private async Task RollbackTest1<T>(
+            Func<IPageManager, ITransaction, PageSerializerBase<T[]>> pageCreate)
+        {
+            using (Stream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                IPageManager pageManager = new InMemoryPageManager(4096);
+                ILogManager manager = new LogManager.LogManager(writer);
+
+                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                var page = pageCreate(pageManager, tran1);
+
+                await tran1.Rollback();
+                Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
+                T[] pageContent = page.Fetch();
+                Assert.AreEqual(0, pageContent.Length);
+            }
+        }
+
+        private async Task RollbackTest2<T>(
+            Func<IPageManager, ITransaction, PageSerializerBase<T[]>> pageCreate,
+            Action<PageSerializerBase<T[]>, ITransaction> pageModify,
+            Action<T[]> verify)
         {
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
@@ -70,55 +91,135 @@ namespace LogManagerTests
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
-                var page = pageManager.AllocatePageInt(0, 0, tran1);
-                page.Merge(new[] { 3, 2, 1 }, tran1);
+                var page = pageCreate(pageManager, tran1);
 
-                ILogRecord record1 =
-                    new UpdateRowRecord(
-                        pageId: page.PageId(),
-                        rowPosition: 2,
-                        diffOldValue: BitConverter.GetBytes(42),
-                        diffNewValue: BitConverter.GetBytes(43),
-                        transactionId: tran1.TranscationId());
+                await tran1.Commit();
 
-                tran1.AddRecord(record1);
-                await tran1.Rollback();
+                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                pageModify(page, tran2);
 
-                Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
-                int[] pageContent = page.Fetch();
-                Assert.AreEqual(42, pageContent[2]);
+                await tran2.Rollback();
+
+                Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
+                Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
+
+                T[] pageContent = page.Fetch();
+                verify(pageContent);
             }
         }
 
         [Test]
-        public async Task RollbackStringPage()
+        public async Task RollbackIntPage()
         {
-            using (Stream stream = new MemoryStream())
-            using (BinaryWriter writer = new BinaryWriter(stream))
-            {
-                IPageManager pageManager = new InMemoryPageManager(4096);
-                ILogManager manager = new LogManager.LogManager(writer);
+            await RollbackTest1<int>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageInt(0, 0, tran);
+                    page.Merge(new[] { 3, 2, 1 }, tran);
+                    return page;
+                });
+        }
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+        [Test]
+        public async Task RollbackLongPage()
+        {
+            await RollbackTest1<long>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageLong(0, 0, tran);
+                    page.Merge(new long [] { 3, 2, 1 }, tran);
+                    return page;
+                });
+        }
 
-                var page = pageManager.AllocatePageStr(0, 0, tran1);
-                page.Merge(new[] { "TEST1".ToCharArray(), "TEST2".ToCharArray(), "TEST3".ToCharArray() }, tran1);
+        [Test]
+        public async Task RollbackDoublePage()
+        {
+            await RollbackTest1<double>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageDouble(0, 0, tran);
+                    page.Merge(new double[] { 3, 2, 1 }, tran);
+                    return page;
+                });
+        }
 
-                ILogRecord record1 =
-                    new UpdateRowRecord(
-                        pageId: page.PageId(),
-                        rowPosition: 2,
-                        diffOldValue: BitConverter.GetBytes((short)9).Concat(Encoding.ASCII.GetBytes("OLD VALUE")).ToArray(),
-                        diffNewValue: BitConverter.GetBytes((short)9).Concat(Encoding.ASCII.GetBytes("NEW VALUE")).ToArray(),
-                        transactionId: tran1.TranscationId());
+        [Test]
+        public async Task RollbackStrPage()
+        {
+            await RollbackTest1<char[]>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageStr(0, 0, tran);
+                    page.Merge(new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() }, tran);
+                    return page;
+                });
+        }
 
-                tran1.AddRecord(record1);
-                await tran1.Rollback();
+        [Test]
+        public async Task RollbackIntPage2()
+        {
+            await RollbackTest2<int>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageInt(0, 0, tran);
+                    page.Merge(new[] { 3, 2, 1 }, tran);
+                    return page;
+                },
+                (p, tran) =>
+                {
+                    p.Merge(new[] { 3, 2, 1 }, tran);
+                },
+                (i) => Assert.AreEqual(new int[] { 3, 2, 1 }, i));
+        }
 
-                Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
-                char[][] pageContent = page.Fetch();
-                Assert.AreEqual("OLD VALUE", new string(pageContent[2]));
-            }
+        [Test]
+        public async Task RollbackLongPage2()
+        {
+            await RollbackTest2<long>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageLong(0, 0, tran);
+                    page.Merge(new long[] { 3, 2, 1 }, tran);
+                    return page;
+                },
+                (p, tran) =>
+                {
+                    p.Merge(new long[] { 3, 2, 1 }, tran);
+                },
+                (i) => Assert.AreEqual(new long[] { 3, 2, 1 }, i));
+        }
+
+        [Test]
+        public async Task RollbackDoublePage2()
+        {
+            await RollbackTest2<double>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageDouble(0, 0, tran);
+                    page.Merge(new double[] { 3, 2, 1 }, tran);
+                    return page;
+                },
+                (p, tran) =>
+                {
+                    p.Merge(new double[] { 3, 2, 1 }, tran);
+                },
+                (i) => Assert.AreEqual(new double[] { 3, 2, 1 }, i));
+        }
+
+        [Test]
+        public async Task RollbackStrPage2()
+        {
+            var pageContent = new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() };
+            await RollbackTest2<char[]>(
+                (pm, tran) =>
+                {
+                    var page = pm.AllocatePageStr(0, 0, tran);
+                    page.Merge(pageContent, tran);
+                    return page;
+                },
+                (p, tran) => p.Merge(pageContent, tran),
+                (i) => Assert.AreEqual(pageContent, i));
         }
 
         [Test]
@@ -137,38 +238,22 @@ namespace LogManagerTests
 
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-
                 page.Merge(holder, tran1);
+                await tran1.Commit();
 
+                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
+                page.Merge(updateRow, tran2);
 
-                byte[] serializedRow = new byte[updateRow.StorageSizeInBytes()];
-                using (MemoryStream ms = new MemoryStream(serializedRow))
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    updateRow.Serialize(bw);
-                }
+                await tran2.Rollback();
 
-                ILogRecord record1 =
-                    new UpdateRowRecord(
-                        pageId: page.PageId(),
-                        rowPosition: 2,
-                        diffOldValue: serializedRow,
-                        diffNewValue: serializedRow,
-                        transactionId: tran1.TranscationId());
-
-                tran1.AddRecord(record1);
-                await tran1.Rollback();
-
-                Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
+                Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
+                Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
                 RowsetHolder pageContent = page.Fetch();
 
-                Assert.AreEqual(pageContent.GetIntColumn(0)[2], updateRow.GetIntColumn(0)[0]);
-                Assert.AreEqual(pageContent.GetIntColumn(1)[2], updateRow.GetIntColumn(1)[0]);
-                Assert.AreEqual(pageContent.GetDoubleColumn(2)[2], updateRow.GetDoubleColumn(2)[0]);
-                Assert.AreEqual(pageContent.GetIntColumn(3)[2], updateRow.GetIntColumn(3)[0]);
+                Assert.AreEqual(holder, pageContent);
             }
         }
 

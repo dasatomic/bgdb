@@ -412,23 +412,25 @@ namespace PageManager
         {
             for (int i = 0; i < this.pagePointerOffsetColumns.Length; i++)
             {
-                this.pagePointerOffsetColumns = this.pagePointerOffsetColumns.RemoveAt(rowNumber);
+                this.pagePointerOffsetColumns[i] = this.pagePointerOffsetColumns[i].RemoveAt(rowNumber);
             }
 
             for (int i = 0; i < this.intColumns.Length; i++)
             {
-                this.intColumns= this.intColumns.RemoveAt(rowNumber);
+                this.intColumns[i] = this.intColumns[i].RemoveAt(rowNumber);
             }
 
             for (int i = 0; i < this.doubleColumns.Length; i++)
             {
-                this.doubleColumns = this.doubleColumns.RemoveAt(rowNumber);
+                this.doubleColumns[i] = this.doubleColumns[i].RemoveAt(rowNumber);
             }
 
             for (int i = 0; i < this.pagePointerColumns.Length; i++)
             {
-                this.pagePointerOffsetColumns = this.pagePointerOffsetColumns.RemoveAt(rowNumber);
+                this.pagePointerColumns[i] = this.pagePointerColumns[i].RemoveAt(rowNumber);
             }
+
+            this.rowsetCount--;
         }
 
         public void ModifyRow(int rowNumber, RowsetHolder rowsetHolder)

@@ -78,8 +78,19 @@ namespace PageManager
 
         public override void Merge(RowsetHolder item, ITransaction transaction)
         {
+            uint prevSize = this.items.GetRowCount();
             this.items.Merge(item);
             this.rowCount = this.items.GetRowCount();
+
+            byte[] lrContent = new byte[item.StorageSizeInBytes()];
+            using (MemoryStream ms = new MemoryStream(lrContent))
+            using (BinaryWriter bw = new BinaryWriter(ms))
+            {
+                item.Serialize(bw);
+            }
+
+            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(prevSize), lrContent, transaction.TranscationId());
+            transaction.AddRecord(rc);
         }
 
         public override uint MaxRowCount()
@@ -160,12 +171,13 @@ namespace PageManager
             }
             else if (record.GetRecordType() == LogRecordType.RowInsert)
             {
-                if (undoContent.RowPosition != items.GetRowCount())
+                if (undoContent.RowPosition + 1 != items.GetRowCount())
                 {
                     throw new LogCorruptedException();
                 }
 
                 this.items.RemoveRow(undoContent.RowPosition);
+                this.rowCount--;
             }
             else
             {

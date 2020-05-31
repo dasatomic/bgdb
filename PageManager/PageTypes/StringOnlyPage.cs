@@ -101,8 +101,22 @@ namespace PageManager
                 throw new NotEnoughSpaceException();
             }
 
+            int startPos = this.items.Length;
             this.items = this.items.Concat(items).ToArray();
             this.rowCount = (uint)this.items.Length;
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                byte[] bs = new byte[items[i].Length + 2];
+                using (MemoryStream ms = new MemoryStream(bs))
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    bw.Write((ushort)items[i].Length);
+                    bw.Write(items[i]);
+                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId());
+                    transaction.AddRecord(rc);
+                }
+            }
         }
 
         public uint MergeWithOffsetFetch(char[] item)
@@ -176,10 +190,6 @@ namespace PageManager
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
-        private void ApplyDiff(byte[] data, int rowPosition)
-        {
-        }
-
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
             var redoContent = record.GetRedoContent();
@@ -211,22 +221,22 @@ namespace PageManager
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
             var undoContent = record.GetUndoContent();
-            using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
-            using (BinaryReader br = new BinaryReader(ms))
+            if (record.GetRecordType() == LogRecordType.RowModify)
             {
-                if (record.GetRecordType() == LogRecordType.RowModify)
+                using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
+                using (BinaryReader br = new BinaryReader(ms))
                 {
                     int elemSize = br.ReadUInt16();
                     this.items[undoContent.RowPosition] = br.ReadChars(elemSize);
                 }
-                else if (record.GetRecordType() == LogRecordType.RowInsert)
-                {
-                    this.items = this.items.Take(this.items.Length - 1).ToArray();
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
+            }
+            else if (record.GetRecordType() == LogRecordType.RowInsert)
+            {
+                this.items = this.items.Take(this.items.Length - 1).ToArray();
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
 

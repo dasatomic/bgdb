@@ -92,5 +92,7 @@ namespace PageManager
                 throw new NotImplementedException();
             }
         }
+
+        protected override byte[] SerializeItem(double item) => BitConverter.GetBytes(item);
     }
 }

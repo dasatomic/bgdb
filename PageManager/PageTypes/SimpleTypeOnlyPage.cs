@@ -80,6 +80,8 @@ namespace PageManager
             return (uint)items.Length * (uint)Marshal.SizeOf(default(T));
         }
 
+        protected abstract byte[] SerializeItem(T item);
+
         public override void Merge(T[] items, ITransaction transaction)
         {
             if (!CanFit(items))
@@ -87,10 +89,16 @@ namespace PageManager
                 throw new SerializationException();
             }
 
+            int startPos = this.items.Length;
             this.items = this.items.Concat(items).ToArray();
             this.rowCount = (uint)this.items.Length;
 
-            // TODO: Need to fire transaction here.
+            for (int i = 0; i < items.Length; i++)
+            {
+                byte[] bs = SerializeItem(items[i]);
+                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId());
+                transaction.AddRecord(rc);
+            }
         }
 
         public override T[] Fetch()
