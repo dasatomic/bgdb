@@ -1,0 +1,16 @@
+image: mcr.microsoft.com/dotnet/core/sdk:2.2.301
+
+stages:
+  - test
+    
+debug:
+  before_script:
+   - 'echo | dotnet --version' # must be v 2.2.300 or later for reporter tool to work
+   - dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
+
+  stage: test
+
+  script:
+
+    - dotnet test
+    - echo 'End Summary'
