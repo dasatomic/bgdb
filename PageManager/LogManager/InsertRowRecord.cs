@@ -31,7 +31,7 @@ namespace LogManager
 
         public void Serialize(BinaryWriter destination)
         {
-            destination.Write((byte)LogRecordType.RowModify);
+            destination.Write((byte)LogRecordType.RowInsert);
             destination.Write(this.TranscationId);
             destination.Write(this.PageId);
             destination.Write(this.RowPosition);

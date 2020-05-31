@@ -30,9 +30,14 @@ namespace PageManager
             return AllocatePage(pageType, columnTypes, 0, 0, IBootPageAllocator.BootPageId, tran);
         }
 
-        private IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
+        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
         {
             IPage page;
+
+            if (this.pages.Any(page => page.PageId() == pageId))
+            {
+                throw new PageCorruptedException();
+            }
 
             if (pageType == PageType.IntPage)
             {

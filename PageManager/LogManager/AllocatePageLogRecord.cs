@@ -54,7 +54,7 @@ namespace LogManager
 
         public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            pageManager.AllocatePage(this.PageType, this.ColumnTypes, this.PrevPageId, this.NextPageId, tran);
+            pageManager.AllocatePage(this.PageType, this.ColumnTypes, this.PrevPageId, this.NextPageId, this.PageId, tran);
         }
 
         public void Serialize(BinaryWriter destination)

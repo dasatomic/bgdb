@@ -258,6 +258,55 @@ namespace LogManagerTests
         }
 
         [Test]
+        public async Task RedoMixedPage()
+        {
+            using (Stream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                IPageManager pageManager = new InMemoryPageManager(4096);
+                ILogManager manager = new LogManager.LogManager(writer);
+
+                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+
+                GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
+                MixedPage page = pageManager.AllocateMixedPage(types1, 0, 0, tran1);
+
+                RowsetHolder holder = new RowsetHolder(types1);
+                holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
+                page.Merge(holder, tran1);
+                await tran1.Commit();
+
+                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
+                RowsetHolder updateRow = new RowsetHolder(types2);
+                updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
+                page.Merge(updateRow, tran2);
+
+                await tran2.Commit();
+
+                Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
+                Assert.AreEqual(TransactionState.Committed, tran2.GetTransactionState());
+
+                holder = page.Fetch();
+
+                stream.Seek(0, SeekOrigin.Begin);
+                pageManager = new InMemoryPageManager(4096);
+                Assert.AreEqual(0, pageManager.PageCount());
+
+                using (BinaryReader br = new BinaryReader(stream))
+                {
+                    using ITransaction recTran = new DummyTran();
+                    await manager.Recovery(br, pageManager, recTran);
+                }
+
+                var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran());
+                RowsetHolder pageContent = page.Fetch();
+                Assert.AreEqual(holder, pageContent);
+            }
+
+        }
+
+        [Test]
         public async Task PageAllocRedo()
         {
             using (Stream stream = new MemoryStream())
