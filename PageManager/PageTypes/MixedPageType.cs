@@ -86,6 +86,7 @@ namespace PageManager
             using (MemoryStream ms = new MemoryStream(lrContent))
             using (BinaryWriter bw = new BinaryWriter(ms))
             {
+                bw.Write((ushort)item.GetRowCount());
                 item.Serialize(bw);
             }
 
@@ -131,8 +132,9 @@ namespace PageManager
             using (MemoryStream ms = new MemoryStream(redoContent.DataToApply))
             using (BinaryReader br = new BinaryReader(ms))
             {
+                ushort rsCount = br.ReadUInt16();
                 var rs = new RowsetHolder(this.columnTypes);
-                rs.Deserialize(br, 1);
+                rs.Deserialize(br, rsCount);
 
                 if (record.GetRecordType() == LogRecordType.RowModify)
                 {
@@ -164,8 +166,9 @@ namespace PageManager
                 using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
                 using (BinaryReader br = new BinaryReader(ms))
                 {
+                    ushort rsCount = br.ReadUInt16();
                     var rs = new RowsetHolder(this.columnTypes);
-                    rs.Deserialize(br, 1);
+                    rs.Deserialize(br, rsCount);
                     this.items.ModifyRow(undoContent.RowPosition, rs);
                 }
             }

@@ -303,7 +303,6 @@ namespace LogManagerTests
                 RowsetHolder pageContent = page.Fetch();
                 Assert.AreEqual(holder, pageContent);
             }
-
         }
 
         [Test]

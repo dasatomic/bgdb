@@ -37,7 +37,7 @@ namespace LogManager
                 {
                     case LogRecordType.NullRecord: passCompleted = true; break;
                     case LogRecordType.Commit:
-                        ulong transactionId = reader.ReadUInt32();
+                        ulong transactionId = reader.ReadUInt64();
                         uncommittedTransactions.Remove(transactionId);
                         committedTransactions.Add(transactionId);
                         break;
@@ -78,7 +78,9 @@ namespace LogManager
                 switch (recordType)
                 {
                     case LogRecordType.NullRecord: passCompleted = true; break;
-                    case LogRecordType.Commit: break;
+                    case LogRecordType.Commit: 
+                        ulong transactionId = reader.ReadUInt64();
+                        break;
                     case LogRecordType.Rollback: break;
                     case LogRecordType.RowModify:
                         rc = new UpdateRowRecord(reader);
