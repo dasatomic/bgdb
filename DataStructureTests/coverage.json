@@ -1,0 +1,93 @@
+{
+  "DataStructures.dll": {
+    "C:\\Users\\Aleksandar\\projects\\atomicdb\\DataStructures\\ArrayWithInsert.cs": {
+      "DataStructures.ArrayWithInsert": {
+        "T[] DataStructures.ArrayWithInsert::RemoveAt(T[],System.Int32)": {
+          "Lines": {
+            "8": 4,
+            "9": 4,
+            "11": 4,
+            "12": 1,
+            "13": 1,
+            "16": 27,
+            "17": 6,
+            "18": 6,
+            "19": 2,
+            "20": 2,
+            "21": 2,
+            "23": 6,
+            "24": 6,
+            "26": 3,
+            "27": 3
+          },
+          "Branches": [
+            {
+              "Line": 11,
+              "Offset": 14,
+              "EndOffset": 16,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 4
+            },
+            {
+              "Line": 11,
+              "Offset": 14,
+              "EndOffset": 26,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            },
+            {
+              "Line": 11,
+              "Offset": 29,
+              "EndOffset": 31,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 1
+            },
+            {
+              "Line": 11,
+              "Offset": 29,
+              "EndOffset": 38,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 3
+            },
+            {
+              "Line": 16,
+              "Offset": 94,
+              "EndOffset": 44,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 6
+            },
+            {
+              "Line": 18,
+              "Offset": 53,
+              "EndOffset": 55,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 2
+            },
+            {
+              "Line": 18,
+              "Offset": 53,
+              "EndOffset": 61,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 6
+            },
+            {
+              "Line": 16,
+              "Offset": 94,
+              "EndOffset": 96,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 3
+            }
+          ]
+        }
+      }
+    }
+  }
+}

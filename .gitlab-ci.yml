@@ -12,5 +12,5 @@ debug:
 
   script:
 
-    - dotnet test
+    - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
     - echo 'End Summary'
