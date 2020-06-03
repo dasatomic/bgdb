@@ -18,7 +18,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -65,7 +65,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -86,7 +86,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -228,7 +228,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -263,7 +263,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -290,7 +290,7 @@ namespace LogManagerTests
                 holder = page.Fetch();
 
                 stream.Seek(0, SeekOrigin.Begin);
-                pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 Assert.AreEqual(0, pageManager.PageCount());
 
                 using (BinaryReader br = new BinaryReader(stream))
@@ -311,7 +311,7 @@ namespace LogManagerTests
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
             {
-                IPageManager pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                IPageManager pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
                 using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
@@ -327,7 +327,7 @@ namespace LogManagerTests
 
                 // Restart page manager.
                 stream.Seek(0, SeekOrigin.Begin);
-                pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 Assert.AreEqual(0, pageManager.PageCount());
 
                 using (BinaryReader br = new BinaryReader(stream))

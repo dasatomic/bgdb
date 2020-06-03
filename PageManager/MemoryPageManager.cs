@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PageManager
 {
-    public class InMemoryPageManager : IPageManager
+    public class MemoryPageManager : IPageManager
     {
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
@@ -15,7 +15,7 @@ namespace PageManager
         private IPageEvictionPolicy pageEvictionPolicy;
         private IPersistedStream persistedStream;
 
-        public InMemoryPageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
+        public MemoryPageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
         {
             this.pageSize = defaultPageSize;
             this.pageEvictionPolicy = evictionPolicy;

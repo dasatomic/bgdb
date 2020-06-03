@@ -20,7 +20,7 @@ namespace E2EQueryExecutionTests
         [SetUp]
         public async Task Setup()
         {
-            this.pageManager =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            this.pageManager =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 

@@ -15,7 +15,7 @@ namespace PageManagerTests
         [Test]
         public void VerifyAllocatePage()
         {
-            var pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             IPage page1 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             IPage page2 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -32,7 +32,7 @@ namespace PageManagerTests
         [Test]
         public void GetPageById()
         {
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
             var page2 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
@@ -50,7 +50,7 @@ namespace PageManagerTests
         [Test]
         public void MixedTypePages()
         {
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
             var doublePage = pageManager.AllocatePageDouble(DefaultPrevPage, DefaultNextPage, tran);
@@ -72,7 +72,7 @@ namespace PageManagerTests
         [Test]
         public void GetPageOfInvalidType()
         {
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.Throws<InvalidCastException>(() => { pageManager.GetPageDouble(intPage.PageId(), tran); });
@@ -83,7 +83,7 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page = pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
@@ -105,7 +105,7 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page11 = pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
             MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), PageManagerConstants.NullPageId, tran);
             MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), PageManagerConstants.NullPageId, tran);
@@ -121,7 +121,7 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IPageManager pageManager =  new MemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page11 = pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
             MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), PageManagerConstants.NullPageId, tran);
             MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), PageManagerConstants.NullPageId, tran);
