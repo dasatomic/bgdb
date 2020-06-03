@@ -162,7 +162,6 @@ namespace PageManager
 
             if (record.GetRecordType() == LogRecordType.RowModify)
             {
-
                 using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
                 using (BinaryReader br = new BinaryReader(ms))
                 {
