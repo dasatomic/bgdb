@@ -16,7 +16,7 @@ namespace MetadataManager
         public StringHeapCollection(IAllocateStringPage allocator, ITransaction tran)
         {
             this.allocator = allocator;
-            this.collectionRootPageId = this.allocator.AllocatePageStr(0, 0, tran).PageId();
+            this.collectionRootPageId = this.allocator.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).PageId();
         }
 
         public StringHeapCollection(IAllocateStringPage allocator, IPage initialPage)
@@ -29,7 +29,7 @@ namespace MetadataManager
         {
             StringOnlyPage currPage = null;
             uint offset;
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = allocator.GetPageStr(currPageId, tran);
                 if (currPage.CanFit(item))
@@ -39,7 +39,7 @@ namespace MetadataManager
                 }
             }
 
-            currPage = this.allocator.AllocatePageStr(currPage.PageId(), 0, tran);
+            currPage = this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
             offset = currPage.MergeWithOffsetFetch(item);
             return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
         }

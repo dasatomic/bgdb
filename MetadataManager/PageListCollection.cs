@@ -28,7 +28,7 @@ namespace MetadataManager
                 throw new ArgumentNullException();
             }
 
-            this.collectionRootPageId = pageAllocator.AllocateMixedPage(columnTypes, 0, 0, tran).PageId();
+            this.collectionRootPageId = pageAllocator.AllocateMixedPage(columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).PageId();
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
         }
@@ -50,7 +50,7 @@ namespace MetadataManager
             ulong rowCount = 0;
 
             IPage currPage;
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 rowCount += currPage.RowCount();
@@ -62,7 +62,7 @@ namespace MetadataManager
         public void Add(RowsetHolder item, ITransaction tran)
         {
             MixedPage currPage = null;
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 if (currPage.CanFit(item))
@@ -72,7 +72,7 @@ namespace MetadataManager
                 }
             }
 
-            currPage = this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), 0, tran);
+            currPage = this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran);
             currPage.Merge(item, tran);
         }
 
@@ -80,7 +80,7 @@ namespace MetadataManager
         {
             MixedPage currPage;
             List<RowsetHolder> result = new List<RowsetHolder>();
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 RowsetHolder holder = currPage.Fetch();
@@ -99,7 +99,7 @@ namespace MetadataManager
             MixedPage currPage;
             U max = startMin;
 
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 RowsetHolder holder = currPage.Fetch();
@@ -118,7 +118,7 @@ namespace MetadataManager
         public IEnumerable<RowsetHolder> Iterate(ITransaction tran)
         {
             MixedPage currPage;
-            for (ulong currPageId = collectionRootPageId; currPageId != 0; currPageId = currPage.NextPageId())
+            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = pageAllocator.GetMixedPage(currPageId, tran);
                 RowsetHolder holder = currPage.Fetch();

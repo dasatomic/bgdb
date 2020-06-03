@@ -53,8 +53,9 @@ namespace PageManagerTests
             byte[] content = new byte[DefaultSize];
 
             using (var stream = new MemoryStream(content))
+            using (var bw = new BinaryWriter(stream))
             {
-                page.Persist(stream);
+                page.Persist(bw);
             }
 
             var source = new BinaryReader(new MemoryStream(content));

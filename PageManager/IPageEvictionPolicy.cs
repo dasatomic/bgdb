@@ -2,7 +2,7 @@
 
 namespace PageManager
 {
-    interface IPageEvictionPolicy
+    public interface IPageEvictionPolicy
     {
         public ulong InMemoryPageCountLimit();
         public IEnumerable<ulong> RecordUsageAndEvict(ulong pageId);

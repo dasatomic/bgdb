@@ -11,7 +11,7 @@ namespace MetadataManagerTests
         [Test]
         public void InitStringHeap()
         {
-            IAllocateStringPage strPageAlloc= new InMemoryPageManager(4096);
+            var strPageAlloc =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             DummyTran tran = new DummyTran();
 
             StringHeapCollection collection = new StringHeapCollection(strPageAlloc, tran);
@@ -20,7 +20,7 @@ namespace MetadataManagerTests
         [Test]
         public void ReadFromStringHeap()
         {
-            IAllocateStringPage strPageAlloc= new InMemoryPageManager(4096);
+            var strPageAlloc =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             DummyTran tran = new DummyTran();
 
             StringHeapCollection collection = new StringHeapCollection(strPageAlloc, tran);
@@ -33,7 +33,7 @@ namespace MetadataManagerTests
         [Test]
         public void ReadFromStringHeapMultiPage()
         {
-            IAllocateStringPage strPageAlloc= new InMemoryPageManager(4096);
+            var strPageAlloc =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             DummyTran tran = new DummyTran();
 
             StringHeapCollection collection = new StringHeapCollection(strPageAlloc, tran);

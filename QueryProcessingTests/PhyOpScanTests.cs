@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Test.Common;
 
 namespace QueryProcessingTests
 {
@@ -15,7 +16,7 @@ namespace QueryProcessingTests
         [Test]
         public void ValidateScan()
         {
-            var allocator = new InMemoryPageManager(4096);
+            var allocator =  new InMemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);

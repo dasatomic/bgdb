@@ -90,7 +90,7 @@ namespace MetadataManager
                 id = maxId + 1;
             }
 
-            MixedPage rootPage = this.pageAllocator.AllocateMixedPage(def.ColumnTypes, 0, 0, tran);
+            MixedPage rootPage = this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.TableName.ToCharArray(), tran);

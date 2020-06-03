@@ -27,21 +27,18 @@ namespace PageManager
             }
         }
 
-        public override void Persist(Stream destination)
+        public override void Persist(BinaryWriter destination)
         {
-            using (BinaryWriter bw = new BinaryWriter(destination))
-            {
-                bw.Write(this.pageId);
-                bw.Write(this.pageSize);
-                bw.Write((int)this.PageType());
-                bw.Write(this.rowCount);
-                bw.Write(this.prevPageId);
-                bw.Write(this.nextPageId);
+            destination.Write(this.pageId);
+            destination.Write(this.pageSize);
+            destination.Write((int)this.PageType());
+            destination.Write(this.rowCount);
+            destination.Write(this.prevPageId);
+            destination.Write(this.nextPageId);
 
-                for (int i = 0; i < this.rowCount; i++)
-                {
-                    bw.Write(this.items[i]);
-                }
+            for (int i = 0; i < this.rowCount; i++)
+            {
+                destination.Write(this.items[i]);
             }
         }
 

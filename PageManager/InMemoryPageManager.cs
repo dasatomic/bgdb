@@ -1,6 +1,9 @@
-﻿using System;
+﻿using LogManager;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
@@ -9,10 +12,14 @@ namespace PageManager
         private List<IPage> pages = new List<IPage>();
         private uint pageSize;
         private ulong lastUsedPageId = 1;
+        private IPageEvictionPolicy pageEvictionPolicy;
+        private IPersistedStream persistedStream;
 
-        public InMemoryPageManager(uint defaultPageSize)
+        public InMemoryPageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
         {
             this.pageSize = defaultPageSize;
+            this.pageEvictionPolicy = evictionPolicy;
+            this.persistedStream = persistedStream;
         }
 
         public IPage AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
@@ -27,7 +34,7 @@ namespace PageManager
 
         public IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran)
         {
-            return AllocatePage(pageType, columnTypes, 0, 0, IBootPageAllocator.BootPageId, tran);
+            return AllocatePage(pageType, columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, IBootPageAllocator.BootPageId, tran);
         }
 
         public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
@@ -66,7 +73,7 @@ namespace PageManager
 
             pages.Add(page);
 
-            if (prevPageId != 0)
+            if (prevPageId != PageManagerConstants.NullPageId)
             {
                 IPage prevPage = GetPage(prevPageId, tran);
 
@@ -78,7 +85,7 @@ namespace PageManager
                 prevPage.SetNextPageId(page.PageId());
             }
 
-            if (nextPageId != 0)
+            if (nextPageId != PageManagerConstants.NullPageId)
             {
                 IPage nextPage = GetPage(nextPageId, tran);
 
@@ -88,6 +95,16 @@ namespace PageManager
                 }
 
                 nextPage.SetPrevPageId(page.PageId());
+            }
+
+            foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
+            {
+                using (ITransaction evictTran = new ReadonlyTransaction())
+                {
+                    // TODO: All of this needs to be async.
+                    IPage pageToEvict = this.GetPage(pageIdToEvict, tran);
+                    this.FlushPage(pageToEvict);
+                }
             }
 
             return page;
@@ -105,10 +122,10 @@ namespace PageManager
             return page;
         }
 
-        public void SavePage(IPage page, ITransaction tran)
+        internal void FlushPage(IPage page)
         {
-            // No op. Should release the lock.
-            // and write log records.
+            ulong position = page.PageId() * this.pageSize;
+            this.persistedStream.SeekAndAccess(position, (stream) => page.Persist(stream));
         }
 
         public IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction tran)

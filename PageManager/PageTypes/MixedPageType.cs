@@ -110,19 +110,16 @@ namespace PageManager
             return items.StorageSizeInBytes();
         }
 
-        public override void Persist(Stream destination)
+        public override void Persist(BinaryWriter destination)
         {
-            using (BinaryWriter bw = new BinaryWriter(destination))
-            {
-                bw.Write(this.pageId);
-                bw.Write(this.pageSize);
-                bw.Write((int)this.PageType());
-                bw.Write(this.rowCount);
-                bw.Write(this.prevPageId);
-                bw.Write(this.nextPageId);
+            destination.Write(this.pageId);
+            destination.Write(this.pageSize);
+            destination.Write((int)this.PageType());
+            destination.Write(this.rowCount);
+            destination.Write(this.prevPageId);
+            destination.Write(this.nextPageId);
 
-                this.items.Serialize(bw);
-            }
+            this.items.Serialize(destination);
         }
 
         public override void RedoLog(ILogRecord record, ITransaction tran)

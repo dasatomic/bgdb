@@ -6,7 +6,6 @@ namespace PageManager
 {
     public interface IPageSerializer<T> : IPage
     {
-        public void Persist(Stream destination);
         public bool CanFit(T items);
         public uint GetSizeNeeded(T items);
         public void Merge(T items, ITransaction transaction);
@@ -38,7 +37,7 @@ namespace PageManager
         public abstract uint GetSizeNeeded(T items);
         public abstract bool CanFit(T items);
         public abstract PageType PageType();
-        public abstract void Persist(Stream destination);
+        public abstract void Persist(BinaryWriter destination);
         public abstract T Fetch();
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);

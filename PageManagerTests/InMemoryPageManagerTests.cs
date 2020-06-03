@@ -8,14 +8,14 @@ namespace PageManagerTests
     public class InMemoryPageManagerTests
     {
         private const int DefaultSize = 4096;
-        private const ulong DefaultPrevPage = 0;
-        private const ulong DefaultNextPage = 0;
+        private const ulong DefaultPrevPage = PageManagerConstants.NullPageId;
+        private const ulong DefaultNextPage = PageManagerConstants.NullPageId;
         private DummyTran tran = new DummyTran();
 
         [Test]
         public void VerifyAllocatePage()
         {
-            var pageManager = new InMemoryPageManager(DefaultSize);
+            var pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             IPage page1 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             IPage page2 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -32,7 +32,7 @@ namespace PageManagerTests
         [Test]
         public void GetPageById()
         {
-            var pageManager = new InMemoryPageManager(DefaultSize);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
             var page2 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
@@ -42,7 +42,6 @@ namespace PageManagerTests
             int[] items = new int[] { 1, 2, 3 };
             page2.Merge(items, new DummyTran());
 
-            pageManager.SavePage(page2, tran);
             page2 = pageManager.GetPageInt(pageId, tran);
 
             Assert.AreEqual(items, page2.Fetch());
@@ -51,7 +50,7 @@ namespace PageManagerTests
         [Test]
         public void MixedTypePages()
         {
-            var pageManager = new InMemoryPageManager(DefaultSize);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
             var doublePage = pageManager.AllocatePageDouble(DefaultPrevPage, DefaultNextPage, tran);
@@ -60,10 +59,6 @@ namespace PageManagerTests
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
-
-            pageManager.SavePage(intPage, tran);
-            pageManager.SavePage(doublePage, tran);
-            pageManager.SavePage(strPage, tran);
 
             intPage = pageManager.GetPageInt(intPage.PageId(), tran);
             doublePage = pageManager.GetPageDouble(doublePage.PageId(), tran);
@@ -77,9 +72,8 @@ namespace PageManagerTests
         [Test]
         public void GetPageOfInvalidType()
         {
-            var pageManager = new InMemoryPageManager(DefaultSize);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             var intPage = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-            pageManager.SavePage(intPage, tran);
 
             Assert.Throws<InvalidCastException>(() => { pageManager.GetPageDouble(intPage.PageId(), tran); });
         }
@@ -89,14 +83,12 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            var pageManager = new InMemoryPageManager(DefaultSize);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page = pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
 
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
             page.Merge(holder, new DummyTran());
-
-            pageManager.SavePage(page, tran);
 
             page = pageManager.GetMixedPage(page.PageId(), tran);
 
@@ -113,10 +105,10 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            var pageManager = new InMemoryPageManager(DefaultSize);
-            MixedPage page11 = pageManager.AllocateMixedPage(types, 0, 0, tran);
-            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), 0, tran);
-            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), 0, tran);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            MixedPage page11 = pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), PageManagerConstants.NullPageId, tran);
+            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), PageManagerConstants.NullPageId, tran);
 
             Assert.AreEqual(page11.PageId(), page12.PrevPageId());
             Assert.AreEqual(page11.NextPageId(), page12.PageId());
@@ -129,12 +121,12 @@ namespace PageManagerTests
         {
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            var pageManager = new InMemoryPageManager(DefaultSize);
-            MixedPage page11 = pageManager.AllocateMixedPage(types, 0, 0, tran);
-            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), 0, tran);
-            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), 0, tran);
-            MixedPage page21 = pageManager.AllocateMixedPage(types, 0, 0, tran);
-            MixedPage page22 = pageManager.AllocateMixedPage(types, page21.PageId(), 0, tran);
+            IPageManager pageManager =  new InMemoryPageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            MixedPage page11 = pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage page12 = pageManager.AllocateMixedPage(types, page11.PageId(), PageManagerConstants.NullPageId, tran);
+            MixedPage page13 = pageManager.AllocateMixedPage(types, page12.PageId(), PageManagerConstants.NullPageId, tran);
+            MixedPage page21 = pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage page22 = pageManager.AllocateMixedPage(types, page21.PageId(), PageManagerConstants.NullPageId, tran);
 
             Assert.AreEqual(page11.PageId(), page12.PrevPageId());
             Assert.AreEqual(page11.NextPageId(), page12.PageId());

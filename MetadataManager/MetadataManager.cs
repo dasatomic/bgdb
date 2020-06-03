@@ -53,10 +53,10 @@ namespace MetadataManager
             using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "MetadataSetup");
             RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
 
-            var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), 0, 0, tran);
+            var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
             this.columnsManager = new MetadataColumnsManager(this.pageAllocator, mdColumnsFirstPage, this.stringHeap);
 
-            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), 0, 0, tran);
+            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
             this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap, this.columnsManager);
 
             rh.SetColumns(

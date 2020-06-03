@@ -5,7 +5,7 @@
         IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran);
         bool BootPageInitialized();
 
-        public const ulong BootPageId = ulong.MaxValue;
+        public const ulong BootPageId = 0;
     }
 
     public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator

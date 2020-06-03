@@ -32,6 +32,7 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
             this.prevPageId = prevPageId;
+            this.nextPageId = nextPageId;
             this.items = new char[0][];
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
@@ -163,22 +164,19 @@ namespace PageManager
             throw new PageCorruptedException();
         }
 
-        public override void Persist(Stream destination)
+        public override void Persist(BinaryWriter destination)
         {
-            using (BinaryWriter bw = new BinaryWriter(destination))
-            {
-                bw.Write(this.pageId);
-                bw.Write(this.pageSize);
-                bw.Write((int)this.PageType());
-                bw.Write(this.rowCount);
-                bw.Write(this.prevPageId);
-                bw.Write(this.nextPageId);
+            destination.Write(this.pageId);
+            destination.Write(this.pageSize);
+            destination.Write((int)this.PageType());
+            destination.Write(this.rowCount);
+            destination.Write(this.prevPageId);
+            destination.Write(this.nextPageId);
 
-                foreach (char[] item in this.items)
-                {
-                    bw.Write((short)item.Length);
-                    bw.Write(item);
-                }
+            foreach (char[] item in this.items)
+            {
+                destination.Write((short)item.Length);
+                destination.Write(item);
             }
         }
 

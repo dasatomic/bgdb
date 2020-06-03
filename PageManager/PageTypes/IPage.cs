@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
 [assembly:InternalsVisibleTo("PageManagerTests")]
 
 namespace PageManager
@@ -16,6 +17,7 @@ namespace PageManager
         public uint MaxRowCount();
         public void RedoLog(ILogRecord record, ITransaction tran);
         public void UndoLog(ILogRecord record, ITransaction tran);
+        public void Persist(BinaryWriter destination);
 
         internal const uint PageIdPosition = 0;
         internal const uint PageSizePosition = 8;
