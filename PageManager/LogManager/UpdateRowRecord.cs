@@ -31,6 +31,10 @@ namespace LogManager
             this.pageType = pageType;
         }
 
+        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId, PageType pageType)
+            : this(pageId, rowPosition, diffOldValue, diffNewValue, transactionId, new ColumnType[0], pageType)
+        { }
+
         public UpdateRowRecord(BinaryReader source)
         {
             this.TranscationId = source.ReadUInt64();

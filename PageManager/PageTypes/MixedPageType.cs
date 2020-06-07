@@ -92,6 +92,8 @@ namespace PageManager
 
             ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(prevSize), lrContent, transaction.TranscationId(), this.columnTypes, this.PageType());
             transaction.AddRecord(rc);
+
+            this.isDirty = true;
         }
 
         public override uint MaxRowCount()
@@ -212,6 +214,11 @@ namespace PageManager
             }
 
             return true;
+        }
+
+        public override void Update(RowsetHolder item, ushort position, ITransaction transaction)
+        {
+            throw new NotImplementedException();
         }
     }
 }

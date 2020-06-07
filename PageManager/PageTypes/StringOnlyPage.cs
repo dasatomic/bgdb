@@ -118,6 +118,8 @@ namespace PageManager
                     transaction.AddRecord(rc);
                 }
             }
+
+            this.isDirty = true;
         }
 
         public uint MergeWithOffsetFetch(char[] item)
@@ -274,6 +276,11 @@ namespace PageManager
             }
 
             return true;
+        }
+
+        public override void Update(char[][] item, ushort position, ITransaction transaction)
+        {
+            throw new NotImplementedException();
         }
     }
 }

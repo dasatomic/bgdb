@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using PageManager;
 using Test.Common;
@@ -135,6 +137,47 @@ namespace PageManagerTests
 
             Assert.AreEqual(page21.NextPageId(), page22.PageId());
             Assert.AreEqual(page22.PrevPageId(), page21.PageId());
+        }
+
+        [Test]
+        public void VerifyAllocationMap()
+        {
+            var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+
+            IPage page1 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            IPage page2 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            IPage page3 = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+
+            var allocationMaps = pageManager.GetAllocationMapFirstPage();
+            Assert.IsTrue(allocationMaps.Count == 1);
+            int[] items = allocationMaps.First().Fetch();
+            Assert.AreEqual(1, items.Length);
+
+            int expectedMask = 1 << (int)page1.PageId() | 1 << (int)page2.PageId() | 1 << (int)page3.PageId();
+            Assert.AreEqual(expectedMask, items[0]);
+        }
+
+        [Test]
+        public void VerifyAllocationMapMultiple()
+        {
+            var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            List<ulong> pageIds = new List<ulong>();
+
+            for (int i = 2; i < 32 * 10 + 5; i++)
+            {
+                IPage page = pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+                pageIds.Add(page.PageId());
+            }
+
+            var allocationMaps = pageManager.GetAllocationMapFirstPage();
+            Assert.AreEqual(1, allocationMaps.Count);
+
+            int[] items = allocationMaps.First().Fetch();
+            Assert.AreEqual(11, items.Length);
+            foreach (ulong pageId in pageIds)
+            {
+                Assert.IsTrue((items[pageId / 32] & (1 << ((int)pageId % 32))) != 0);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace PageManager
 {
@@ -8,6 +9,7 @@ namespace PageManager
         public void AddPage(IPage page);
         public void EvictPage(ulong id);
         public int PagesInPool();
+        public IEnumerable<IPage> GetAllDirtyPages();
     }
 
     public class BufferPool : IBufferPool
@@ -22,6 +24,14 @@ namespace PageManager
         public void EvictPage(ulong id)
         {
             pageCollection.Remove(id);
+        }
+
+        public IEnumerable<IPage> GetAllDirtyPages()
+        {
+            foreach (IPage page in pageCollection.Values.Where(p => p.IsDirty()))
+            {
+                yield return page;
+            }
         }
 
         public IPage GetPage(ulong id)

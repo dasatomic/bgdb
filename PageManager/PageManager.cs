@@ -1,6 +1,8 @@
 ﻿using LogManager;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
@@ -8,18 +10,17 @@ namespace PageManager
     {
         private List<ulong> pageIds = new List<ulong>();
         private uint pageSize;
-        private ulong lastUsedPageId = 1;
+        private ulong lastUsedPageId = 2;
         private readonly IPageEvictionPolicy pageEvictionPolicy;
         private readonly IPersistedStream persistedStream;
         private readonly IBufferPool bufferPool;
 
-        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-        {
-            this.pageSize = defaultPageSize;
-            this.pageEvictionPolicy = evictionPolicy;
-            this.persistedStream = persistedStream;
+        private const int AllocationMapPageId = 1;
+        private readonly List<IntegerOnlyPage> AllocatationMapPages;
 
-            this.bufferPool = new BufferPool();
+        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
+            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool())
+        {
         }
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool)
@@ -29,6 +30,38 @@ namespace PageManager
             this.persistedStream = persistedStream;
 
             this.bufferPool = bufferPool;
+
+            this.AllocatationMapPages = new List<IntegerOnlyPage>();
+
+            if (!this.persistedStream.IsInitialized())
+            {
+                using (ITransaction tran = new NotLoggedTransaction())
+                {
+                    IntegerOnlyPage allocationMapFirstPage = allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    this.AllocatationMapPages.Add(allocationMapFirstPage);
+                }
+            }
+            else
+            {
+                // TODO: Read boot page.
+                ulong position = AllocationMapPageId * this.pageSize;
+                IntegerOnlyPage allocationMapFirstPage = (IntegerOnlyPage)this.persistedStream.SeekAndRead(position, (stream) => new IntegerOnlyPage(stream));
+                this.AllocatationMapPages.Add(allocationMapFirstPage);
+
+                ulong elemPosInPage = 0;
+                foreach (int elem in allocationMapFirstPage.Fetch())
+                {
+                    for (int i = 0; i < 32; i++)
+                    {
+                        if ((elem & (0x1 << i)) != 0)
+                        {
+                            this.pageIds.Add(elemPosInPage * 32UL + (ulong)i);
+                        }
+                    }
+
+                    elemPosInPage++;
+                }
+            }
         }
 
         public IPage AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
@@ -119,7 +152,46 @@ namespace PageManager
 
             bufferPool.AddPage(page);
 
+            AddToAllocationMap(page);
+
             return page;
+        }
+
+        private void AddToAllocationMap(IPage page)
+        {
+            IntegerOnlyPage AMPage = this.AllocatationMapPages.Last();
+            uint maxFit = AMPage.MaxRowCount() * sizeof(int) * 8;
+            uint allocationMapPage = (uint)(page.PageId() / maxFit);
+
+            if (allocationMapPage == this.AllocatationMapPages.Count)
+            {
+                using (ITransaction gamAllocTran = new NotLoggedTransaction())
+                {
+                    IntegerOnlyPage newAmPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId + maxFit, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, gamAllocTran);
+                    this.AllocatationMapPages.Add(newAmPage);
+                }
+            }
+
+            using (ITransaction gamUpdateTran = new NotLoggedTransaction())
+            {
+                IntegerOnlyPage gamPage = this.AllocatationMapPages.ElementAt((int)allocationMapPage);
+                int positionInPage = (int)(page.PageId() % maxFit);
+
+                if (gamPage.RowCount() * sizeof(int) * 8 > positionInPage)
+                {
+                    int[] elems = gamPage.Fetch();
+
+                    int elemPos = positionInPage / (8 * sizeof(int));
+                    int offset = positionInPage % (8 * sizeof(int));
+                    elems[elemPos] |= 0x1 << offset;
+
+                    gamPage.Update(new int[1] { elems[elemPos] }, (ushort)elemPos, gamUpdateTran);
+                }
+                else
+                {
+                    gamPage.Merge(new int[1] { 1 << positionInPage }, gamUpdateTran);
+                }
+            }
         }
 
         public IPage GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes)
@@ -149,8 +221,12 @@ namespace PageManager
 
         internal void FlushPage(IPage page)
         {
-            ulong position = page.PageId() * this.pageSize;
-            this.persistedStream.SeekAndWrite(position, (stream) => page.Persist(stream));
+            if (page.IsDirty())
+            {
+                ulong position = page.PageId() * this.pageSize;
+                this.persistedStream.SeekAndWrite(position, (stream) => page.Persist(stream));
+                page.ResetDirty();
+            }
         }
 
         internal IPage FetchPage(ulong pageId, PageType pageType, ColumnType[] columnTypes)
@@ -282,5 +358,25 @@ namespace PageManager
         }
 
         public ulong PageCount() => (ulong)this.pageIds.Count;
+
+        public async Task Checkpoint()
+        {
+            foreach (IPage page in bufferPool.GetAllDirtyPages())
+            {
+                FlushPage(page);
+            }
+
+            foreach (IPage page in this.AllocatationMapPages)
+            {
+                FlushPage(page);
+            }
+        }
+
+        public List<IntegerOnlyPage> GetAllocationMapFirstPage() => this.AllocatationMapPages;
+
+        public void Dispose()
+        {
+            this.persistedStream.Dispose();
+        }
     }
 }

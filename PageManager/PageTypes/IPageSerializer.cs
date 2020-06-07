@@ -9,6 +9,7 @@ namespace PageManager
         public bool CanFit(T items);
         public uint GetSizeNeeded(T items);
         public void Merge(T items, ITransaction transaction);
+        public void Update(T item, ushort position, ITransaction transaction);
         public T Fetch();
     }
 
@@ -19,6 +20,7 @@ namespace PageManager
         protected ulong prevPageId;
         protected ulong nextPageId;
         protected uint rowCount;
+        protected bool isDirty = false;
         protected T items;
 
         public ulong NextPageId() => this.nextPageId;
@@ -26,8 +28,18 @@ namespace PageManager
         public ulong PrevPageId() => this.prevPageId;
         public uint SizeInBytes() => this.pageSize;
         protected uint GetRowCount(T items) => this.rowCount;
-        public void SetNextPageId(ulong nextPageId) => this.nextPageId = nextPageId;
-        public void SetPrevPageId(ulong prevPageId) => this.prevPageId = prevPageId;
+        public void SetNextPageId(ulong nextPageId)
+        {
+            this.nextPageId = nextPageId;
+            this.isDirty = true;
+        }
+
+        public void SetPrevPageId(ulong prevPageId)
+        {
+            this.prevPageId = prevPageId;
+            this.isDirty = true;
+        }
+
         public uint RowCount() => this.rowCount;
 
         // Abstract fields.
@@ -42,5 +54,14 @@ namespace PageManager
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);
         public abstract bool Equals([AllowNull] PageSerializerBase<T> other);
+
+        public bool IsDirty() => this.isDirty;
+
+        public void ResetDirty()
+        {
+            this.isDirty = false;
+        }
+
+        public abstract void Update(T item, ushort position, ITransaction transaction);
     }
 }

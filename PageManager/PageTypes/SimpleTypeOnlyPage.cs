@@ -99,6 +99,23 @@ namespace PageManager
                 ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.pageType);
                 transaction.AddRecord(rc);
             }
+
+            this.isDirty = true;
+        }
+
+        public override void Update(T[] item, ushort position, ITransaction transaction)
+        {
+            if (position >= this.rowCount)
+            {
+                throw new PageCorruptedException();
+            }
+
+            byte[] oldVal = SerializeItem(this.items[position]);
+            this.items[position] = item[0];
+            byte[] newVal = SerializeItem(this.items[position]);
+
+            ILogRecord rc = new UpdateRowRecord(this.pageId, position, oldVal, newVal, transaction.TranscationId(), this.pageType);
+            transaction.AddRecord(rc);
         }
 
         public override T[] Fetch()

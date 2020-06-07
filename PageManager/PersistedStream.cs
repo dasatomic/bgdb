@@ -3,7 +3,7 @@ using System.IO;
 
 namespace PageManager
 {
-    public interface IPersistedStream
+    public interface IPersistedStream : IDisposable
     {
         public string GetFileName();
         public ulong CurrentFileSize();
@@ -11,6 +11,8 @@ namespace PageManager
         public void Shrink(ulong newSize);
         public void SeekAndWrite(ulong position, Action<BinaryWriter> writer);
         public IPage SeekAndRead(ulong position, Func<BinaryReader, IPage> reader);
+        public bool IsInitialized();
+        public void MarkInitialized();
     }
 
     public class PersistedStream : IPersistedStream
@@ -20,17 +22,25 @@ namespace PageManager
         private FileStream fileStream;
         private BinaryWriter binaryWriter;
         private BinaryReader binaryReader;
+        private bool isInitialized;
 
         public PersistedStream(ulong startFileSize, string fileName, bool createNew)
         {
-            if (File.Exists(fileName) || !createNew)
+            if (File.Exists(fileName) && !createNew)
             {
                 this.fileStream = new FileStream(fileName, FileMode.Open, FileAccess.ReadWrite);
+                isInitialized = true;
             }
             else
             {
+                if (File.Exists(fileName))
+                {
+                    File.Delete(fileName);
+                }
+
                 this.fileStream = new FileStream(fileName, FileMode.CreateNew, FileAccess.ReadWrite);
                 this.fileStream.SetLength((long)startFileSize);
+                isInitialized = false;
             }
 
             this.binaryWriter = new BinaryWriter(this.fileStream);
@@ -74,6 +84,19 @@ namespace PageManager
         {
             this.fileStream.Seek((long)position, SeekOrigin.Begin);
             return reader(this.binaryReader);
+        }
+
+        public void Dispose()
+        {
+            this.fileStream.Dispose();
+            this.binaryReader.Dispose();
+        }
+
+        public bool IsInitialized() => this.isInitialized;
+
+        public void MarkInitialized()
+        {
+            this.isInitialized = true;
         }
     }
 }

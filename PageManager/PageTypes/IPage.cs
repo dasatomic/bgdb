@@ -18,6 +18,8 @@ namespace PageManager
         public void RedoLog(ILogRecord record, ITransaction tran);
         public void UndoLog(ILogRecord record, ITransaction tran);
         public void Persist(BinaryWriter destination);
+        public bool IsDirty();
+        public void ResetDirty();
 
         internal const uint PageIdPosition = 0;
         internal const uint PageSizePosition = 8;
