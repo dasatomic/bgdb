@@ -1,14 +1,10 @@
 ﻿using LogManager;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Xml.Schema;
 
 namespace PageManager
 {
-    public class MemoryPageManager : IPageManager
+    public class PageManager : IPageManager
     {
         private List<ulong> pageIds = new List<ulong>();
         private uint pageSize;
@@ -17,7 +13,7 @@ namespace PageManager
         private IPersistedStream persistedStream;
         private IBufferPool bufferPool;
 
-        public MemoryPageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
+        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
         {
             this.pageSize = defaultPageSize;
             this.pageEvictionPolicy = evictionPolicy;

@@ -35,7 +35,7 @@ namespace PageManager
             this.nextPageId = nextPageId;
             this.items = new char[0][];
 
-            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
             tran.AddRecord(logRecord);
         }
 
@@ -46,7 +46,7 @@ namespace PageManager
 
             PageType pageTypePersisted = (PageType)stream.ReadUInt32();
 
-            if (PageManager.PageType.StringPage != pageTypePersisted)
+            if (global::PageManager.PageType.StringPage != pageTypePersisted)
             {
                 throw new InvalidCastException();
             }
@@ -70,7 +70,7 @@ namespace PageManager
             }
         }
 
-        public override PageType PageType() => PageManager.PageType.StringPage;
+        public override PageType PageType() => global::PageManager.PageType.StringPage;
 
         public override uint GetSizeNeeded(char[][] items)
         {

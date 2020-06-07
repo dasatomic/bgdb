@@ -14,8 +14,8 @@ namespace PageManager
     public class LongOnlyPage : SimpleTypeOnlyPage<long>
     {
         public LongOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction tran) : 
-            base(pageSize, pageId, PageManager.PageType.LongPage, prevPageId, nextPageId, tran) { }
-        public LongOnlyPage(BinaryReader stream) : base(stream, PageManager.PageType.LongPage) { }
+            base(pageSize, pageId, global::PageManager.PageType.LongPage, prevPageId, nextPageId, tran) { }
+        public LongOnlyPage(BinaryReader stream) : base(stream, global::PageManager.PageType.LongPage) { }
 
         protected override void SerializeInternal(BinaryReader stream)
         {

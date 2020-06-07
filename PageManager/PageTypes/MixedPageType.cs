@@ -31,7 +31,7 @@ namespace PageManager
             this.nextPageId = nextPageId;
             this.items = new RowsetHolder(this.columnTypes);
 
-            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
+            ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
             tran.AddRecord(logRecord);
         }
 
@@ -44,7 +44,7 @@ namespace PageManager
 
             PageType pageTypePersisted = (PageType)stream.ReadUInt32();
 
-            if (PageManager.PageType.MixedPage != pageTypePersisted)
+            if (global::PageManager.PageType.MixedPage != pageTypePersisted)
             {
                 throw new InvalidCastException();
             }
@@ -69,7 +69,7 @@ namespace PageManager
             }
         }
 
-        public override PageType PageType() => PageManager.PageType.MixedPage;
+        public override PageType PageType() => global::PageManager.PageType.MixedPage;
 
         public override RowsetHolder Fetch()
         {

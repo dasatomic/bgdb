@@ -14,7 +14,7 @@ namespace MetadataManagerTests
         [Test]
         public void InitPageList()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ITransaction tran = new DummyTran();
             ColumnType[] types = new[] { ColumnType.Int, ColumnType.Int };
 
@@ -25,7 +25,7 @@ namespace MetadataManagerTests
         [Test]
         public void PageListInsert()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
             ITransaction tran = new DummyTran();
@@ -42,7 +42,7 @@ namespace MetadataManagerTests
         [Test]
         public void PageMultiInsert()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
             ITransaction tran = new DummyTran();
@@ -63,7 +63,7 @@ namespace MetadataManagerTests
         [Test]
         public void FilterTestNotFound()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
             ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
@@ -82,7 +82,7 @@ namespace MetadataManagerTests
         [Test]
         public void FilterTestFound()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
             ITransaction tran = new DummyTran();
@@ -102,7 +102,7 @@ namespace MetadataManagerTests
         [Test]
         public void IterationTests()
         {
-            IAllocateMixedPage mixedPageAlloc = new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
             ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);

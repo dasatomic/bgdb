@@ -15,7 +15,7 @@ namespace MetadataManager
         [Test]
         public void CreateTable()
         {
-            var allocator =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
 
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
@@ -60,7 +60,7 @@ namespace MetadataManager
         [Test]
         public void CreateMultiTable()
         {
-            var allocator =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
@@ -96,7 +96,7 @@ namespace MetadataManager
         [Test]
         public void CreateWithSameName()
         {
-            var allocator =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);

@@ -13,7 +13,7 @@ namespace MetadataManagerTests
         [Test]
         public void MetadataManagerInit()
         {
-            var allocator =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             DummyTran tran = new DummyTran();
 
@@ -24,7 +24,7 @@ namespace MetadataManagerTests
         [Test]
         public void MetadataManagerInitFromExisting()
         {
-            var allocator =  new MemoryPageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             DummyTran tran = new DummyTran();
 
