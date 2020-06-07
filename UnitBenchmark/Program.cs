@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using DataStructures;
 using LogManager;
 using MetadataManager;
 using PageManager;

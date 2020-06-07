@@ -1,4 +1,5 @@
-﻿using MetadataManager;
+﻿using DataStructures;
+using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using System.Linq;

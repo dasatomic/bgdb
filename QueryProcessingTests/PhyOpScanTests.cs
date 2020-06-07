@@ -1,4 +1,5 @@
-﻿using LogManager;
+﻿using DataStructures;
+using LogManager;
 using MetadataManager;
 using NUnit.Framework;
 using PageManager;

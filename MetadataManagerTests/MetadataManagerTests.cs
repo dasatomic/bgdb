@@ -4,6 +4,7 @@ using PageManager;
 using LogManager;
 using System.IO;
 using Test.Common;
+using DataStructures;
 
 namespace MetadataManagerTests
 {

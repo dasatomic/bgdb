@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DataStructures\DataStructures.csproj" />
     <ProjectReference Include="..\PageManager\PageManager.csproj" />
   </ItemGroup>
 

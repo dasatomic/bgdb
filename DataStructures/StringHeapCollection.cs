@@ -1,6 +1,6 @@
 ﻿using PageManager;
 
-namespace MetadataManager
+namespace DataStructures
 {
     public interface HeapWithOffsets<T>
     {

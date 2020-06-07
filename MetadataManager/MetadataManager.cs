@@ -1,4 +1,5 @@
-﻿using LogManager;
+﻿using DataStructures;
+using LogManager;
 using PageManager;
 using System;
 using System.Collections.Generic;

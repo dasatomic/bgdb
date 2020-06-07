@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using PageManager;
 
-namespace MetadataManager
+namespace DataStructures
 {
     public interface UnorderedListCollection<T>
     {

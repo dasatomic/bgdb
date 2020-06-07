@@ -6,6 +6,7 @@ using System.Linq;
 using LogManager;
 using System.IO;
 using Test.Common;
+using DataStructures;
 
 namespace MetadataManager
 {
