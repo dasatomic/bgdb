@@ -7,6 +7,7 @@ namespace PageManager
         public IPage GetPage(ulong id);
         public void AddPage(IPage page);
         public void EvictPage(ulong id);
+        public int PagesInPool();
     }
 
     public class BufferPool : IBufferPool
@@ -27,5 +28,7 @@ namespace PageManager
         {
             return pageCollection.GetValueOrDefault(id);
         }
+
+        public int PagesInPool() => this.pageCollection.Count;
     }
 }

@@ -9,9 +9,9 @@ namespace PageManager
         private List<ulong> pageIds = new List<ulong>();
         private uint pageSize;
         private ulong lastUsedPageId = 1;
-        private IPageEvictionPolicy pageEvictionPolicy;
-        private IPersistedStream persistedStream;
-        private IBufferPool bufferPool;
+        private readonly IPageEvictionPolicy pageEvictionPolicy;
+        private readonly IPersistedStream persistedStream;
+        private readonly IBufferPool bufferPool;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
         {
@@ -20,6 +20,15 @@ namespace PageManager
             this.persistedStream = persistedStream;
 
             this.bufferPool = new BufferPool();
+        }
+
+        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool)
+        {
+            this.pageSize = defaultPageSize;
+            this.pageEvictionPolicy = evictionPolicy;
+            this.persistedStream = persistedStream;
+
+            this.bufferPool = bufferPool;
         }
 
         public IPage AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
