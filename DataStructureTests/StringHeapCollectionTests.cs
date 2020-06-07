@@ -1,11 +1,10 @@
 ﻿using DataStructures;
-using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using System.Linq;
 using Test.Common;
 
-namespace MetadataManagerTests
+namespace DataStructureTests
 {
     public class StringHeapCollectionTests
     {
@@ -39,7 +38,7 @@ namespace MetadataManagerTests
 
             StringHeapCollection collection = new StringHeapCollection(strPageAlloc, tran);
 
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 string itemToInsert = i.ToString();
                 var offset = collection.Add(itemToInsert.ToCharArray(), tran);

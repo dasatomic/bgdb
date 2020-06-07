@@ -1,13 +1,12 @@
 using DataStructures;
 using LogManager;
-using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using System.Collections.Generic;
 using System.Linq;
 using Test.Common;
 
-namespace MetadataManagerTests
+namespace DataStructureTests
 {
     public class PageListCollectionTests
     {

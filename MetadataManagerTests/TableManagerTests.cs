@@ -1,14 +1,13 @@
 ﻿using NUnit.Framework;
 using MetadataManager;
 using PageManager;
-using System.Collections.Generic;
 using System.Linq;
 using LogManager;
 using System.IO;
 using Test.Common;
 using DataStructures;
 
-namespace MetadataManager
+namespace MetadataManagerTests
 {
     public class TableManagerTests
     {
@@ -20,7 +19,7 @@ namespace MetadataManager
 
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
+            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
             setupTran.Commit();
 
             ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
@@ -65,7 +64,7 @@ namespace MetadataManager
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
+            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
             const int repCount = 100;
@@ -100,7 +99,7 @@ namespace MetadataManager
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
-            MetadataManager mm = new MetadataManager(allocator, stringHeap, allocator, logManager);
+            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
             ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
