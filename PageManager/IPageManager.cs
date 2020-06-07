@@ -10,7 +10,7 @@
 
     public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator
     {
-        public IPage GetPage(ulong pageId, ITransaction tran);
+        public IPage GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes);
         public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran);
         public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran);
         public ulong PageCount();

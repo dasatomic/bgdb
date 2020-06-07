@@ -90,7 +90,7 @@ namespace PageManagerTests
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
             page.Merge(holder, new DummyTran());
 
-            page = pageManager.GetMixedPage(page.PageId(), tran);
+            page = pageManager.GetMixedPage(page.PageId(), tran, types);
 
             RowsetHolder holder2 = page.Fetch();
 

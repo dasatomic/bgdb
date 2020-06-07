@@ -20,8 +20,9 @@ namespace QueryProcessing
             this.mdTable = mdTable;
             this.pageAllocator = pageAllocator;
 
-            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran);
-            this.pageCollection = new PageListCollection(this.pageAllocator, mdTable.Columns.Select(c => c.ColumnType).ToArray(), rootPage);
+            ColumnType[] columnTypes = mdTable.Columns.Select(x => x.ColumnType).ToArray();
+            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran, columnTypes);
+            this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, rootPage);
             this.stringHeap = stringHeap;
             this.input = input;
             this.tran = tran;

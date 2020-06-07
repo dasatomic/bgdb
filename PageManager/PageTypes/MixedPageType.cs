@@ -9,7 +9,7 @@ namespace PageManager
     public interface IAllocateMixedPage
     {
         MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
-        MixedPage GetMixedPage(ulong pageId, ITransaction tran);
+        MixedPage GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
     }
 
     public class MixedPage : PageSerializerBase<RowsetHolder>
@@ -90,7 +90,7 @@ namespace PageManager
                 item.Serialize(bw);
             }
 
-            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(prevSize), lrContent, transaction.TranscationId());
+            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(prevSize), lrContent, transaction.TranscationId(), this.columnTypes, this.PageType());
             transaction.AddRecord(rc);
         }
 

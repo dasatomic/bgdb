@@ -30,7 +30,8 @@ namespace QueryProcessing
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = tableManager.GetByName(tableName, tran);
 
-            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetMixedPage(table.RootPage, tran));
+            ColumnType[] columnTypes = table.Columns.Select(x => x.ColumnType).ToArray();
+            PageListCollection pcl = new PageListCollection(allocator, columnTypes, allocator.GetMixedPage(table.RootPage, tran, columnTypes));
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();

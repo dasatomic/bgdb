@@ -96,7 +96,7 @@ namespace PageManager
             for (int i = 0; i < items.Length; i++)
             {
                 byte[] bs = SerializeItem(items[i]);
-                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId());
+                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.pageType);
                 transaction.AddRecord(rc);
             }
         }

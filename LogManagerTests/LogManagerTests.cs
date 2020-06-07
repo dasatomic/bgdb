@@ -29,7 +29,9 @@ namespace LogManagerTests
                         rowPosition: 2,
                         diffOldValue: new byte[] { 1, 2, 3 },
                         diffNewValue: new byte[] { 3, 2, 1 },
-                        transactionId: tran1.TranscationId());
+                        transactionId: tran1.TranscationId(),
+                        new ColumnType[1] { ColumnType.Int },
+                        PageType.IntPage);
 
                 tran1.AddRecord(record1);
                 await tran1.Commit();
@@ -299,7 +301,7 @@ namespace LogManagerTests
                     await manager.Recovery(br, pageManager, recTran);
                 }
 
-                var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran());
+                var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran(), types1);
                 RowsetHolder pageContent = page.Fetch();
                 Assert.AreEqual(holder, pageContent);
             }
@@ -320,8 +322,8 @@ namespace LogManagerTests
                 const int pageCount = 3;
 
                 var p1 = pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-                var p2 = pageManager.AllocatePageDouble(2, 2, tran1);
-                var p3 = pageManager.AllocatePageInt(3, 3, tran1);
+                var p2 = pageManager.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var p3 = pageManager.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 await tran1.Commit();
 
@@ -338,7 +340,7 @@ namespace LogManagerTests
 
                 Assert.AreEqual(pageCount, pageManager.PageCount());
 
-                var np1 = pageManager.GetMixedPage(p1.PageId(), new DummyTran());
+                var np1 = pageManager.GetMixedPage(p1.PageId(), new DummyTran(), types1);
                 var np2 = pageManager.GetPageDouble(p2.PageId(), new DummyTran());
                 var np3 = pageManager.GetPageInt(p3.PageId(), new DummyTran());
 

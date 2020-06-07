@@ -12,8 +12,10 @@ namespace LogManager
         public readonly byte[] DiffOldValue;
         public readonly byte[] DiffNewValue;
         public readonly ulong TranscationId;
+        public readonly ColumnType[] columnTypes;
+        public readonly PageType pageType;
 
-        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId)
+        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId, ColumnType[] columnTypes, PageType pageType)
         {
             if (diffOldValue.Length != diffNewValue.Length)
             {
@@ -25,6 +27,8 @@ namespace LogManager
             this.DiffOldValue = diffOldValue;
             this.DiffNewValue = diffNewValue;
             this.TranscationId = transactionId;
+            this.columnTypes = columnTypes;
+            this.pageType = pageType;
         }
 
         public UpdateRowRecord(BinaryReader source)
@@ -35,6 +39,14 @@ namespace LogManager
             int bc = source.ReadUInt16();
             this.DiffOldValue = source.ReadBytes(bc);
             this.DiffNewValue = source.ReadBytes(bc);
+            int cts = source.ReadUInt16();
+            this.columnTypes = new ColumnType[cts];
+            for (int i = 0; i < cts; i++)
+            {
+                this.columnTypes[i] = (ColumnType)source.ReadByte();
+            }
+
+            this.pageType = (PageType)source.ReadByte();
         }
 
         public void Serialize(BinaryWriter destination)
@@ -46,6 +58,12 @@ namespace LogManager
             destination.Write((ushort)this.DiffOldValue.Length);
             destination.Write(this.DiffOldValue);
             destination.Write(this.DiffNewValue);
+            destination.Write((ushort)this.columnTypes.Length);
+            foreach (ColumnType ct in this.columnTypes)
+            {
+                destination.Write((byte)ct);
+            }
+            destination.Write((byte)this.pageType);
         }
 
         public LogRecordType GetRecordType() => LogRecordType.RowModify;
@@ -54,13 +72,13 @@ namespace LogManager
 
         public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            IPage page = pageManager.GetPage(this.PageId, tran);
+            IPage page = pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
             page.RedoLog(this, tran);
         }
 
         public async Task Undo(IPageManager pageManager, ITransaction tran)
         {
-            IPage page = pageManager.GetPage(this.PageId, tran);
+            IPage page = pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
             page.UndoLog(this, tran);
         }
 

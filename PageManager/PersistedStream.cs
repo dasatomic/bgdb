@@ -9,7 +9,8 @@ namespace PageManager
         public ulong CurrentFileSize();
         public void Grow(ulong newSize);
         public void Shrink(ulong newSize);
-        public void SeekAndAccess(ulong position, Action<BinaryWriter> writer);
+        public void SeekAndWrite(ulong position, Action<BinaryWriter> writer);
+        public IPage SeekAndRead(ulong position, Func<BinaryReader, IPage> reader);
     }
 
     public class PersistedStream : IPersistedStream
@@ -18,6 +19,7 @@ namespace PageManager
 
         private FileStream fileStream;
         private BinaryWriter binaryWriter;
+        private BinaryReader binaryReader;
 
         public PersistedStream(ulong startFileSize, string fileName, bool createNew)
         {
@@ -32,6 +34,7 @@ namespace PageManager
             }
 
             this.binaryWriter = new BinaryWriter(this.fileStream);
+            this.binaryReader = new BinaryReader(this.fileStream);
 
             this.fileName = fileName;
         }
@@ -60,11 +63,17 @@ namespace PageManager
             this.fileStream.SetLength((long)newSize);
         }
 
-        public void SeekAndAccess(ulong position, Action<BinaryWriter> writer)
+        public void SeekAndWrite(ulong position, Action<BinaryWriter> writer)
         {
             this.fileStream.Seek((long)position, SeekOrigin.Begin);
             writer(this.binaryWriter);
             this.fileStream.Flush();
+        }
+
+        public IPage SeekAndRead(ulong position, Func<BinaryReader, IPage> reader)
+        {
+            this.fileStream.Seek((long)position, SeekOrigin.Begin);
+            return reader(this.binaryReader);
         }
     }
 }

@@ -35,7 +35,7 @@ namespace MetadataManager
             {
                 using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "SETUP_BOOT_PAGE");
                 bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran));
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition));
                 tran.Commit();
 
                 MetadataInitialSetup();
@@ -43,7 +43,7 @@ namespace MetadataManager
             else
             {
                 using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "GET_BOOT_PAGE");
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran));
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition));
                 tran.Commit();
             }
         }

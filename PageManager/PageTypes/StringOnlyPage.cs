@@ -114,7 +114,7 @@ namespace PageManager
                 {
                     bw.Write((ushort)items[i].Length);
                     bw.Write(items[i]);
-                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId());
+                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.PageType());
                     transaction.AddRecord(rc);
                 }
             }

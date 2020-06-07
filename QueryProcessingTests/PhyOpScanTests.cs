@@ -55,7 +55,7 @@ namespace QueryProcessingTests
             tran.Commit();
 
             tran = new Transaction(logManager, allocator, "SELECT");
-            PageListCollection pcl = new PageListCollection(allocator, table.Columns.Select(x => x.ColumnType).ToArray(), allocator.GetPage(table.RootPage, tran));
+            PageListCollection pcl = new PageListCollection(allocator, columnTypes, allocator.GetPage(table.RootPage, tran, PageType.MixedPage, columnTypes));
             PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
             Row[] result = scan.Iterate(tran).ToArray();
 
