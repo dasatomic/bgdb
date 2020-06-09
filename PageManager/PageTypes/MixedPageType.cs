@@ -33,6 +33,8 @@ namespace PageManager
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
             tran.AddRecord(logRecord);
+
+            this.isDirty = true;
         }
 
         public MixedPage(BinaryReader stream, ColumnType[] columnTypes)
@@ -67,6 +69,8 @@ namespace PageManager
             {
                 throw new SerializationException();
             }
+
+            this.isDirty = false;
         }
 
         public override PageType PageType() => global::PageManager.PageType.MixedPage;

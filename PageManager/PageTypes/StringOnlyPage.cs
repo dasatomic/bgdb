@@ -37,6 +37,8 @@ namespace PageManager
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
             tran.AddRecord(logRecord);
+
+            this.isDirty = true;
         }
 
         public StringOnlyPage(BinaryReader stream)
@@ -68,6 +70,8 @@ namespace PageManager
                 int charLength = stream.ReadInt16();
                 this.items[elemCount] = stream.ReadChars(charLength);
             }
+
+            this.isDirty = false;
         }
 
         public override PageType PageType() => global::PageManager.PageType.StringPage;
@@ -140,6 +144,8 @@ namespace PageManager
             this.rowCount++;
             this.items = this.items.Append(item).ToArray();
 
+            this.isDirty = true;
+
             return positionInBuffer;
         }
 
@@ -168,6 +174,11 @@ namespace PageManager
 
         public override void Persist(BinaryWriter destination)
         {
+            if (this.rowCount != this.items.Length)
+            {
+                throw new PageCorruptedException();
+            }
+
             destination.Write(this.pageId);
             destination.Write(this.pageSize);
             destination.Write((int)this.PageType());

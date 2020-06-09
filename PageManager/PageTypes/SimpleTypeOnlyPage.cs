@@ -36,6 +36,8 @@ namespace PageManager
             transaction.AddRecord(logRecord);
 
             this.items = new T[0];
+
+            this.isDirty = true;
         }
 
         public SimpleTypeOnlyPage(BinaryReader stream, PageType pageType)
@@ -61,6 +63,8 @@ namespace PageManager
             }
 
             SerializeInternal(stream);
+
+            this.isDirty = false;
         }
 
         public override PageType PageType() => pageType;

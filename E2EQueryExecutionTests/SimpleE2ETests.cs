@@ -170,5 +170,42 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
         }
+
+        [Test]
+        public async Task E2EBufferPoolExceed()
+        {
+            BufferPool bp = new BufferPool();
+
+            IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(3, 1);
+            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp);
+
+            const int rowInsert = 5000;
+
+            using (Transaction tran = new Transaction(logManager, pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE LargeTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                await this.queryEntryGate.Execute(createTableQuery, tran);
+                await tran.Commit();
+            }
+
+            using (Transaction tran = new Transaction(logManager, pageManager, "INSERT"))
+            {
+                for (int i = 0; i < rowInsert; i++)
+                {
+                    string insertQuery = $"INSERT INTO LargeTable VALUES ({i}, {i}.1, mystring{i})";
+                    await this.queryEntryGate.Execute(insertQuery, tran);
+                }
+
+                await tran.Commit();
+            }
+
+            using (Transaction tran = new Transaction(logManager, pageManager, "SELECT"))
+            {
+                string query = @"SELECT a, b, c FROM LargeTable";
+                Row[] result = (await this.queryEntryGate.Execute(query, tran)).ToArray();
+
+                Assert.AreEqual(rowInsert, result.Length);
+            }
+        }
     }
 }

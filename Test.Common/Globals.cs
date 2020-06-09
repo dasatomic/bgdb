@@ -11,6 +11,7 @@ namespace Test.Common
                 return new FifoEvictionPolicy(10, 5);
             }
         }
+
         public static IPageEvictionPolicy RestrictiveEviction = new FifoEvictionPolicy(1, 1);
 
         public static PersistedStream DefaultPersistedStream = new PersistedStream(1024 * 1024, "temp.data", createNew: true);

@@ -27,7 +27,7 @@ namespace PageManagerTests
             pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             var p = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
 
-            Assert.IsTrue(!bp.GetAllDirtyPages().Any());
+            Assert.IsTrue(bp.GetAllDirtyPages().Any());
             p.Merge(new int[] { 1, 2, 3 }, tran);
             Assert.IsTrue(bp.GetAllDirtyPages().Any());
 
