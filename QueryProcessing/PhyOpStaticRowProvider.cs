@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -14,13 +15,17 @@ namespace QueryProcessing
             this.source = rows;
         }
 
-        public IEnumerable<Row> Iterate(ITransaction _)
+        public async IAsyncEnumerable<Row> Iterate(ITransaction _)
         {
-            return source;
+            foreach (Row row in source)
+            {
+                yield return await Task.FromResult(row);
+            }
         }
 
-        public void Invoke()
+        public async Task Invoke()
         {
+            await Task.FromResult(0);
         }
     }
 }

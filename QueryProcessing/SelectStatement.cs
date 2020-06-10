@@ -14,7 +14,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async Task<IEnumerable<Row>> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<Row> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsSelect)
             {
@@ -23,8 +23,12 @@ namespace QueryProcessing
 
             Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
 
-            IPhysicalOperator<Row> rootOp = this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran);
-            return rootOp.Iterate(tran);
+            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran);
+
+            await foreach (Row row in rootOp.Iterate(tran))
+            {
+                yield return row;
+            }
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsSelect;

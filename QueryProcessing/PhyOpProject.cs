@@ -1,6 +1,7 @@
 ﻿using PageManager;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -15,16 +16,17 @@ namespace QueryProcessing
             this.columnChooser = columnChooser;
         }
 
-        public IEnumerable<Row> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<Row> Iterate(ITransaction tran)
         {
-            foreach (Row row in this.source.Iterate(tran))
+            await foreach (Row row in this.source.Iterate(tran))
             {
                 yield return row.Project(this.columnChooser);
             }
         }
 
-        public void Invoke()
+        public async Task Invoke()
         {
+            await Task.FromResult(0);
         }
     }
 }

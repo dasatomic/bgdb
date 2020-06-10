@@ -11,7 +11,7 @@ namespace PageManager
         RollBacked,
     }
 
-    public interface ITransaction : IDisposable
+    public interface ITransaction : IAsyncDisposable, IDisposable
     {
         ulong TranscationId();
         Task Rollback();

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MetadataManager
 {
@@ -56,13 +57,13 @@ namespace MetadataManager
             this.pageAllocator = pageAllocator;
         }
 
-        public bool Exists(TableCreateDefinition def, ITransaction tran)
+        public async Task<bool> Exists(TableCreateDefinition def, ITransaction tran)
         {
-            foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
             {
                 foreach (PagePointerOffsetPair stringPointer in rh.GetStringPointerColumn(1))
                 {
-                    if (def.TableName == new string(stringHeap.Fetch(stringPointer, tran)))
+                    if (def.TableName == new string(await stringHeap.Fetch(stringPointer, tran)))
                     {
                         return true;
                     }
@@ -72,9 +73,9 @@ namespace MetadataManager
             return false;
         }
 
-        public int CreateObject(TableCreateDefinition def, ITransaction tran)
+        public async Task<int> CreateObject(TableCreateDefinition def, ITransaction tran)
         {
-            if (this.Exists(def, tran))
+            if (await this.Exists(def, tran))
             {
                 throw new ElementWithSameNameExistsException();
             }
@@ -85,19 +86,19 @@ namespace MetadataManager
             }
 
             int id = 1;
-            if (!pageListCollection.IsEmpty(tran))
+            if (!(await pageListCollection.IsEmpty(tran)))
             {
-                int maxId = pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0, tran);
+                int maxId = await pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0, tran);
                 id = maxId + 1;
             }
 
-            MixedPage rootPage = this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage rootPage = await this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
             RowsetHolder rh = new RowsetHolder(columnDefinitions);
-            PagePointerOffsetPair namePointer =  this.stringHeap.Add(def.TableName.ToCharArray(), tran);
+            PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.TableName.ToCharArray(), tran);
 
             rh.SetColumns(new int[1][] { new[] { id } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[1][] { new[] { (long)rootPage.PageId() }});
-            pageListCollection.Add(rh, tran);
+            await pageListCollection.Add(rh, tran);
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
             {
@@ -108,16 +109,16 @@ namespace MetadataManager
                     TableId = id,
                 };
 
-                columnManager.CreateObject(ccd, tran);
+                await columnManager.CreateObject(ccd, tran);
             }
 
 
             return id;
         }
 
-        public IEnumerable<MetadataTable> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<MetadataTable> Iterate(ITransaction tran)
         {
-            foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
             {
                 for (int i = 0; i < rh.GetRowCount(); i++)
                 {
@@ -129,20 +130,29 @@ namespace MetadataManager
                         };
 
                     PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataTable.TableNameColumnPos)[i];
-                    char[] tableName= this.stringHeap.Fetch(stringPointer, tran);
+                    char[] tableName= await this.stringHeap.Fetch(stringPointer, tran);
 
                     mdObj.TableName = new string(tableName);
 
-                    mdObj.Columns = this.columnManager.Iterate(tran).Where(c => c.TableId == mdObj.TableId).ToArray();
+                    List<MetadataColumn> columns = new List<MetadataColumn>();
+                    await foreach (var column in this.columnManager.Iterate(tran))
+                    {
+                        if (column.TableId == mdObj.TableId)
+                        {
+                            columns.Add(column);
+                        }
+                    }
+
+                    mdObj.Columns = columns.ToArray();
 
                     yield return mdObj;
                 }
             }
         }
 
-        public MetadataTable GetById(int id, ITransaction tran)
+        public async Task<MetadataTable> GetById(int id, ITransaction tran)
         {
-            foreach (var table in this.Iterate(tran))
+            await foreach (var table in this.Iterate(tran))
             {
                 if (table.TableId == id)
                 {
@@ -153,9 +163,9 @@ namespace MetadataManager
             throw new KeyNotFoundException();
         }
 
-        public MetadataTable GetByName(string name, ITransaction tran)
+        public async Task<MetadataTable> GetByName(string name, ITransaction tran)
         {
-            foreach (var table in this.Iterate(tran))
+            await foreach (var table in this.Iterate(tran))
             {
                 if (table.TableName == name)
                 {

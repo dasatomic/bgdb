@@ -21,6 +21,8 @@ namespace LogManager
         {
         }
 
+        public ValueTask DisposeAsync() => default;
+
         public IEnumerable<ILogRecord> GetRecords() => Enumerable.Empty<ILogRecord>();
 
         public TransactionState GetTransactionState() => TransactionState.Open;

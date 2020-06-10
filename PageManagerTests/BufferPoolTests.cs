@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.Threading.Tasks;
 using Test.Common;
 
 namespace PageManagerTests
@@ -12,22 +13,22 @@ namespace PageManagerTests
         private DummyTran tran = new DummyTran();
 
         [Test]
-        public void BufferPoolCheck()
+        public async Task BufferPoolCheck()
         {
             IBufferPool bp = new BufferPool();
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
 
             var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp);
 
-            pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.AreEqual(3, bp.PagesInPool());
         }
 
         [Test]
-        public void BufferPoolAfterEviction()
+        public async Task BufferPoolAfterEviction()
         {
             IBufferPool bp = new BufferPool();
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
@@ -36,7 +37,7 @@ namespace PageManagerTests
 
             for (int i = 0; i < 11; i++)
             {
-                pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+                await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             }
 
             Assert.AreEqual(6, bp.PagesInPool());

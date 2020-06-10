@@ -10,8 +10,6 @@ namespace LogManager
 {
     public class ReadonlyTransaction : ITransaction
     {
-        private readonly ulong transactionId;
-
         public void AddRecord(ILogRecord logRecord)
         {
             throw new InvalidTransactionOperationException();
@@ -27,6 +25,12 @@ namespace LogManager
             // TODO: Release locks
         }
 
+        public ValueTask DisposeAsync()
+        {
+            // TODO: Release locks.
+            return default;
+        }
+
         public IEnumerable<ILogRecord> GetRecords() => Enumerable.Empty<ILogRecord>();
 
         public TransactionState GetTransactionState() => TransactionState.Open;
@@ -36,6 +40,6 @@ namespace LogManager
             throw new InvalidTransactionOperationException();
         }
 
-        public ulong TranscationId() => this.transactionId;
+        public ulong TranscationId() => 0;
     }
 }

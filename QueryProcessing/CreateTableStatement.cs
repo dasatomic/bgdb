@@ -17,7 +17,7 @@ namespace QueryProcessing
             this.metadataManager = metadataManager;
         }
 
-        public async Task<IEnumerable<Row>> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<Row> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsCreate)
             {
@@ -41,9 +41,9 @@ namespace QueryProcessing
                 else throw new ArgumentException();
             }).ToArray();
 
-            tableManager.CreateObject(tableCreateDefinition, tran);
+            await tableManager.CreateObject(tableCreateDefinition, tran);
 
-            return Enumerable.Empty<Row>();
+            yield return null;
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsCreate;

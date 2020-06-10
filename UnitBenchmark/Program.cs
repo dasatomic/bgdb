@@ -38,7 +38,7 @@ namespace UnitBenchmark
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
                     ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
-                }, tran);
+                }, tran).Wait();
             }
         }
 
@@ -60,11 +60,11 @@ namespace UnitBenchmark
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnTypes,
-            }, tran);
+            }, tran).Result;
 
             tran = new Transaction(logManager, allocator, "FETCH_TABLE");
-            var table = tm.GetById(id, tran);
-            tran.Commit();
+            var table = tm.GetById(id, tran).Result;
+            tran.Commit().Wait();
 
             Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes) };
 
@@ -74,8 +74,8 @@ namespace UnitBenchmark
 
                 tran = new Transaction(logManager, allocator, "INSERT");
                 PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
-                op.Invoke();
-                tran.Commit();
+                op.Invoke().Wait();
+                tran.Commit().Wait();
             }
         }
     }

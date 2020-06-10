@@ -1,15 +1,15 @@
 ﻿using LogManager;
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
     public interface IAllocateDoublePage
     {
-        DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran);
-        DoubleOnlyPage GetPageDouble(ulong pageId, ITransaction tran);
+        Task<DoubleOnlyPage> AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran);
+        Task<DoubleOnlyPage> GetPageDouble(ulong pageId, ITransaction tran);
     }
 
     public class DoubleOnlyPage : SimpleTypeOnlyPage<double>

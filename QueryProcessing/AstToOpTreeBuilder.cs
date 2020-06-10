@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using DataStructures;
 using MetadataManager;
 using PageManager;
@@ -23,16 +24,16 @@ namespace QueryProcessing
             this.stringHeap = stringHeap;
         }
 
-        public IPhysicalOperator<Row> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
+        public async Task<IPhysicalOperator<Row>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
             string tableName = sqlStatement.Table;
             string[] columns = sqlStatement.Columns.ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = tableManager.GetByName(tableName, tran);
+            MetadataTable table = await tableManager.GetByName(tableName, tran);
 
             ColumnType[] columnTypes = table.Columns.Select(x => x.ColumnType).ToArray();
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, allocator.GetMixedPage(table.RootPage, tran, columnTypes));
+            PageListCollection pcl = new PageListCollection(allocator, columnTypes, await allocator.GetMixedPage(table.RootPage, tran, columnTypes));
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();
@@ -46,12 +47,12 @@ namespace QueryProcessing
             return projectOp;
         }
 
-        public PhyOpTableInsert ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran)
+        public async Task<PhyOpTableInsert> ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran)
         {
             string tableName = insertStatement.Table;
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = tableManager.GetByName(tableName, tran);
+            MetadataTable table = await tableManager.GetByName(tableName, tran);
 
             List<int> intCols = new List<int>();
             List<double> doubleCols = new List<double>();

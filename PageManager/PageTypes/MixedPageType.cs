@@ -3,13 +3,14 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
     public interface IAllocateMixedPage
     {
-        MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
-        MixedPage GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
+        Task<MixedPage> AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
+        Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
     }
 
     public class MixedPage : PageSerializerBase<RowsetHolder>

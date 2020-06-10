@@ -4,6 +4,7 @@ using PageManager;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -22,24 +23,25 @@ namespace QueryProcessing
             this.pageAllocator = pageAllocator;
 
             ColumnType[] columnTypes = mdTable.Columns.Select(x => x.ColumnType).ToArray();
-            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran, columnTypes);
+            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran, columnTypes).Result;
             this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, rootPage);
             this.stringHeap = stringHeap;
             this.input = input;
             this.tran = tran;
         }
 
-        public void Invoke()
+        public async Task Invoke()
         {
-            foreach (Row row in this.input.Iterate(this.tran))
+            await foreach (Row row in this.input.Iterate(this.tran))
             {
-                this.pageCollection.Add(row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap, tran), tran);
+                await this.pageCollection.Add(await row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap, tran), tran);
             }
         }
 
-        public IEnumerable<Row> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<Row> Iterate(ITransaction tran)
         {
-            return Enumerable.Empty<Row>();
+            await Task.FromResult(0);
+            yield return null;
         }
     }
 }

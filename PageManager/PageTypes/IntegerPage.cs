@@ -2,13 +2,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
     public interface IAllocateIntegerPage
     {
-        IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction transaction);
-        IntegerOnlyPage GetPageInt(ulong pageId, ITransaction transaction);
+        Task<IntegerOnlyPage> AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction transaction);
+        Task<IntegerOnlyPage> GetPageInt(ulong pageId, ITransaction transaction);
     }
 
     public class IntegerOnlyPage : SimpleTypeOnlyPage<int>

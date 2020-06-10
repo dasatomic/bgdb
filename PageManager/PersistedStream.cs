@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
@@ -9,8 +10,8 @@ namespace PageManager
         public ulong CurrentFileSize();
         public void Grow(ulong newSize);
         public void Shrink(ulong newSize);
-        public void SeekAndWrite(ulong position, Action<BinaryWriter> writer);
-        public IPage SeekAndRead(ulong position, Func<BinaryReader, IPage> reader);
+        public Task SeekAndWrite(ulong position, IPage page);
+        public Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnType[] columnTypes);
         public bool IsInitialized();
         public void MarkInitialized();
     }
@@ -73,17 +74,41 @@ namespace PageManager
             this.fileStream.SetLength((long)newSize);
         }
 
-        public void SeekAndWrite(ulong position, Action<BinaryWriter> writer)
+        public async Task SeekAndWrite(ulong position, IPage page)
         {
             this.fileStream.Seek((long)position, SeekOrigin.Begin);
-            writer(this.binaryWriter);
-            this.fileStream.Flush();
+            page.Persist(this.binaryWriter);
+            await this.fileStream.FlushAsync();
         }
 
-        public IPage SeekAndRead(ulong position, Func<BinaryReader, IPage> reader)
+        public async Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnType[] columnTypes)
         {
             this.fileStream.Seek((long)position, SeekOrigin.Begin);
-            return reader(this.binaryReader);
+
+            if (pageType == PageType.DoublePage)
+            {
+                return new DoubleOnlyPage(this.binaryReader);
+            }
+            else if (pageType == PageType.IntPage)
+            {
+                return new IntegerOnlyPage(this.binaryReader);
+            }
+            else if (pageType == PageType.LongPage)
+            {
+                return new LongOnlyPage(this.binaryReader);
+            }
+            else if (pageType == PageType.MixedPage)
+            {
+                return new MixedPage(this.binaryReader, columnTypes);
+            }
+            else if (pageType == PageType.StringPage)
+            {
+                return new StringOnlyPage(this.binaryReader);
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
         }
 
         public void Dispose()

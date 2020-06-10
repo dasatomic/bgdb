@@ -4,6 +4,7 @@ using PageManager;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -20,17 +21,17 @@ namespace QueryProcessing
             this.tran = tran;
         }
 
-        public IEnumerable<Row> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<Row> Iterate(ITransaction tran)
         {
             // TODO: Need transaction here.
-            foreach (var rowsetHolder in this.source.Iterate(tran))
+            await foreach (var rowsetHolder in this.source.Iterate(tran))
             {
                 foreach (RowHolder rowHolder in rowsetHolder)
                 {
                     string[] strVals = new string[rowHolder.strPRow.Length];
                     for (int i = 0; i < strVals.Length; i++)
                     {
-                        strVals[i] = new string(strHeap.Fetch(rowHolder.strPRow[i], this.tran));
+                        strVals[i] = new string(await strHeap.Fetch(rowHolder.strPRow[i], this.tran));
                     }
 
                     Row row = new Row(rowHolder.iRow, rowHolder.dRow, strVals, rowsetHolder.GetColumnTypes());
@@ -39,7 +40,7 @@ namespace QueryProcessing
             }
         }
 
-        public void Invoke()
+        public Task Invoke()
         {
             throw new NotImplementedException();
         }

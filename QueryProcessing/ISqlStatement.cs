@@ -6,7 +6,7 @@ namespace QueryProcessing
 {
     public interface ISqlStatement
     {
-        Task<IEnumerable<Row>> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran);
+        IAsyncEnumerable<Row> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran);
 
         bool ShouldExecute(Sql.DmlDdlSqlStatement statement);
     }

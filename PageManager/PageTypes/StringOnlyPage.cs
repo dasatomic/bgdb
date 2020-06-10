@@ -4,13 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
     public interface IAllocateStringPage
     {
-        StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran);
-        StringOnlyPage GetPageStr(ulong pageId, ITransaction tran);
+        Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran);
+        Task<StringOnlyPage> GetPageStr(ulong pageId, ITransaction tran);
     }
 
     public interface IPageWithOffsets<T>

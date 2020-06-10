@@ -36,7 +36,7 @@ namespace MetadataManager
             {
                 using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "SETUP_BOOT_PAGE");
                 bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition));
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
                 tran.Commit();
 
                 MetadataInitialSetup();
@@ -44,7 +44,7 @@ namespace MetadataManager
             else
             {
                 using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "GET_BOOT_PAGE");
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition));
+                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
                 tran.Commit();
             }
         }
@@ -54,10 +54,10 @@ namespace MetadataManager
             using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "MetadataSetup");
             RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
 
-            var mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
             this.columnsManager = new MetadataColumnsManager(this.pageAllocator, mdColumnsFirstPage, this.stringHeap);
 
-            var mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            MixedPage mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
             this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap, this.columnsManager);
 
             rh.SetColumns(
@@ -72,9 +72,9 @@ namespace MetadataManager
                     (long)mdTableFirstPage.PageId(),
                     (long)mdColumnsFirstPage.PageId() 
                 }});
-            masterMetadataCollection.Add(rh, tran);
+            masterMetadataCollection.Add(rh, tran).Wait();
 
-            tran.Commit();
+            tran.Commit().Wait();
         }
 
         public MetadataTablesManager GetTableManager() => this.tableManager;

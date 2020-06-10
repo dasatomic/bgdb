@@ -2,13 +2,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PageManager
 {
     public interface IAllocateLongPage
     {
-        LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran);
-        LongOnlyPage GetPageLong(ulong pageId, ITransaction tran);
+        Task<LongOnlyPage> AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran);
+        Task<LongOnlyPage> GetPageLong(ulong pageId, ITransaction tran);
     }
 
     public class LongOnlyPage : SimpleTypeOnlyPage<long>

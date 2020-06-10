@@ -61,7 +61,15 @@ namespace LogManager
         {
             if (this.state == TransactionState.Open)
             {
-                this.Rollback();
+                this.Rollback().Wait();
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (this.state == TransactionState.Open)
+            {
+                await this.Rollback();
             }
         }
     }

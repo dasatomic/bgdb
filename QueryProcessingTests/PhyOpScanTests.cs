@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Test.Common;
 
 namespace QueryProcessingTests
@@ -15,7 +16,7 @@ namespace QueryProcessingTests
     public class PhyOpScanTests
     {
         [Test]
-        public void ValidateScan()
+        public async Task ValidateScan()
         {
             var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
@@ -27,18 +28,18 @@ namespace QueryProcessingTests
 
             ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
-            int id = tm.CreateObject(new TableCreateDefinition()
+            int id = await tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnTypes, 
             }, tran);
 
-            tran.Commit();
+            await tran.Commit();
 
             tran = new Transaction(logManager, allocator, "GET_TABLE");
-            var table = tm.GetById(id, tran);
-            tran.Commit();
+            var table = await tm.GetById(id, tran);
+            await tran.Commit();
 
             Row[] source = new Row[] { 
                 new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes),
@@ -52,15 +53,21 @@ namespace QueryProcessingTests
 
             tran = new Transaction(logManager, allocator, "INSERT");
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
-            op.Invoke();
-            tran.Commit();
+            await op.Invoke();
+            await tran.Commit();
 
             tran = new Transaction(logManager, allocator, "SELECT");
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, allocator.GetPage(table.RootPage, tran, PageType.MixedPage, columnTypes));
+            PageListCollection pcl = new PageListCollection(allocator, columnTypes, await allocator.GetPage(table.RootPage, tran, PageType.MixedPage, columnTypes));
             PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
-            Row[] result = scan.Iterate(tran).ToArray();
 
-            Assert.AreEqual(source, result);
+            List<Row> result = new List<Row>();
+
+            await foreach (var row in scan.Iterate(tran))
+            {
+                result.Add(row);
+            }
+
+            Assert.AreEqual(source, result.ToArray());
         }
     }
 }

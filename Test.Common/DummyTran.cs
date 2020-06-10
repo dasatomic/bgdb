@@ -20,6 +20,8 @@ namespace Test.Common
         {
         }
 
+        public ValueTask DisposeAsync() => default;
+
         public IEnumerable<ILogRecord> GetRecords()
         {
             return Enumerable.Empty<ILogRecord>();

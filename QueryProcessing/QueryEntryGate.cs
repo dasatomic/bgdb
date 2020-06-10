@@ -23,7 +23,7 @@ namespace QueryProcessing
             return SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
         }
 
-        public async Task<IEnumerable<Row>> Execute(string queryText, ITransaction tran)
+        public async IAsyncEnumerable<Row> Execute(string queryText, ITransaction tran)
         {
             Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
 
@@ -31,7 +31,12 @@ namespace QueryProcessing
             {
                 if (handler.ShouldExecute(statement))
                 {
-                    return await handler.Execute(statement, tran);
+                    await foreach (Row row in handler.Execute(statement, tran))
+                    {
+                        yield return row;
+                    }
+
+                    yield break;
                 }
             }
 

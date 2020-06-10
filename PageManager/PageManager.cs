@@ -45,7 +45,7 @@ namespace PageManager
             {
                 // TODO: Read boot page.
                 ulong position = AllocationMapPageId * this.pageSize;
-                IntegerOnlyPage allocationMapFirstPage = (IntegerOnlyPage)this.persistedStream.SeekAndRead(position, (stream) => new IntegerOnlyPage(stream));
+                IntegerOnlyPage allocationMapFirstPage = (IntegerOnlyPage)this.persistedStream.SeekAndRead(position, PageType.IntPage, null).Result;
                 this.AllocatationMapPages.Add(allocationMapFirstPage);
 
                 ulong elemPosInPage = 0;
@@ -64,22 +64,22 @@ namespace PageManager
             }
         }
 
-        public IPage AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
+        public async Task<IPage> AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
-            return AllocatePage(pageType, null, prevPageId, nextPageId, tran);
+            return await AllocatePage(pageType, null, prevPageId, nextPageId, tran);
         }
 
-        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
+        public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
-            return AllocatePage(pageType, columnTypes, prevPageId, nextPageId, lastUsedPageId++, tran);
+            return await AllocatePage(pageType, columnTypes, prevPageId, nextPageId, lastUsedPageId++, tran);
         }
 
-        public IPage AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran)
+        public async Task<IPage> AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran)
         {
-            return AllocatePage(pageType, columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, IBootPageAllocator.BootPageId, tran);
+            return await AllocatePage(pageType, columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, IBootPageAllocator.BootPageId, tran);
         }
 
-        public IPage AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
+        public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
         {
             IPage page;
 
@@ -117,7 +117,7 @@ namespace PageManager
 
             if (prevPageId != PageManagerConstants.NullPageId)
             {
-                IPage prevPage = GetPage(prevPageId, tran, pageType, columnTypes);
+                IPage prevPage = await GetPage(prevPageId, tran, pageType, columnTypes);
 
                 if (prevPage.NextPageId() != page.NextPageId())
                 {
@@ -129,7 +129,7 @@ namespace PageManager
 
             if (nextPageId != PageManagerConstants.NullPageId)
             {
-                IPage nextPage = GetPage(nextPageId, tran, pageType, columnTypes);
+                IPage nextPage = await GetPage(nextPageId, tran, pageType, columnTypes);
 
                 if (nextPage.PrevPageId() != page.PrevPageId())
                 {
@@ -144,7 +144,7 @@ namespace PageManager
                 using (ITransaction evictTran = new ReadonlyTransaction())
                 {
                     IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                    this.FlushPage(pageToEvict);
+                    await this.FlushPage(pageToEvict);
 
                     bufferPool.EvictPage(pageToEvict.PageId());
                 }
@@ -194,7 +194,7 @@ namespace PageManager
             }
         }
 
-        public IPage GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes)
+        public async Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes)
         {
             if (!this.pageIds.Contains(pageId))
             {
@@ -205,71 +205,45 @@ namespace PageManager
 
             if (page == null)
             {
-                page = this.FetchPage(pageId, pageType, columnTypes);
+                page = await this.FetchPage(pageId, pageType, columnTypes);
                 this.bufferPool.AddPage(page);
             }
 
             foreach (ulong pageIdToEvict in this.pageEvictionPolicy.RecordUsageAndEvict(pageId))
             {
                 IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                this.FlushPage(pageToEvict);
+                await this.FlushPage(pageToEvict);
                 this.bufferPool.EvictPage(pageIdToEvict);
             }
 
             return page;
         }
 
-        internal void FlushPage(IPage page)
+        internal async Task FlushPage(IPage page)
         {
             if (page.IsDirty())
             {
                 ulong position = page.PageId() * this.pageSize;
-                this.persistedStream.SeekAndWrite(position, (stream) => page.Persist(stream));
+                await this.persistedStream.SeekAndWrite(position, page);
                 page.ResetDirty();
             }
         }
 
-        internal IPage FetchPage(ulong pageId, PageType pageType, ColumnType[] columnTypes)
+        internal async Task<IPage> FetchPage(ulong pageId, PageType pageType, ColumnType[] columnTypes)
         {
             ulong position = pageId * this.pageSize;
-            return this.persistedStream.SeekAndRead(position, (stream) =>
-            {
-                if (pageType == PageType.DoublePage)
-                {
-                    return new DoubleOnlyPage(stream);
-                }
-                else if (pageType == PageType.IntPage)
-                {
-                    return new IntegerOnlyPage(stream);
-                }
-                else if (pageType == PageType.LongPage)
-                {
-                    return new LongOnlyPage(stream);
-                }
-                else if (pageType == PageType.MixedPage)
-                {
-                    return new MixedPage(stream, columnTypes);
-                }
-                else if (pageType == PageType.StringPage)
-                {
-                    return new StringOnlyPage(stream);
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
-            });
+            return await this.persistedStream.SeekAndRead(position, pageType, columnTypes);
         }
 
-        public IntegerOnlyPage AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction tran)
+        public async Task<IntegerOnlyPage> AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = AllocatePage(PageType.IntPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.IntPage, prevPage, nextPage, tran);
             return (IntegerOnlyPage)page;
         }
 
-        public IntegerOnlyPage GetPageInt(ulong pageId, ITransaction tran)
+        public async Task<IntegerOnlyPage> GetPageInt(ulong pageId, ITransaction tran)
         {
-            IPage page = this.GetPage(pageId, tran, PageType.IntPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.IntPage, null);
 
             if (page.PageType() != PageType.IntPage)
             {
@@ -279,15 +253,15 @@ namespace PageManager
             return (IntegerOnlyPage)page;
         }
 
-        public DoubleOnlyPage AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran)
+        public async Task<DoubleOnlyPage> AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = AllocatePage(PageType.DoublePage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.DoublePage, prevPage, nextPage, tran);
             return (DoubleOnlyPage)page;
         }
 
-        public DoubleOnlyPage GetPageDouble(ulong pageId, ITransaction tran)
+        public async Task<DoubleOnlyPage> GetPageDouble(ulong pageId, ITransaction tran)
         {
-            IPage page = this.GetPage(pageId, tran, PageType.DoublePage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.DoublePage, null);
 
             if (page.PageType() != PageType.DoublePage)
             {
@@ -297,15 +271,15 @@ namespace PageManager
             return (DoubleOnlyPage)page;
         }
 
-        public StringOnlyPage AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)
+        public async Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = AllocatePage(PageType.StringPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.StringPage, prevPage, nextPage, tran);
             return (StringOnlyPage)page;
         }
 
-        public StringOnlyPage GetPageStr(ulong pageId, ITransaction tran)
+        public async Task<StringOnlyPage> GetPageStr(ulong pageId, ITransaction tran)
         {
-            IPage page = this.GetPage(pageId, tran, PageType.StringPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.StringPage, null);
 
             if (page.PageType() != PageType.StringPage)
             {
@@ -315,15 +289,15 @@ namespace PageManager
             return (StringOnlyPage)page;
         }
 
-        public LongOnlyPage AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran)
+        public async Task<LongOnlyPage> AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = AllocatePage(PageType.LongPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.LongPage, prevPage, nextPage, tran);
             return (LongOnlyPage)page;
         }
 
-        public LongOnlyPage GetPageLong(ulong pageId, ITransaction tran)
+        public async Task<LongOnlyPage> GetPageLong(ulong pageId, ITransaction tran)
         {
-            IPage page = this.GetPage(pageId, tran, PageType.LongPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.LongPage, null);
 
             if (page.PageType() != PageType.LongPage)
             {
@@ -333,15 +307,15 @@ namespace PageManager
             return (LongOnlyPage)page;
         }
 
-        public MixedPage AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran)
+        public async Task<MixedPage> AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = AllocatePage(PageType.MixedPage, columnTypes, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.MixedPage, columnTypes, prevPage, nextPage, tran);
             return (MixedPage)page;
         }
 
-        public MixedPage GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes)
+        public async Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes)
         {
-            IPage page = this.GetPage(pageId, tran, PageType.MixedPage, columnTypes);
+            IPage page = await this.GetPage(pageId, tran, PageType.MixedPage, columnTypes);
 
             if (page.PageType() != PageType.MixedPage)
             {
@@ -363,12 +337,12 @@ namespace PageManager
         {
             foreach (IPage page in bufferPool.GetAllDirtyPages())
             {
-                FlushPage(page);
+                await FlushPage(page);
             }
 
             foreach (IPage page in this.AllocatationMapPages)
             {
-                FlushPage(page);
+                await FlushPage(page);
             }
         }
 

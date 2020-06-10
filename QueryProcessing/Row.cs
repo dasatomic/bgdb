@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -89,7 +90,7 @@ namespace QueryProcessing
                 Enumerable.SequenceEqual(this.stringCols, other.stringCols);
         }
 
-        public RowsetHolder ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
+        public async Task<RowsetHolder> ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
         {
             RowsetHolder rh = new RowsetHolder(columnTypes);
 
@@ -105,7 +106,7 @@ namespace QueryProcessing
                 doubleColsPrep[i] = new double[1] { doubleCols[0] };
             }
 
-            PagePointerOffsetPair[] offsetCols = PushStringsToStringHeap(stringAlloc, tran);
+            PagePointerOffsetPair[] offsetCols = await PushStringsToStringHeap(stringAlloc, tran);
             PagePointerOffsetPair[][] offsetPreps = new PagePointerOffsetPair[offsetCols.Length][];
             for (int i = 0; i < offsetCols.Length; i++)
             {
@@ -117,13 +118,13 @@ namespace QueryProcessing
             return rh;
         }
 
-        private PagePointerOffsetPair[] PushStringsToStringHeap(HeapWithOffsets<char[]> stringAloc, ITransaction tran)
+        private async Task<PagePointerOffsetPair[]> PushStringsToStringHeap(HeapWithOffsets<char[]> stringAloc, ITransaction tran)
         {
             PagePointerOffsetPair[] locs = new PagePointerOffsetPair[stringCols.Length];
             int i = 0;
             foreach (string str in stringCols)
             {
-                locs[i++] = stringAloc.Add(str.ToCharArray(), tran);
+                locs[i++] = await stringAloc.Add(str.ToCharArray(), tran);
             }
 
             return locs;

@@ -23,9 +23,9 @@ namespace PageManagerTests
             IBufferPool bp = new BufferPool();
             using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp);
 
-            pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            var p = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            var p = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.IsTrue(bp.GetAllDirtyPages().Any());
             p.Merge(new int[] { 1, 2, 3 }, tran);
@@ -44,9 +44,9 @@ namespace PageManagerTests
             IntegerOnlyPage p1, p2, p3;
             using (var pageManager = new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp))
             {
-                p1 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-                p2 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-                p3 = pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
+                p1 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
+                p2 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
+                p3 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
 
                 p1.Merge(new int[] { 1, 2, 3 }, tran);
                 p2.Merge(new int[] { 3, 2, 1 }, tran);
@@ -59,11 +59,11 @@ namespace PageManagerTests
             var eviction = new FifoEvictionPolicy(10, 5);
             using var pageManager2 =  new PageManager.PageManager(DefaultSize, eviction, persistedStream2);
 
-            var readPage = pageManager2.GetPageInt(p1.PageId(), tran);
+            var readPage = await pageManager2.GetPageInt(p1.PageId(), tran);
             Assert.AreEqual(p1, readPage);
-            readPage = pageManager2.GetPageInt(p2.PageId(), tran);
+            readPage = await pageManager2.GetPageInt(p2.PageId(), tran);
             Assert.AreEqual(p2, readPage);
-            readPage = pageManager2.GetPageInt(p3.PageId(), tran);
+            readPage = await pageManager2.GetPageInt(p3.PageId(), tran);
             Assert.AreEqual(p3, readPage);
         }
     }

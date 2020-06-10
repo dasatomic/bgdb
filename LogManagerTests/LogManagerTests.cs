@@ -21,7 +21,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 ILogRecord record1 =
                     new UpdateRowRecord(
@@ -70,7 +70,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
                 var page = pageCreate(pageManager, tran1);
 
                 await tran1.Rollback();
@@ -91,13 +91,13 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 var page = pageCreate(pageManager, tran1);
 
                 await tran1.Commit();
 
-                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 pageModify(page, tran2);
 
                 await tran2.Rollback();
@@ -116,7 +116,7 @@ namespace LogManagerTests
             await RollbackTest1<int>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new[] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -128,7 +128,7 @@ namespace LogManagerTests
             await RollbackTest1<long>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new long [] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -140,7 +140,7 @@ namespace LogManagerTests
             await RollbackTest1<double>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new double[] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -152,7 +152,7 @@ namespace LogManagerTests
             await RollbackTest1<char[]>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() }, tran);
                     return page;
                 });
@@ -164,7 +164,7 @@ namespace LogManagerTests
             await RollbackTest2<int>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new[] { 3, 2, 1 }, tran);
                     return page;
                 },
@@ -181,7 +181,7 @@ namespace LogManagerTests
             await RollbackTest2<long>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new long[] { 3, 2, 1 }, tran);
                     return page;
                 },
@@ -198,7 +198,7 @@ namespace LogManagerTests
             await RollbackTest2<double>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(new double[] { 3, 2, 1 }, tran);
                     return page;
                 },
@@ -216,7 +216,7 @@ namespace LogManagerTests
             await RollbackTest2<char[]>(
                 (pm, tran) =>
                 {
-                    var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     page.Merge(pageContent, tran);
                     return page;
                 },
@@ -233,17 +233,17 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                MixedPage page = pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
                 page.Merge(holder, tran1);
                 await tran1.Commit();
 
-                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
@@ -268,17 +268,17 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                MixedPage page = pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
                 page.Merge(holder, tran1);
                 await tran1.Commit();
 
-                using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
@@ -297,7 +297,7 @@ namespace LogManagerTests
 
                 using (BinaryReader br = new BinaryReader(stream))
                 {
-                    using ITransaction recTran = new DummyTran();
+                    await using ITransaction recTran = new DummyTran();
                     await manager.Recovery(br, pageManager, recTran);
                 }
 
@@ -316,14 +316,14 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
                 const int pageCount = 3;
 
-                var p1 = pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-                var p2 = pageManager.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-                var p3 = pageManager.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var p1 = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var p2 = await pageManager.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var p3 = await pageManager.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 await tran1.Commit();
 
@@ -334,15 +334,15 @@ namespace LogManagerTests
 
                 using (BinaryReader br = new BinaryReader(stream))
                 {
-                    using ITransaction recTran = new DummyTran();
+                    await using ITransaction recTran = new DummyTran();
                     await manager.Recovery(br, pageManager, recTran);
                 }
 
                 Assert.AreEqual(pageCount, pageManager.PageCount());
 
-                var np1 = pageManager.GetMixedPage(p1.PageId(), new DummyTran(), types1);
-                var np2 = pageManager.GetPageDouble(p2.PageId(), new DummyTran());
-                var np3 = pageManager.GetPageInt(p3.PageId(), new DummyTran());
+                var np1 = await pageManager.GetMixedPage(p1.PageId(), new DummyTran(), types1);
+                var np2 = await pageManager.GetPageDouble(p2.PageId(), new DummyTran());
+                var np3 = await pageManager.GetPageInt(p3.PageId(), new DummyTran());
 
                 Assert.AreEqual(p1, np1);
                 Assert.AreEqual(p2, np2);

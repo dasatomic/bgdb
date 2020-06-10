@@ -1,13 +1,14 @@
 ﻿using PageManager;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MetadataManager
 {
     public interface IMetadataObjectManager<O, C>
     {
-        int CreateObject(C def, ITransaction tran);
-        bool Exists(C def, ITransaction tran);
-        O GetById(int id, ITransaction tran);
-        IEnumerable<O> Iterate(ITransaction tran);
+        Task<int> CreateObject(C def, ITransaction tran);
+        Task<bool> Exists(C def, ITransaction tran);
+        Task<O> GetById(int id, ITransaction tran);
+        IAsyncEnumerable<O> Iterate(ITransaction tran);
     }
 }

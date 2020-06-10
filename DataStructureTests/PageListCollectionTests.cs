@@ -4,6 +4,7 @@ using NUnit.Framework;
 using PageManager;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Test.Common;
 
 namespace DataStructureTests
@@ -11,18 +12,25 @@ namespace DataStructureTests
     public class PageListCollectionTests
     {
         [Test]
-        public void InitPageList()
+        public async Task InitPageList()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ITransaction tran = new DummyTran();
             ColumnType[] types = new[] { ColumnType.Int, ColumnType.Int };
 
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, new DummyTran());
-            Assert.AreEqual(0, collection.Iterate(tran).Sum(rs => rs.GetRowCount()));
+
+            ulong cnt = 0;
+            await foreach (var c in collection.Iterate(tran))
+            {
+                cnt += c.GetRowCount();
+            }
+
+            Assert.AreEqual(0, cnt);
         }
 
         [Test]
-        public void PageListInsert()
+        public async Task PageListInsert()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
@@ -33,13 +41,19 @@ namespace DataStructureTests
             RowsetHolder holder = new RowsetHolder(types);
             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
 
-            collection.Add(holder, tran);
+            await collection.Add(holder, tran);
 
-            Assert.AreEqual(holder.GetRowCount(), collection.Iterate(tran).Sum(rs => rs.GetRowCount()));
+            ulong cnt = 0;
+            await foreach (var c in collection.Iterate(tran))
+            {
+                cnt += c.GetRowCount();
+            }
+
+            Assert.AreEqual(holder.GetRowCount(), cnt);
         }
 
         [Test]
-        public void PageMultiInsert()
+        public async Task PageMultiInsert()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
@@ -52,15 +66,20 @@ namespace DataStructureTests
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder, tran);
+                await collection.Add(holder, tran);
             }
 
-            long rowCount = collection.Iterate(tran).Sum(rs => rs.GetRowCount());
-            Assert.AreEqual(holder.GetRowCount() * 100, rowCount);
+            ulong cnt = 0;
+            await foreach (var c in collection.Iterate(tran))
+            {
+                cnt += c.GetRowCount();
+            }
+
+            Assert.AreEqual(holder.GetRowCount() * 100, cnt);
         }
 
         [Test]
-        public void FilterTestNotFound()
+        public async Task FilterTestNotFound()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
@@ -72,14 +91,14 @@ namespace DataStructureTests
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder, tran);
+                await collection.Add(holder, tran);
             }
 
-            Assert.IsEmpty(collection.Where((holder) => holder.GetIntColumn(0).Contains(42), tran));
+            Assert.IsEmpty(await collection.Where((holder) => holder.GetIntColumn(0).Contains(42), tran));
         }
 
         [Test]
-        public void FilterTestFound()
+        public async Task FilterTestFound()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
@@ -92,14 +111,14 @@ namespace DataStructureTests
 
             for (int i = 0; i < 100; i++)
             {
-                collection.Add(holder, tran);
+                await collection.Add(holder, tran);
             }
 
-            Assert.IsNotEmpty(collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4]), tran));
+            Assert.IsNotEmpty(await collection.Where((searcher) => searcher.GetIntColumn(0).Contains(holder.GetIntColumn(0)[4]), tran));
         }
 
         [Test]
-        public void IterationTests()
+        public async Task IterationTests()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
@@ -112,7 +131,7 @@ namespace DataStructureTests
             List<int> column0Insert = new List<int>();
             for (int i = 0; i < 1000; i++)
             {
-                collection.Add(holder, tran);
+                await collection.Add(holder, tran);
                 foreach (int v in holder.GetIntColumn(0))
                 {
                     column0Insert.Add(v);
@@ -120,7 +139,7 @@ namespace DataStructureTests
             }
 
             List<int> column0 = new List<int>();
-            foreach (var i in collection.Iterate(tran))
+            await foreach (var i in collection.Iterate(tran))
             {
                 foreach (int v in i.GetIntColumn(0))
                 {
