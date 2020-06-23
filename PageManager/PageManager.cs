@@ -88,30 +88,15 @@ namespace PageManager
                 throw new PageCorruptedException();
             }
 
-            if (pageType == PageType.IntPage)
+            page = pageType switch
             {
-                page = new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
-            }
-            else if (pageType == PageType.DoublePage)
-            {
-                page = new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
-            }
-            else if (pageType == PageType.StringPage)
-            {
-                page = new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
-            }
-            else if (pageType == PageType.MixedPage)
-            {
-                page = new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran);
-            }
-            else if (pageType == PageType.LongPage)
-            {
-                page = new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran);
-            }
-            else
-            {
-                throw new ArgumentException("Unknown page type");
-            }
+                PageType.IntPage => new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
+                PageType.DoublePage => new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
+                PageType.StringPage => new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
+                PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran),
+                PageType.LongPage => new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
+                _ => throw new ArgumentException("Unknown page type")
+            };
 
             this.pageIds.Add(pageId);
 

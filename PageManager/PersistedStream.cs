@@ -85,30 +85,15 @@ namespace PageManager
         {
             this.fileStream.Seek((long)position, SeekOrigin.Begin);
 
-            if (pageType == PageType.DoublePage)
+            return pageType switch
             {
-                return new DoubleOnlyPage(this.binaryReader);
-            }
-            else if (pageType == PageType.IntPage)
-            {
-                return new IntegerOnlyPage(this.binaryReader);
-            }
-            else if (pageType == PageType.LongPage)
-            {
-                return new LongOnlyPage(this.binaryReader);
-            }
-            else if (pageType == PageType.MixedPage)
-            {
-                return new MixedPage(this.binaryReader, columnTypes);
-            }
-            else if (pageType == PageType.StringPage)
-            {
-                return new StringOnlyPage(this.binaryReader);
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
+                PageType.DoublePage => new DoubleOnlyPage(this.binaryReader),
+                PageType.IntPage => new IntegerOnlyPage(this.binaryReader),
+                PageType.LongPage => new LongOnlyPage(this.binaryReader),
+                PageType.MixedPage => new MixedPage(this.binaryReader, columnTypes),
+                PageType.StringPage => new StringOnlyPage(this.binaryReader),
+                _ => throw new ArgumentException()
+            };
         }
 
         public void Dispose()
