@@ -1,4 +1,5 @@
 using DataStructures;
+using LockManager;
 using LogManager;
 using MetadataManager;
 using NUnit.Framework;
@@ -177,7 +178,8 @@ namespace E2EQueryExecutionTests
             BufferPool bp = new BufferPool();
 
             IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(3, 1);
-            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp);
+            ILockManager lm = new LockManager.LockManager();
+            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp, lm);
 
             const int rowInsert = 5000;
 

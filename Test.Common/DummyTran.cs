@@ -1,4 +1,6 @@
-﻿using PageManager;
+﻿using LockManager;
+using LockManager.LockImplementation;
+using PageManager;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +9,11 @@ namespace Test.Common
 {
     public class DummyTran : ITransaction
     {
+        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        {
+            return new Releaser();
+        }
+
         public void AddRecord(ILogRecord logRecord)
         {
         }
@@ -40,6 +47,10 @@ namespace Test.Common
         public ulong TranscationId()
         {
             return 42;
+        }
+
+        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        {
         }
     }
 }

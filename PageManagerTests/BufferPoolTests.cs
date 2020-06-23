@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using LockManager;
+using NUnit.Framework;
 using PageManager;
 using System.Threading.Tasks;
 using Test.Common;
@@ -17,8 +18,9 @@ namespace PageManagerTests
         {
             IBufferPool bp = new BufferPool();
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
+            ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp);
+            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm);
 
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -32,8 +34,9 @@ namespace PageManagerTests
         {
             IBufferPool bp = new BufferPool();
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
+            ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp);
+            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm);
 
             for (int i = 0; i < 11; i++)
             {

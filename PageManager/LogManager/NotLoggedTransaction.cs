@@ -1,4 +1,6 @@
-﻿using PageManager;
+﻿using LockManager;
+using LockManager.LockImplementation;
+using PageManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +10,11 @@ namespace LogManager
 {
     public class NotLoggedTransaction : ITransaction
     {
+        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        {
+            return new Releaser();
+        }
+
         public void AddRecord(ILogRecord logRecord)
         {
         }
@@ -33,5 +40,9 @@ namespace LogManager
         }
 
         public ulong TranscationId() => 0;
+
+        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        {
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LockManager;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -20,5 +21,6 @@ namespace PageManager
         public ulong PageCount();
         public Task Checkpoint();
         public List<IntegerOnlyPage> GetAllocationMapFirstPage();
+        public ILockManager GetLockManager();
     }
 }

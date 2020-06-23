@@ -1,4 +1,5 @@
-﻿using LogManager;
+﻿using LockManager;
+using LogManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,17 +18,19 @@ namespace PageManager
 
         private const int AllocationMapPageId = 1;
         private readonly List<IntegerOnlyPage> AllocatationMapPages;
+        private readonly ILockManager lockManager;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool())
+            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager())
         {
         }
 
-        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool)
+        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager)
         {
             this.pageSize = defaultPageSize;
             this.pageEvictionPolicy = evictionPolicy;
             this.persistedStream = persistedStream;
+            this.lockManager = lockManager;
 
             this.bufferPool = bufferPool;
 
@@ -126,7 +129,7 @@ namespace PageManager
 
             foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
             {
-                using (ITransaction evictTran = new ReadonlyTransaction())
+                using (ITransaction evictTran = new ReadonlyTransaction(this.lockManager))
                 {
                     IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
                     await this.FlushPage(pageToEvict);
@@ -337,5 +340,7 @@ namespace PageManager
         {
             this.persistedStream.Dispose();
         }
+
+        public ILockManager GetLockManager() => this.lockManager;
     }
 }

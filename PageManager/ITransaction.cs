@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LockManager;
+using LockManager.LockImplementation;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -19,5 +21,7 @@ namespace PageManager
         void AddRecord(ILogRecord logRecord);
         IEnumerable<ILogRecord> GetRecords();
         TransactionState GetTransactionState();
+        Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType);
+        void VerifyLock(ulong pageId, LockTypeEnum expectedLock);
     }
 }

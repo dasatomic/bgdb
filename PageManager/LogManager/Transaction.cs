@@ -1,4 +1,8 @@
-﻿using PageManager;
+﻿using LockManager;
+using LockManager.LockImplementation;
+using PageManager;
+using PageManager.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +19,8 @@ namespace LogManager
         private readonly ILogManager logManager;
         private readonly string name;
         private TransactionState state;
+        private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
+        private object lck = new object();
 
         public Transaction(ILogManager logManager, IPageManager pageManager, string name)
         {
@@ -63,6 +69,11 @@ namespace LogManager
             {
                 this.Rollback().Wait();
             }
+
+            if (this.locksHeld.Any())
+            {
+                throw new TranHoldingLockDuringDispose();
+            }
         }
 
         public async ValueTask DisposeAsync()
@@ -70,6 +81,56 @@ namespace LogManager
             if (this.state == TransactionState.Open)
             {
                 await this.Rollback();
+            }
+        }
+
+        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        {
+            ILockManager lockManager = this.pageManager.GetLockManager();
+            int lockId = lockManager.LockIdForPage(pageId);
+
+            lock (lck)
+            {
+                if (locksHeld.ContainsKey(lockId))
+                {
+                    // Return dummy leaser. You don't really own this lock.
+                    // This probably needs to change.
+                    return new Releaser();
+                }
+            }
+
+            var releaser = await lockManager.AcquireLock(lockType, pageId);
+
+            lock (lck)
+            {
+                locksHeld.Add(lockId, lockType);
+            }
+
+            releaser.SetReleaseCallback(() => this.ReleaseLock(lockId));
+
+            return releaser;
+        }
+
+        private void ReleaseLock(int lockId)
+        {
+            lock (lck)
+            {
+                this.locksHeld.Remove(lockId);
+            }
+        }
+
+        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        {
+            int lockId = this.pageManager.GetLockManager().LockIdForPage(pageId);
+
+            lock (lck)
+            {
+                this.locksHeld.TryGetValue(lockId, out LockTypeEnum lockHeld);
+
+                if ((int)lockHeld < (int)expectedLock)
+                {
+                    throw new TranNotHoldingLock();
+                }
             }
         }
     }

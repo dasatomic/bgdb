@@ -2,7 +2,8 @@
 {
     public enum LockTypeEnum
     {
-        Exclusive,
+        // Lock hierarchy needs to be respected in enum order.
         Shared,
+        Exclusive,
     }
 }

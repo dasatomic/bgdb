@@ -1,15 +1,64 @@
-﻿using PageManager;
+﻿using LockManager;
+using LockManager.LockImplementation;
+using PageManager;
 using PageManager.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LogManager
 {
     public class ReadonlyTransaction : ITransaction
     {
+        private ILockManager lockManager;
+        private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
+        private object lck = new object();
+
+        public ReadonlyTransaction(ILockManager lockManager)
+        {
+            this.lockManager = lockManager;
+        }
+
+        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        {
+            int lockId = lockManager.LockIdForPage(pageId);
+
+            if (lockType != LockTypeEnum.Exclusive)
+            {
+                throw new ArgumentException("Can't request EX lock in readonly tran.");
+            }
+
+            lock (lck)
+            {
+                if (locksHeld.ContainsKey(lockId))
+                {
+                    // Return dummy leaser. You don't really own this lock.
+                    // This probably needs to change.
+                    return new Releaser();
+                }
+            }
+
+            var releaser = await lockManager.AcquireLock(lockType, pageId);
+
+            lock (lck)
+            {
+                locksHeld.Add(lockId, lockType);
+            }
+
+            releaser.SetReleaseCallback(() => this.ReleaseLock(lockId));
+
+            return releaser;
+        }
+
+        private void ReleaseLock(int lockId)
+        {
+            lock (lck)
+            {
+                this.locksHeld.Remove(lockId);
+            }
+        }
+
         public void AddRecord(ILogRecord logRecord)
         {
             throw new InvalidTransactionOperationException();
@@ -22,12 +71,15 @@ namespace LogManager
 
         public void Dispose()
         {
-            // TODO: Release locks
+            if (this.locksHeld.Any())
+            {
+                throw new TranHoldingLockDuringDispose();
+            }
         }
 
         public ValueTask DisposeAsync()
         {
-            // TODO: Release locks.
+            this.Dispose();
             return default;
         }
 
@@ -41,5 +93,21 @@ namespace LogManager
         }
 
         public ulong TranscationId() => 0;
+
+        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        {
+            if (expectedLock == LockTypeEnum.Exclusive)
+            {
+                throw new TranNotHoldingLock();
+            }
+
+            lock (lck)
+            {
+                if (!this.locksHeld.ContainsKey(this.lockManager.LockIdForPage(pageId)))
+                {
+                    throw new TranNotHoldingLock();
+                }
+            }
+        }
     }
 }
