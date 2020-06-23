@@ -48,7 +48,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            long[] content = page.Fetch();
+            long[] content = page.Fetch(TestGlobals.DummyTran);
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -59,7 +59,7 @@ namespace PageManagerTests
 
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             page.Merge(startArray, new DummyTran());
-            long[] content = page.Fetch();
+            long[] content = page.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
         }
 
@@ -72,11 +72,11 @@ namespace PageManagerTests
             LongOnlyPage page = new LongOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             page.Merge(startArray, new DummyTran());
-            long[] content = page.Fetch();
+            long[] content = page.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
 
             page.Merge(secondArray, new DummyTran());
-            content = page.Fetch();
+            content = page.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 

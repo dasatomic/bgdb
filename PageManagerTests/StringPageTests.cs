@@ -2,7 +2,6 @@
 using PageManager;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using Test.Common;
 
 namespace PageManagerTests
@@ -39,7 +38,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            char[][] content = strPage.Fetch();
+            char[][] content = strPage.Fetch(TestGlobals.DummyTran);
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -54,7 +53,7 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             strPage.Merge(startArray, new DummyTran());
-            char[][] content = strPage.Fetch();
+            char[][] content = strPage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
         }
 
@@ -76,11 +75,11 @@ namespace PageManagerTests
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             strPage.Merge(startArray, new DummyTran());
-            char[][] content = strPage.Fetch();
+            char[][] content = strPage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
 
             strPage.Merge(secondArray, new DummyTran());
-            content = strPage.Fetch();
+            content = strPage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
@@ -113,7 +112,7 @@ namespace PageManagerTests
             }
 
             strPage.Merge(array, new DummyTran());
-            char[][] content = strPage.Fetch();
+            char[][] content = strPage.Fetch(TestGlobals.DummyTran);
 
             Assert.AreEqual(array, content);
         }
@@ -136,7 +135,7 @@ namespace PageManagerTests
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             strPage.Merge(startArray, new DummyTran());
             strPage.Merge(secondArray, new DummyTran());
-            char[][] result = strPage.Fetch();
+            char[][] result = strPage.Fetch(TestGlobals.DummyTran);
 
             Assert.AreEqual(startArray.Concat(secondArray), result);
         }
@@ -238,7 +237,7 @@ namespace PageManagerTests
             Assert.AreEqual(strPage.PageId(), pageDeserialized.PageId());
             Assert.AreEqual(strPage.PageType(), pageDeserialized.PageType());
             Assert.AreEqual(strPage.RowCount(), pageDeserialized.RowCount());
-            Assert.AreEqual(strPage.Fetch(), pageDeserialized.Fetch());
+            Assert.AreEqual(strPage.Fetch(TestGlobals.DummyTran), pageDeserialized.Fetch(TestGlobals.DummyTran));
         }
     }
 }

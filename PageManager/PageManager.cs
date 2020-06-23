@@ -52,17 +52,20 @@ namespace PageManager
                 this.AllocatationMapPages.Add(allocationMapFirstPage);
 
                 ulong elemPosInPage = 0;
-                foreach (int elem in allocationMapFirstPage.Fetch())
+                using (ITransaction tran = new NotLoggedTransaction())
                 {
-                    for (int i = 0; i < 32; i++)
+                    foreach (int elem in allocationMapFirstPage.Fetch(tran))
                     {
-                        if ((elem & (0x1 << i)) != 0)
+                        for (int i = 0; i < 32; i++)
                         {
-                            this.pageIds.Add(elemPosInPage * 32UL + (ulong)i);
+                            if ((elem & (0x1 << i)) != 0)
+                            {
+                                this.pageIds.Add(elemPosInPage * 32UL + (ulong)i);
+                            }
                         }
-                    }
 
-                    elemPosInPage++;
+                        elemPosInPage++;
+                    }
                 }
             }
         }
@@ -167,7 +170,7 @@ namespace PageManager
 
                 if (gamPage.RowCount() * sizeof(int) * 8 > positionInPage)
                 {
-                    int[] elems = gamPage.Fetch();
+                    int[] elems = gamPage.Fetch(gamUpdateTran);
 
                     int elemPos = positionInPage / (8 * sizeof(int));
                     int offset = positionInPage % (8 * sizeof(int));

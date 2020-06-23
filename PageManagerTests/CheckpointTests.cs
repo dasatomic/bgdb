@@ -63,11 +63,11 @@ namespace PageManagerTests
             using var pageManager2 =  new PageManager.PageManager(DefaultSize, eviction, persistedStream2);
 
             var readPage = await pageManager2.GetPageInt(p1.PageId(), tran);
-            Assert.AreEqual(p1, readPage);
+            Assert.IsTrue(p1.Equals(readPage, TestGlobals.DummyTran));
             readPage = await pageManager2.GetPageInt(p2.PageId(), tran);
-            Assert.AreEqual(p2, readPage);
+            Assert.IsTrue(p2.Equals(readPage, TestGlobals.DummyTran));
             readPage = await pageManager2.GetPageInt(p3.PageId(), tran);
-            Assert.AreEqual(p3, readPage);
+            Assert.IsTrue(p3.Equals(readPage, TestGlobals.DummyTran));
         }
     }
 }

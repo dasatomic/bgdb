@@ -194,7 +194,7 @@ namespace PageManager
             }
         }
 
-        public override char[][] Fetch() => this.items;
+        public override char[][] Fetch(ITransaction tran) => this.items;
 
         public bool CanFit(char[] item)
         {
@@ -252,7 +252,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals([AllowNull] PageSerializerBase<char[][]> other)
+        public override bool Equals([AllowNull] PageSerializerBase<char[][]> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -274,12 +274,12 @@ namespace PageManager
                 return false;
             }
 
-            if (this.Fetch().Length != other.Fetch().Length)
+            if (this.Fetch(tran).Length != other.Fetch(tran).Length)
             {
                 return false;
             }
 
-            foreach (var pairs in this.Fetch().Zip(other.Fetch()))
+            foreach (var pairs in this.Fetch(tran).Zip(other.Fetch(tran)))
             {
                 if (Enumerable.SequenceEqual(pairs.First, pairs.Second))
                 {

@@ -31,7 +31,7 @@ namespace PageManagerTests
             page.Merge(holder1, new DummyTran());
             page.Merge(holder2, new DummyTran());
 
-            RowsetHolder result = page.Fetch();
+            RowsetHolder result = page.Fetch(TestGlobals.DummyTran);
 
             Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].Concat(intColumns2[0]).ToArray());
             Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].Concat(intColumns2[1]).ToArray());
@@ -67,7 +67,7 @@ namespace PageManagerTests
             Assert.AreEqual(page.NextPageId(), pageDeserialized.NextPageId());
             Assert.AreEqual(page.PrevPageId(), pageDeserialized.PrevPageId());
 
-            RowsetHolder result = pageDeserialized.Fetch();
+            RowsetHolder result = pageDeserialized.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].ToArray());
             Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].ToArray());
             Assert.AreEqual(result.GetDoubleColumn(2), doubleColumns1[0].ToArray());

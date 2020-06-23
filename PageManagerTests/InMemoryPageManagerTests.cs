@@ -47,7 +47,7 @@ namespace PageManagerTests
 
             page2 = await pageManager.GetPageInt(pageId, tran);
 
-            Assert.AreEqual(items, page2.Fetch());
+            Assert.AreEqual(items, page2.Fetch(TestGlobals.DummyTran));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace PageManagerTests
 
             page = await pageManager.GetMixedPage(page.PageId(), tran, types);
 
-            RowsetHolder holder2 = page.Fetch();
+            RowsetHolder holder2 = page.Fetch(TestGlobals.DummyTran);
 
             Assert.AreEqual(holder2.GetIntColumn(0), intColumns[0]);
             Assert.AreEqual(holder2.GetIntColumn(1), intColumns[1]);
@@ -151,7 +151,7 @@ namespace PageManagerTests
 
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.IsTrue(allocationMaps.Count == 1);
-            int[] items = allocationMaps.First().Fetch();
+            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(1, items.Length);
 
             int expectedMask = 1 << (int)page1.PageId() | 1 << (int)page2.PageId() | 1 << (int)page3.PageId();
@@ -173,7 +173,7 @@ namespace PageManagerTests
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.AreEqual(1, allocationMaps.Count);
 
-            int[] items = allocationMaps.First().Fetch();
+            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(11, items.Length);
             foreach (ulong pageId in pageIds)
             {

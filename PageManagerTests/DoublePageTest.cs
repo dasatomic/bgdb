@@ -39,7 +39,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            double[] content = page.Fetch();
+            double[] content = page.Fetch(TestGlobals.DummyTran);
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -49,7 +49,7 @@ namespace PageManagerTests
             double[] startArray = new double[] { 1, 2, 3, 4 };
             DoubleOnlyPage page = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran()); ;
             page.Merge(startArray, new DummyTran());
-            double[] content = page.Fetch();
+            double[] content = page.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
         }
 
@@ -61,11 +61,11 @@ namespace PageManagerTests
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             doublePage.Merge(startArray, new DummyTran());
-            double[] content = doublePage.Fetch();
+            double[] content = doublePage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
 
             doublePage.Merge(secondArray, new DummyTran());
-            content = doublePage.Fetch();
+            content = doublePage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
@@ -91,7 +91,7 @@ namespace PageManagerTests
             DoubleOnlyPage doublePage = new DoubleOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             double[] startArray = new double[doublePage.MaxRowCount()];
             doublePage.Merge(startArray, new DummyTran());
-            double[] content = doublePage.Fetch();
+            double[] content = doublePage.Fetch(TestGlobals.DummyTran);
             Assert.AreEqual(startArray, content);
         }
     }

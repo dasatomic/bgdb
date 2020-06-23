@@ -76,7 +76,7 @@ namespace PageManager
 
         public override PageType PageType() => global::PageManager.PageType.MixedPage;
 
-        public override RowsetHolder Fetch()
+        public override RowsetHolder Fetch(ITransaction tran)
         {
             return this.items;
         }
@@ -191,7 +191,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals(PageSerializerBase<RowsetHolder> other)
+        public override bool Equals(PageSerializerBase<RowsetHolder> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -213,7 +213,7 @@ namespace PageManager
                 return false;
             }
 
-            if (!this.Fetch().Equals(other.Fetch()))
+            if (!this.Fetch(tran).Equals(other.Fetch(tran)))
             {
                 return false;
             }

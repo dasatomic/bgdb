@@ -10,10 +10,10 @@ namespace PageManager
         public uint GetSizeNeeded(T items);
         public void Merge(T items, ITransaction transaction);
         public void Update(T item, ushort position, ITransaction transaction);
-        public T Fetch();
+        public T Fetch(ITransaction tran);
     }
 
-    public abstract class PageSerializerBase<T> : IPageSerializer<T>, IEquatable<PageSerializerBase<T>>
+    public abstract class PageSerializerBase<T> : IPageSerializer<T>
     {
         protected uint pageSize;
         protected ulong pageId;
@@ -50,10 +50,10 @@ namespace PageManager
         public abstract bool CanFit(T items);
         public abstract PageType PageType();
         public abstract void Persist(BinaryWriter destination);
-        public abstract T Fetch();
+        public abstract T Fetch(ITransaction tran);
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);
-        public abstract bool Equals([AllowNull] PageSerializerBase<T> other);
+        public abstract bool Equals([AllowNull] PageSerializerBase<T> other, ITransaction tran);
 
         public bool IsDirty() => this.isDirty;
 

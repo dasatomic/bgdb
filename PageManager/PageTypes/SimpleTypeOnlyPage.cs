@@ -88,6 +88,8 @@ namespace PageManager
 
         public override void Merge(T[] items, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+
             if (!CanFit(items))
             {
                 throw new SerializationException();
@@ -109,6 +111,8 @@ namespace PageManager
 
         public override void Update(T[] item, ushort position, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+
             if (position >= this.rowCount)
             {
                 throw new PageCorruptedException();
@@ -122,14 +126,15 @@ namespace PageManager
             transaction.AddRecord(rc);
         }
 
-        public override T[] Fetch()
+        public override T[] Fetch(ITransaction tran)
         {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.items;
         }
 
         protected abstract void SerializeInternal(BinaryReader stream);
 
-        public override bool Equals(PageSerializerBase<T[]> other)
+        public override bool Equals(PageSerializerBase<T[]> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -151,7 +156,7 @@ namespace PageManager
                 return false;
             }
 
-            if (!Enumerable.SequenceEqual(this.Fetch(), other.Fetch()))
+            if (!Enumerable.SequenceEqual(this.Fetch(tran), other.Fetch(tran)))
             {
                 return false;
             }

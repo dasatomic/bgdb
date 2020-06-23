@@ -75,7 +75,9 @@ namespace LogManagerTests
 
                 await tran1.Rollback();
                 Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
-                T[] pageContent = page.Fetch();
+
+                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                T[] pageContent = page.Fetch(tran2);
                 Assert.AreEqual(0, pageContent.Length);
             }
         }
@@ -105,7 +107,8 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
-                T[] pageContent = page.Fetch();
+                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                T[] pageContent = page.Fetch(tran3);
                 verify(pageContent);
             }
         }
@@ -117,6 +120,7 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new[] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -129,6 +133,7 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new long [] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -141,6 +146,7 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new double[] { 3, 2, 1 }, tran);
                     return page;
                 });
@@ -153,6 +159,7 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() }, tran);
                     return page;
                 });
@@ -165,11 +172,13 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new[] { 3, 2, 1 }, tran);
                     return page;
                 },
                 (p, tran) =>
                 {
+                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     p.Merge(new[] { 3, 2, 1 }, tran);
                 },
                 (i) => Assert.AreEqual(new int[] { 3, 2, 1 }, i));
@@ -182,11 +191,13 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new long[] { 3, 2, 1 }, tran);
                     return page;
                 },
                 (p, tran) =>
                 {
+                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     p.Merge(new long[] { 3, 2, 1 }, tran);
                 },
                 (i) => Assert.AreEqual(new long[] { 3, 2, 1 }, i));
@@ -199,11 +210,13 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(new double[] { 3, 2, 1 }, tran);
                     return page;
                 },
                 (p, tran) =>
                 {
+                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     p.Merge(new double[] { 3, 2, 1 }, tran);
                 },
                 (i) => Assert.AreEqual(new double[] { 3, 2, 1 }, i));
@@ -251,9 +264,10 @@ namespace LogManagerTests
 
                 await tran2.Rollback();
 
+                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
-                RowsetHolder pageContent = page.Fetch();
+                RowsetHolder pageContent = page.Fetch(tran3);
 
                 Assert.AreEqual(holder, pageContent);
             }
@@ -289,7 +303,8 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.Committed, tran2.GetTransactionState());
 
-                holder = page.Fetch();
+                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                holder = page.Fetch(tran3);
 
                 stream.Seek(0, SeekOrigin.Begin);
                 pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
@@ -302,7 +317,7 @@ namespace LogManagerTests
                 }
 
                 var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran(), types1);
-                RowsetHolder pageContent = page.Fetch();
+                RowsetHolder pageContent = page.Fetch(tran3);
                 Assert.AreEqual(holder, pageContent);
             }
         }
@@ -344,9 +359,9 @@ namespace LogManagerTests
                 var np2 = await pageManager.GetPageDouble(p2.PageId(), new DummyTran());
                 var np3 = await pageManager.GetPageInt(p3.PageId(), new DummyTran());
 
-                Assert.AreEqual(p1, np1);
-                Assert.AreEqual(p2, np2);
-                Assert.AreEqual(p3, np3);
+                Assert.IsTrue(p1.Equals(np1, TestGlobals.DummyTran));
+                Assert.IsTrue(p2.Equals(np2, TestGlobals.DummyTran));
+                Assert.IsTrue(p3.Equals(np3, TestGlobals.DummyTran));
             }
         }
     }
