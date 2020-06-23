@@ -151,13 +151,13 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, strPage.RowCount());
-            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
+            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0], TestGlobals.DummyTran);
             Assert.AreEqual(IPage.FirstElementPosition, offsetOne);
-            Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne));
+            Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne, TestGlobals.DummyTran));
             Assert.AreEqual(1, strPage.RowCount());
-            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
+            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1], TestGlobals.DummyTran);
             Assert.AreEqual(IPage.FirstElementPosition + startArray[0].Length + sizeof(short), offsetTwo);
-            Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo));
+            Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo, TestGlobals.DummyTran));
             Assert.AreEqual(2, strPage.RowCount());
         }
 
@@ -172,7 +172,7 @@ namespace PageManagerTests
 
             for (uint i = 0; i < maxElemCount; i++)
             {
-                strPage.MergeWithOffsetFetch(elemToInsert);
+                strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran);
                 Assert.AreEqual(i + 1, strPage.RowCount());
             }
         }
@@ -188,11 +188,11 @@ namespace PageManagerTests
 
             for (uint i = 0; i < maxElemCount; i++)
             {
-                strPage.MergeWithOffsetFetch(elemToInsert);
+                strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran);
                 Assert.AreEqual(i + 1, strPage.RowCount());
             }
 
-            Assert.Throws<NotEnoughSpaceException>(() => strPage.MergeWithOffsetFetch(elemToInsert));
+            Assert.Throws<NotEnoughSpaceException>(() => strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran));
         }
 
         [Test]
@@ -206,10 +206,10 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, strPage.RowCount());
-            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0]);
-            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1]);
-            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetOne + 1));
-            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetTwo + 1));
+            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0], TestGlobals.DummyTran);
+            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1], TestGlobals.DummyTran);
+            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetOne + 1, TestGlobals.DummyTran));
+            Assert.Throws<PageCorruptedException>(() => strPage.FetchWithOffset(offsetTwo + 1, TestGlobals.DummyTran));
         }
 
         [Test]

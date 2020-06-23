@@ -1,4 +1,5 @@
-﻿using PageManager;
+﻿using LockManager.LockImplementation;
+using PageManager;
 using System.Threading.Tasks;
 
 namespace DataStructures
@@ -33,22 +34,26 @@ namespace DataStructures
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = await allocator.GetPageStr(currPageId, tran);
+                using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
                 if (currPage.CanFit(item))
                 {
-                    offset = currPage.MergeWithOffsetFetch(item);
+                    offset = currPage.MergeWithOffsetFetch(item, tran);
                     return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
                 }
             }
 
-            currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
-            offset = currPage.MergeWithOffsetFetch(item);
-            return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+            {
+                currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
+                using Releaser lckReleaser = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                offset = currPage.MergeWithOffsetFetch(item, tran);
+                return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+            }
         }
 
         public async Task<char[]> Fetch(PagePointerOffsetPair loc, ITransaction tran)
         {
             StringOnlyPage page = await allocator.GetPageStr((ulong)loc.PageId, tran);
-            return page.FetchWithOffset((uint)loc.OffsetInPage);
+            return page.FetchWithOffset((uint)loc.OffsetInPage, tran);
         }
     }
 }

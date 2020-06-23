@@ -16,8 +16,8 @@ namespace PageManager
 
     public interface IPageWithOffsets<T>
     {
-        public uint MergeWithOffsetFetch(T item);
-        public T FetchWithOffset(uint offset);
+        public uint MergeWithOffsetFetch(T item, ITransaction tran);
+        public T FetchWithOffset(uint offset, ITransaction tran);
         public bool CanFit(T item);
     }
 
@@ -101,6 +101,7 @@ namespace PageManager
 
         public override void Merge(char[][] items, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
             uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
             if (this.pageSize - IPage.FirstElementPosition < size)
             {
@@ -127,8 +128,9 @@ namespace PageManager
             this.isDirty = true;
         }
 
-        public uint MergeWithOffsetFetch(char[] item)
+        public uint MergeWithOffsetFetch(char[] item, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
             uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
 
             if (this.pageSize - IPage.FirstElementPosition < size)
@@ -143,15 +145,27 @@ namespace PageManager
             }
 
             this.rowCount++;
+            int startPos = this.items.Length;
             this.items = this.items.Append(item).ToArray();
+
+            byte[] bs = new byte[item.Length + 2];
+            using (MemoryStream ms = new MemoryStream(bs))
+            using (BinaryWriter bw = new BinaryWriter(ms))
+            {
+                bw.Write((ushort)item.Length);
+                bw.Write(item);
+                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos), bs, transaction.TranscationId(), this.PageType());
+                transaction.AddRecord(rc);
+            }
 
             this.isDirty = true;
 
             return positionInBuffer;
         }
 
-        public char[] FetchWithOffset(uint offset)
+        public char[] FetchWithOffset(uint offset, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             if (offset < IPage.FirstElementPosition || offset >= this.pageSize)
             {
                 throw new ArgumentException();
@@ -194,7 +208,11 @@ namespace PageManager
             }
         }
 
-        public override char[][] Fetch(ITransaction tran) => this.items;
+        public override char[][] Fetch(ITransaction tran)
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+            return this.items;
+        }
 
         public bool CanFit(char[] item)
         {

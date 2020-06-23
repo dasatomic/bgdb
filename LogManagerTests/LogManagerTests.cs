@@ -7,6 +7,7 @@ using System;
 using System.Text;
 using System.Linq;
 using Test.Common;
+using LockManager;
 
 namespace LogManagerTests
 {
@@ -230,10 +231,15 @@ namespace LogManagerTests
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
+                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
                     page.Merge(pageContent, tran);
                     return page;
                 },
-                (p, tran) => p.Merge(pageContent, tran),
+                (p, tran) =>
+                {
+                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
+                    p.Merge(pageContent, tran);
+                },
                 (i) => Assert.AreEqual(pageContent, i));
         }
 
@@ -253,14 +259,21 @@ namespace LogManagerTests
 
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-                page.Merge(holder, tran1);
+
+                {
+                    using var rs = await tran1.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
+                    page.Merge(holder, tran1);
+                }
                 await tran1.Commit();
 
                 await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
-                page.Merge(updateRow, tran2);
+                {
+                    using var rs = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
+                    page.Merge(updateRow, tran2);
+                }
 
                 await tran2.Rollback();
 
@@ -289,14 +302,21 @@ namespace LogManagerTests
 
                 RowsetHolder holder = new RowsetHolder(types1);
                 holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-                page.Merge(holder, tran1);
+                {
+                    using var rs = await tran1.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
+                    page.Merge(holder, tran1);
+                }
                 await tran1.Commit();
 
                 await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
-                page.Merge(updateRow, tran2);
+
+                {
+                    using var rs = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
+                    page.Merge(updateRow, tran2);
+                }
 
                 await tran2.Commit();
 

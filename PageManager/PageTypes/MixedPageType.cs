@@ -83,6 +83,7 @@ namespace PageManager
 
         public override void Merge(RowsetHolder item, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
             uint prevSize = this.items.GetRowCount();
             this.items.Merge(item);
             this.rowCount = this.items.GetRowCount();

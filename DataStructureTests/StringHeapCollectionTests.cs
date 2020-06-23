@@ -28,7 +28,7 @@ namespace DataStructureTests
             string itemToInsert = "one";
             var offset = await collection.Add(itemToInsert.ToCharArray(), tran);
             StringOnlyPage stringOnlyPage = await strPageAlloc.GetPageStr((uint)offset.PageId, tran);
-            Assert.AreEqual(itemToInsert.ToArray(), stringOnlyPage.FetchWithOffset((uint)offset.OffsetInPage));
+            Assert.AreEqual(itemToInsert.ToArray(), stringOnlyPage.FetchWithOffset((uint)offset.OffsetInPage, tran));
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace DataStructureTests
                 string itemToInsert = i.ToString();
                 var offset = await collection.Add(itemToInsert.ToCharArray(), tran);
                 StringOnlyPage stringOnlyPage = await strPageAlloc.GetPageStr((uint)offset.PageId, tran);
-                Assert.AreEqual(itemToInsert.ToArray(), stringOnlyPage.FetchWithOffset((uint)offset.OffsetInPage));
+                Assert.AreEqual(itemToInsert.ToArray(), stringOnlyPage.FetchWithOffset((uint)offset.OffsetInPage, tran));
             }
         }
     }
