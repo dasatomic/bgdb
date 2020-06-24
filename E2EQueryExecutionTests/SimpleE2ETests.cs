@@ -223,5 +223,19 @@ namespace E2EQueryExecutionTests
                 }
             });
         }
+
+        [Test]
+        public void ScanFromInvalidTable()
+        {
+            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await using (Transaction tran = new Transaction(logManager, pageManager, "INSERT"))
+                {
+                    string query = @"SELECT a, b, c FROM NOTEXISTINGTABLE";
+                    await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                    await tran.Commit();
+                }
+            });
+        }
     }
 }
