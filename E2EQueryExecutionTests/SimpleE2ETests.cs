@@ -5,6 +5,7 @@ using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -208,6 +209,19 @@ namespace E2EQueryExecutionTests
 
                 Assert.AreEqual(rowInsert, result.Length);
             }
+        }
+        [Test]
+        public void InsertInvalidName()
+        {
+            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await using (Transaction tran = new Transaction(logManager, pageManager, "INSERT"))
+                {
+                    string insertQuery = "INSERT INTO NOTEXISTINGTABLE VALUES (2, 2.2, mystring2)";
+                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                    await tran.Commit();
+                }
+            });
         }
     }
 }

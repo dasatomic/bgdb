@@ -7,6 +7,7 @@ namespace PageManager
         private LinkedList<ulong> pages = new LinkedList<ulong>();
         private readonly ulong pageCountLimit;
         private readonly int evictCountOnReachingLimit;
+        private object lck = new object();
 
         public FifoEvictionPolicy(ulong pageCountLimit, int evictCountOnReachingLimit)
             => (this.pageCountLimit, this.evictCountOnReachingLimit) = (pageCountLimit, evictCountOnReachingLimit);
@@ -19,29 +20,32 @@ namespace PageManager
 
         public IEnumerable<ulong> RecordUsageAndEvict(ulong pageId)
         {
-            var node = pages.Find(pageId);
+            lock (lck)
+            {
+                var node = pages.Find(pageId);
 
-            if (node == null)
-            {
-                pages.AddFirst(pageId);
-            }
-            else
-            {
-                pages.Remove(node);
-                pages.AddFirst(pageId);
-            }
-
-            List<ulong> pagesToRemove = new List<ulong>();
-            if (pages.Count > (int)pageCountLimit)
-            {
-                for (int i = 0; i < evictCountOnReachingLimit; i++)
+                if (node == null)
                 {
-                    pagesToRemove.Add(pages.Last.Value);
-                    pages.RemoveLast();
+                    pages.AddFirst(pageId);
                 }
-            }
+                else
+                {
+                    pages.Remove(node);
+                    pages.AddFirst(pageId);
+                }
 
-            return pagesToRemove;
+                List<ulong> pagesToRemove = new List<ulong>();
+                if (pages.Count > (int)pageCountLimit)
+                {
+                    for (int i = 0; i < evictCountOnReachingLimit; i++)
+                    {
+                        pagesToRemove.Add(pages.Last.Value);
+                        pages.RemoveLast();
+                    }
+                }
+
+                return pagesToRemove;
+            }
         }
     }
 }
