@@ -78,6 +78,7 @@ namespace PageManager
 
         public override RowsetHolder Fetch(ITransaction tran)
         {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.items;
         }
 
@@ -107,8 +108,9 @@ namespace PageManager
             return (this.pageSize - IPage.FirstElementPosition - sizeof(int)) / RowsetHolder.CalculateSizeOfRow(this.columnTypes);
         }
 
-        public override bool CanFit(RowsetHolder items)
+        public override bool CanFit(RowsetHolder items, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             int freeSpace = (int)((this.pageSize - IPage.FirstElementPosition) - (this.RowCount() * RowsetHolder.CalculateSizeOfRow(this.columnTypes)));
             return freeSpace >= items.StorageSizeInBytes();
         }

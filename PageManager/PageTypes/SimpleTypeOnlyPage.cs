@@ -74,8 +74,9 @@ namespace PageManager
             return (this.pageSize - IPage.FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
         }
 
-        public override bool CanFit(T[] items)
+        public override bool CanFit(T[] items, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T)) * items.Length;
         }
 
@@ -90,7 +91,7 @@ namespace PageManager
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
-            if (!CanFit(items))
+            if (!CanFit(items, transaction))
             {
                 throw new SerializationException();
             }

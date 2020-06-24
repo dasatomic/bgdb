@@ -68,7 +68,7 @@ namespace DataStructures
             {
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
                 using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
-                if (currPage.CanFit(item))
+                if (currPage.CanFit(item, tran))
                 {
                     currPage.Merge(item, tran);
                     return;

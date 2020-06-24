@@ -93,8 +93,9 @@ namespace PageManager
             return this.pageSize - IPage.FirstElementPosition;
         }
 
-        public override bool CanFit(char[][] items)
+        public override bool CanFit(char[][] items, ITransaction transaction)
         {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
