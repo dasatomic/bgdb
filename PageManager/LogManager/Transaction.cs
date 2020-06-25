@@ -11,8 +11,6 @@ namespace LogManager
 {
     public class Transaction : ITransaction
     {
-        public static ulong lastTransactionId = 0;
-
         private readonly ulong transactionId;
         private List<ILogRecord> logRecords;
         private IPageManager pageManager;
@@ -22,10 +20,10 @@ namespace LogManager
         private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
         private object lck = new object();
 
-        public Transaction(ILogManager logManager, IPageManager pageManager, string name)
+        public Transaction(ILogManager logManager, IPageManager pageManager, ulong transactionId, string name)
         {
-            transactionId = lastTransactionId++;
-            logRecords = new List<ILogRecord>();
+            this.transactionId = transactionId;
+            this.logRecords = new List<ILogRecord>();
             this.logManager = logManager;
             this.name = name;
             this.state = TransactionState.Open;
@@ -104,7 +102,7 @@ namespace LogManager
                 }
             }
 
-            var releaser = await lockManager.AcquireLock(lockType, pageId);
+            var releaser = await lockManager.AcquireLock(lockType, pageId, this.transactionId);
 
             lock (lck)
             {

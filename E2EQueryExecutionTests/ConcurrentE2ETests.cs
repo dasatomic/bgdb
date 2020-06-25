@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace E2EQueryExecutionTests
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 
-            await using (Transaction tran = new Transaction(logManager, pageManager, "SETUP"))
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: false, "SETUP"))
             {
                 stringHeap = new StringHeapCollection(pageManager, tran);
                 await tran.Commit();
@@ -50,7 +51,7 @@ namespace E2EQueryExecutionTests
         [Repeat(10)]
         public async Task ConcurrentInserts()
         {
-            await using (Transaction tran = new Transaction(logManager, pageManager, "CREATE_TABLE"))
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
                 string createTableQuery = "CREATE TABLE ConcurrentTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
@@ -64,7 +65,7 @@ namespace E2EQueryExecutionTests
 
             Action insertAction = () =>
             {
-                using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
+                using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
                 {
                     for (int i = 1; i <= rowCount; i++)
                     {
@@ -86,7 +87,7 @@ namespace E2EQueryExecutionTests
 
             await Task.WhenAll(tasks);
 
-            await using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
                 Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();

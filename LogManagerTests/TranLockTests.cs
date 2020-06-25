@@ -26,7 +26,7 @@ namespace LogManagerTests
         [Test]
         public async Task LockCheck()
         {
-            await using ITransaction tran1 = new Transaction(logManager, pageManager, "TRAN_TEST");
+            await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Shared);
             tran1.VerifyLock(1, LockTypeEnum.Shared);
         }
@@ -34,7 +34,7 @@ namespace LogManagerTests
         [Test]
         public async Task LockCheckDowngrade()
         {
-            await using ITransaction tran1 = new Transaction(logManager, pageManager, "TRAN_TEST");
+            await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Exclusive);
             tran1.VerifyLock(1, LockTypeEnum.Shared);
         }
@@ -42,7 +42,7 @@ namespace LogManagerTests
         [Test]
         public async Task LockCheckUpgrade()
         {
-            await using ITransaction tran1 = new Transaction(logManager, pageManager, "TRAN_TEST");
+            await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Shared);
             Assert.Throws<TranNotHoldingLock>(() => tran1.VerifyLock(1, LockTypeEnum.Exclusive));
         }
@@ -50,7 +50,7 @@ namespace LogManagerTests
         [Test]
         public async Task LockNotReleased()
         {
-            await using ITransaction tran1 = new Transaction(logManager, pageManager, "TRAN_TEST");
+            await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Shared);
             Assert.Throws<TranHoldingLockDuringDispose>(() => tran1.Dispose());
         }
@@ -58,7 +58,7 @@ namespace LogManagerTests
         [Test]
         public async Task AcquireLoop()
         {
-            await using ITransaction tran1 = new Transaction(logManager, pageManager, "TRAN_TEST");
+            await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
 
             for (int i = 0; i < 1000; i++)
             {

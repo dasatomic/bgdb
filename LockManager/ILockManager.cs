@@ -5,7 +5,7 @@ namespace LockManager
 {
     public interface ILockManager
     {
-        Task<Releaser> AcquireLock(LockTypeEnum lockType, ulong pageId);
+        Task<Releaser> AcquireLock(LockTypeEnum lockType, ulong pageId, ulong ownerId);
         int LockIdForPage(ulong pageId);
     }
 }

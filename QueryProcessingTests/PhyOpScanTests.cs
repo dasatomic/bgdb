@@ -20,13 +20,13 @@ namespace QueryProcessingTests
         {
             var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
+            ITransaction setupTran = logManager.CreateTransaction(allocator);
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
 
-            ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
+            ITransaction tran = logManager.CreateTransaction(allocator);
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
             int id = await tm.CreateObject(new TableCreateDefinition()
             {
@@ -37,7 +37,7 @@ namespace QueryProcessingTests
 
             await tran.Commit();
 
-            tran = new Transaction(logManager, allocator, "GET_TABLE");
+            tran = logManager.CreateTransaction(allocator);
             var table = await tm.GetById(id, tran);
             await tran.Commit();
 
@@ -51,12 +51,12 @@ namespace QueryProcessingTests
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
 
-            tran = new Transaction(logManager, allocator, "INSERT");
+            tran = logManager.CreateTransaction(allocator);
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
             await op.Invoke();
             await tran.Commit();
 
-            tran = new Transaction(logManager, allocator, "SELECT");
+            tran = logManager.CreateTransaction(allocator);
             PhyOpScan scan;
             using (var lck = tran.AcquireLock(table.RootPage, LockManager.LockTypeEnum.Shared))
             {

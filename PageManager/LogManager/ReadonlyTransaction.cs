@@ -13,11 +13,13 @@ namespace LogManager
     {
         private ILockManager lockManager;
         private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
+        private readonly ulong transactionId;
         private object lck = new object();
 
-        public ReadonlyTransaction(ILockManager lockManager)
+        public ReadonlyTransaction(ILockManager lockManager, ulong transactionId)
         {
             this.lockManager = lockManager;
+            this.transactionId = transactionId;
         }
 
         public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
@@ -39,7 +41,7 @@ namespace LogManager
                 }
             }
 
-            var releaser = await lockManager.AcquireLock(lockType, pageId);
+            var releaser = await lockManager.AcquireLock(lockType, pageId, 0);
 
             lock (lck)
             {

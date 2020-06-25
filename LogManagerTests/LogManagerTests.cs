@@ -22,7 +22,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 ILogRecord record1 =
                     new UpdateRowRecord(
@@ -71,13 +71,13 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
                 var page = pageCreate(pageManager, tran1);
 
                 await tran1.Rollback();
                 Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
 
-                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST_FETCH");
+                await using ITransaction tran2 = manager.CreateTransaction(pageManager);
                 using var lck = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 T[] pageContent = page.Fetch(tran2);
                 Assert.AreEqual(0, pageContent.Length);
@@ -95,13 +95,13 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 var page = pageCreate(pageManager, tran1);
 
                 await tran1.Commit();
 
-                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = manager.CreateTransaction(pageManager);
                 pageModify(page, tran2);
 
                 await tran2.Rollback();
@@ -109,7 +109,7 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
-                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran3 = manager.CreateTransaction(pageManager);
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 T[] pageContent = page.Fetch(tran3);
                 verify(pageContent);
@@ -254,7 +254,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
                 MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
@@ -268,7 +268,7 @@ namespace LogManagerTests
                 }
                 await tran1.Commit();
 
-                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = manager.CreateTransaction(pageManager);
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
@@ -279,7 +279,7 @@ namespace LogManagerTests
 
                 await tran2.Rollback();
 
-                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran3 = manager.CreateTransaction(pageManager);
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
@@ -299,7 +299,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
                 MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
@@ -312,7 +312,7 @@ namespace LogManagerTests
                 }
                 await tran1.Commit();
 
-                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = manager.CreateTransaction(pageManager);
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
                 RowsetHolder updateRow = new RowsetHolder(types2);
                 updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
@@ -327,7 +327,7 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.Committed, tran2.GetTransactionState());
 
-                await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran3 = manager.CreateTransaction(pageManager);
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 holder = page.Fetch(tran3);
 
@@ -356,7 +356,7 @@ namespace LogManagerTests
                 IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
                 ILogManager manager = new LogManager.LogManager(writer);
 
-                await using ITransaction tran1 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
                 const int pageCount = 3;

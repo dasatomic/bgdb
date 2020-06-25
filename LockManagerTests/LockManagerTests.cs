@@ -13,7 +13,7 @@ namespace LockManagerTests
         public async Task LockAcquire()
         {
             ILockManager lckmgr = new LockManager.LockManager();
-            using var lck = await lckmgr.AcquireLock(LockTypeEnum.Shared, 1);
+            using var lck = await lckmgr.AcquireLock(LockTypeEnum.Shared, 1, 1);
         }
 
         [Test]
@@ -23,7 +23,7 @@ namespace LockManagerTests
 
             for (int i = 0; i < 1000; i++)
             {
-                using var lck = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, (ulong)i);
+                using var lck = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, (ulong)i, 1);
             }
         }
     }

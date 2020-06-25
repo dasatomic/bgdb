@@ -135,15 +135,14 @@ namespace PageManager
             }
 
             await globalSemaphore.WaitAsync();
+
+            // TODO: Need to check all the locks here.
             foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
             {
-                using (ITransaction evictTran = new ReadonlyTransaction(this.lockManager))
-                {
-                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                    await this.FlushPage(pageToEvict);
+                IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
+                await this.FlushPage(pageToEvict);
 
-                    bufferPool.EvictPage(pageToEvict.PageId());
-                }
+                bufferPool.EvictPage(pageToEvict.PageId());
             }
 
             bufferPool.AddPage(page);

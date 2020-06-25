@@ -6,96 +6,105 @@ namespace LockManager.LockImplementation
 {
     public class AsyncReadWriterLock
     {
-        private readonly Queue<TaskCompletionSource<Releaser>> waitingWriters = new Queue<TaskCompletionSource<Releaser>>();
-        private TaskCompletionSource<Releaser> waitingReader = new TaskCompletionSource<Releaser>();
+        private readonly Queue<(ulong, TaskCompletionSource<Releaser>)> waitingWriters = new Queue<(ulong, TaskCompletionSource<Releaser>)>();
+        private Queue<(ulong, TaskCompletionSource<Releaser>)> waitingReaders = new Queue<(ulong, TaskCompletionSource<Releaser>)>();
         private int status;
 
-        private readonly Task<Releaser> readerReleaser;
-        private readonly Task<Releaser> writerReleaser;
+        private readonly ILockMonitor lockMonitor;
+
         private int readersWaiting;
 
         private readonly int lockId;
 
-        public AsyncReadWriterLock(int lockId)
+        public AsyncReadWriterLock(int lockId, ILockMonitor lockMonitor)
         {
-            readerReleaser = Task.FromResult(new Releaser(this, false, lockId));
-            writerReleaser = Task.FromResult(new Releaser(this, true, lockId));
+            this.lockMonitor = lockMonitor;
 
             this.lockId = lockId;
         }
 
-        public Task<Releaser> ReaderLockAsync()
+        public Task<Releaser> ReaderLockAsync(ulong ownerId)
         {
             lock (waitingWriters)
             {
+                this.lockMonitor.AddRecord(new LockMonitorRecord(ownerId, this.lockId, LockTypeEnum.Shared));
                 if (status >= 0 && waitingWriters.Count == 0)
                 {
                     ++status;
-                    return readerReleaser;
+                    return Task.FromResult(new Releaser(this, false, this.lockId, ownerId));
                 }
                 else
                 {
                     ++readersWaiting;
-                    return waitingReader.Task.ContinueWith(t => t.Result);
+                    var reader = new TaskCompletionSource<Releaser>();
+                    waitingReaders.Enqueue((ownerId, reader));
+                    return reader.Task;
                 }
             }
         }
-        public Task<Releaser> WriterLockAsync()
+        public Task<Releaser> WriterLockAsync(ulong ownerId)
         {
             lock (waitingWriters)
             {
+                this.lockMonitor.AddRecord(new LockMonitorRecord(ownerId, this.lockId, LockTypeEnum.Exclusive));
                 if (status == 0)
                 {
                     status = -1;
-                    return writerReleaser;
+                    return Task.FromResult(new Releaser(this, true, this.lockId, ownerId));
                 }
                 else
                 {
                     var waiter = new TaskCompletionSource<Releaser>();
-                    waitingWriters.Enqueue(waiter);
+                    waitingWriters.Enqueue((ownerId, waiter));
                     return waiter.Task;
                 }
             }
         }
 
-        public void ReaderRelease()
+        public void ReaderRelease(ulong ownerId)
         {
             TaskCompletionSource<Releaser> toWake = null;
+            ulong toWakeId = 0;
 
             lock (waitingWriters)
             {
+                this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 --status;
                 if (status == 0 && waitingWriters.Count > 0)
                 {
                     status = -1;
-                    toWake = waitingWriters.Dequeue();
+                    (toWakeId, toWake) = waitingWriters.Dequeue();
                 }
             }
 
             if (toWake != null)
             {
-                toWake.SetResult(new Releaser(this, true, this.lockId));
+                toWake.SetResult(new Releaser(this, true, this.lockId, toWakeId));
             }
         }
 
-        public void WriterRelease()
+        public void WriterRelease(ulong ownerId)
         {
-            TaskCompletionSource<Releaser> toWake = null;
+            List<(ulong, TaskCompletionSource<Releaser>)> toWake = new List<(ulong, TaskCompletionSource<Releaser>)>();
             bool toWakeIsWriter = false;
 
             lock (waitingWriters)
             {
+                this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 if (waitingWriters.Count > 0)
                 {
-                    toWake = waitingWriters.Dequeue();
+                    toWake.Add(waitingWriters.Dequeue());
                     toWakeIsWriter = true;
                 }
                 else if (readersWaiting > 0)
                 {
-                    toWake = waitingReader;
+                    while (waitingReaders.Count != 0)
+                    {
+                        toWake.Add(waitingReaders.Dequeue());
+                    }
+
                     status = readersWaiting;
                     readersWaiting = 0;
-                    waitingReader = new TaskCompletionSource<Releaser>();
                 }
                 else
                 {
@@ -103,9 +112,9 @@ namespace LockManager.LockImplementation
                 }
             }
 
-            if (toWake != null)
+            foreach ((ulong nextOwnerId, TaskCompletionSource<Releaser>taskToWait) in toWake)
             {
-                toWake.SetResult(new Releaser(this, toWakeIsWriter, this.lockId));
+                taskToWait.SetResult(new Releaser(this, toWakeIsWriter, this.lockId, nextOwnerId));
             }
         }
     }

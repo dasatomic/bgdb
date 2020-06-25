@@ -17,14 +17,14 @@ namespace QueryProcessingTests
         {
             var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            ITransaction setupTran = new Transaction(logManager, allocator, "SETUP");
+            await using ITransaction setupTran = logManager.CreateTransaction(allocator);
             StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
             MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
 
             var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
-            ITransaction tran = new Transaction(logManager, allocator, "CREATE_TABLE_TEST");
+            await using ITransaction tran = logManager.CreateTransaction(allocator);
             int id = await tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "Table",
@@ -34,14 +34,14 @@ namespace QueryProcessingTests
 
             await tran.Commit();
 
-            tran = new Transaction(logManager, allocator, "GET_TABLE");
-            var table = await tm.GetById(id, tran);
+            await using ITransaction tranCreate = logManager.CreateTransaction(allocator);
+            var table = await tm.GetById(id, tranCreate);
 
             Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes) };
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
-            tran = new Transaction(logManager, allocator, "INSERT");
-            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
+            await using ITransaction tranInsert = logManager.CreateTransaction(allocator);
+            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tranInsert);
             await op.Invoke();
             await tran.Commit();
         }

@@ -1,6 +1,7 @@
 ﻿using PageManager;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogManager
@@ -9,6 +10,7 @@ namespace LogManager
     {
         private BinaryWriter storage;
         private object lck = new object();
+        private static long lastTransactionId = 0;
 
         public LogManager(BinaryWriter storage)
         {
@@ -135,6 +137,31 @@ namespace LogManager
         public async Task Flush()
         {
             await this.storage.BaseStream.FlushAsync();
+        }
+
+        public ITransaction CreateTransaction(IPageManager manager, bool isReadOnly, string name)
+        {
+            long tranId = Interlocked.Increment(ref lastTransactionId);
+            if (isReadOnly)
+            {
+                return new ReadonlyTransaction(manager.GetLockManager(), (ulong)tranId);
+            }
+            else
+            {
+                return new Transaction(this, manager, (ulong)tranId, name);
+            }
+        }
+
+        public ITransaction CreateTransaction(IPageManager manager, string name)
+        {
+            long tranId = Interlocked.Increment(ref lastTransactionId);
+            return new Transaction(this, manager, (ulong)tranId, name);
+        }
+
+        public ITransaction CreateTransaction(IPageManager manager)
+        {
+            long tranId = Interlocked.Increment(ref lastTransactionId);
+            return new Transaction(this, manager, (ulong)tranId, "NO_NAME");
         }
     }
 }
