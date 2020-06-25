@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PageManager
@@ -24,6 +25,7 @@ namespace PageManager
         private BinaryWriter binaryWriter;
         private BinaryReader binaryReader;
         private bool isInitialized;
+        private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         public PersistedStream(ulong startFileSize, string fileName, bool createNew)
         {
@@ -76,24 +78,43 @@ namespace PageManager
 
         public async Task SeekAndWrite(ulong position, IPage page)
         {
-            this.fileStream.Seek((long)position, SeekOrigin.Begin);
-            page.Persist(this.binaryWriter);
-            await this.fileStream.FlushAsync();
+            await semaphore.WaitAsync();
+
+            try
+            {
+                this.fileStream.Seek((long)position, SeekOrigin.Begin);
+                page.Persist(this.binaryWriter);
+
+                await this.fileStream.FlushAsync();
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
 
         public async Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnType[] columnTypes)
         {
-            this.fileStream.Seek((long)position, SeekOrigin.Begin);
+            await semaphore.WaitAsync();
 
-            return pageType switch
+            try
             {
-                PageType.DoublePage => new DoubleOnlyPage(this.binaryReader),
-                PageType.IntPage => new IntegerOnlyPage(this.binaryReader),
-                PageType.LongPage => new LongOnlyPage(this.binaryReader),
-                PageType.MixedPage => new MixedPage(this.binaryReader, columnTypes),
-                PageType.StringPage => new StringOnlyPage(this.binaryReader),
-                _ => throw new ArgumentException()
-            };
+                this.fileStream.Seek((long)position, SeekOrigin.Begin);
+
+                return pageType switch
+                {
+                    PageType.DoublePage => new DoubleOnlyPage(this.binaryReader),
+                    PageType.IntPage => new IntegerOnlyPage(this.binaryReader),
+                    PageType.LongPage => new LongOnlyPage(this.binaryReader),
+                    PageType.MixedPage => new MixedPage(this.binaryReader, columnTypes),
+                    PageType.StringPage => new StringOnlyPage(this.binaryReader),
+                    _ => throw new ArgumentException()
+                };
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
 
         public void Dispose()

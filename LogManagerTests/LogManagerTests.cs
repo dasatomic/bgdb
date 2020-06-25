@@ -77,7 +77,8 @@ namespace LogManagerTests
                 await tran1.Rollback();
                 Assert.AreEqual(TransactionState.RollBacked, tran1.GetTransactionState());
 
-                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST");
+                await using ITransaction tran2 = new Transaction(manager, pageManager, "TRAN_TEST_FETCH");
+                using var lck = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 T[] pageContent = page.Fetch(tran2);
                 Assert.AreEqual(0, pageContent.Length);
             }
@@ -109,6 +110,7 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
                 await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 T[] pageContent = page.Fetch(tran3);
                 verify(pageContent);
             }
@@ -280,6 +282,8 @@ namespace LogManagerTests
                 await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
                 Assert.AreEqual(TransactionState.Committed, tran1.GetTransactionState());
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
+
+                using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 RowsetHolder pageContent = page.Fetch(tran3);
 
                 Assert.AreEqual(holder, pageContent);
@@ -324,6 +328,7 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.Committed, tran2.GetTransactionState());
 
                 await using ITransaction tran3 = new Transaction(manager, pageManager, "TRAN_TEST");
+                using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
                 holder = page.Fetch(tran3);
 
                 stream.Seek(0, SeekOrigin.Begin);

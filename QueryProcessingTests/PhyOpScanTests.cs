@@ -57,8 +57,12 @@ namespace QueryProcessingTests
             await tran.Commit();
 
             tran = new Transaction(logManager, allocator, "SELECT");
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, await allocator.GetPage(table.RootPage, tran, PageType.MixedPage, columnTypes));
-            PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
+            PhyOpScan scan;
+            using (var lck = tran.AcquireLock(table.RootPage, LockManager.LockTypeEnum.Shared))
+            {
+                PageListCollection pcl = new PageListCollection(allocator, columnTypes, await allocator.GetPage(table.RootPage, tran, PageType.MixedPage, columnTypes));
+                scan = new PhyOpScan(pcl, stringHeap, tran);
+            }
 
             List<Row> result = new List<Row>();
 

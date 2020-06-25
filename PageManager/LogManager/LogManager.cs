@@ -8,6 +8,7 @@ namespace LogManager
     public class LogManager : ILogManager
     {
         private BinaryWriter storage;
+        private object lck = new object();
 
         public LogManager(BinaryWriter storage)
         {
@@ -117,13 +118,16 @@ namespace LogManager
 
         public async Task CommitTransaction(ITransaction tran)
         {
-            foreach (ILogRecord record in tran.GetRecords())
+            lock (lck)
             {
-                record.Serialize(storage);
-            }
+                foreach (ILogRecord record in tran.GetRecords())
+                {
+                    record.Serialize(storage);
+                }
 
-            storage.Write((byte)LogRecordType.Commit);
-            storage.Write(tran.TranscationId());
+                storage.Write((byte)LogRecordType.Commit);
+                storage.Write(tran.TranscationId());
+            }
 
             await storage.BaseStream.FlushAsync();
         }

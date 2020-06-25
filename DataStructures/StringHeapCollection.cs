@@ -33,8 +33,8 @@ namespace DataStructures
             uint offset;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                currPage = await allocator.GetPageStr(currPageId, tran);
                 using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+                currPage = await allocator.GetPageStr(currPageId, tran);
                 if (currPage.CanFit(item))
                 {
                     offset = currPage.MergeWithOffsetFetch(item, tran);
@@ -43,15 +43,26 @@ namespace DataStructures
             }
 
             {
-                currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
-                using Releaser lckReleaser = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
-                offset = currPage.MergeWithOffsetFetch(item, tran);
-                return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+                using Releaser prevPage = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+
+                if (currPage.NextPageId() != PageManagerConstants.NullPageId)
+                {
+                    prevPage.Dispose();
+                    return await Add(item, tran);
+                }
+                else
+                {
+                    currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
+                    using Releaser lckReleaser = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                    offset = currPage.MergeWithOffsetFetch(item, tran);
+                    return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+                }
             }
         }
 
         public async Task<char[]> Fetch(PagePointerOffsetPair loc, ITransaction tran)
         {
+            using Releaser lckReleaser = await tran.AcquireLock((ulong)loc.PageId, LockManager.LockTypeEnum.Shared);
             StringOnlyPage page = await allocator.GetPageStr((ulong)loc.PageId, tran);
             return page.FetchWithOffset((uint)loc.OffsetInPage, tran);
         }

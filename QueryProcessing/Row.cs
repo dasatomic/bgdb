@@ -9,12 +9,6 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class RowDescriptor
-    {
-        public string[] ColumnNames;
-        public int[] ColumnIds;
-    }
-
     public class Row : IEquatable<Row>
     {
         private int[] intCols;

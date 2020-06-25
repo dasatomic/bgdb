@@ -53,8 +53,8 @@ namespace DataStructures
             IPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared);
                 rowCount += currPage.RowCount();
             }
 
@@ -66,8 +66,8 @@ namespace DataStructures
             MixedPage currPage = null;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
                 if (currPage.CanFit(item, tran))
                 {
                     currPage.Merge(item, tran);
@@ -76,9 +76,20 @@ namespace DataStructures
             }
 
             {
-                currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
-                currPage.Merge(item, tran);
+                using Releaser prevPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+
+                if (currPage.NextPageId() != PageManagerConstants.NullPageId)
+                {
+                    // Someone already inserted next page.
+                    // Just retry the insert.
+                    await Add(item, tran);
+                }
+                else
+                {
+                    currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran);
+                    using Releaser currPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                    currPage.Merge(item, tran);
+                }
             }
         }
 
@@ -108,8 +119,8 @@ namespace DataStructures
 
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared);
                 RowsetHolder holder = currPage.Fetch(tran);
 
                 U curr = projector(holder);
@@ -128,8 +139,8 @@ namespace DataStructures
             MixedPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared);
                 RowsetHolder holder = currPage.Fetch(tran);
 
                 yield return holder;

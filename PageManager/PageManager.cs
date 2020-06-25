@@ -1,15 +1,17 @@
 ﻿using LockManager;
 using LogManager;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PageManager
 {
     public class PageManager : IPageManager
     {
-        private List<ulong> pageIds = new List<ulong>();
+        private ConcurrentBag<ulong> pageIds = new ConcurrentBag<ulong>();
         private uint pageSize;
         private ulong lastUsedPageId = 2;
         private readonly IPageEvictionPolicy pageEvictionPolicy;
@@ -19,6 +21,7 @@ namespace PageManager
         private const int AllocationMapPageId = 1;
         private readonly List<IntegerOnlyPage> AllocatationMapPages;
         private readonly ILockManager lockManager;
+        private SemaphoreSlim globalSemaphore = new SemaphoreSlim(1, 1);
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
             : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager())
@@ -108,6 +111,7 @@ namespace PageManager
 
             if (prevPageId != PageManagerConstants.NullPageId)
             {
+                tran.VerifyLock(prevPageId, LockTypeEnum.Exclusive);
                 IPage prevPage = await GetPage(prevPageId, tran, pageType, columnTypes);
 
                 if (prevPage.NextPageId() != page.NextPageId())
@@ -130,6 +134,7 @@ namespace PageManager
                 nextPage.SetPrevPageId(page.PageId());
             }
 
+            await globalSemaphore.WaitAsync();
             foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
             {
                 using (ITransaction evictTran = new ReadonlyTransaction(this.lockManager))
@@ -144,6 +149,8 @@ namespace PageManager
             bufferPool.AddPage(page);
 
             AddToAllocationMap(page);
+
+            globalSemaphore.Release();
 
             return page;
         }
@@ -187,11 +194,14 @@ namespace PageManager
 
         public async Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes)
         {
+            tran.VerifyLock(pageId, LockTypeEnum.Shared);
+
             if (!this.pageIds.Contains(pageId))
             {
                 throw new PageNotFoundException();
             }
 
+            await this.globalSemaphore.WaitAsync();
             IPage page = this.bufferPool.GetPage(pageId);
 
             if (page == null)
@@ -206,6 +216,8 @@ namespace PageManager
                 await this.FlushPage(pageToEvict);
                 this.bufferPool.EvictPage(pageIdToEvict);
             }
+
+            this.globalSemaphore.Release();
 
             return page;
         }

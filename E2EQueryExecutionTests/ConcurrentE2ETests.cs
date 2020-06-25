@@ -1,14 +1,14 @@
 ﻿using DataStructures;
 using LogManager;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using PageManager;
 using QueryProcessing;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Test.Common;
 
@@ -24,7 +24,7 @@ namespace E2EQueryExecutionTests
         [SetUp]
         public async Task Setup()
         {
-            this.pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 
@@ -47,6 +47,7 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
+        [Repeat(10)]
         public async Task ConcurrentInserts()
         {
             await using (Transaction tran = new Transaction(logManager, pageManager, "CREATE_TABLE"))
@@ -56,26 +57,46 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
 
-            Action<Tuple<int, double, string>> insertAction = async (Tuple<int, double, string> data) =>
+            const int rowCount = 100;
+            const int workerCount = 5;
+            int totalSum = 0;
+            int totalInsert = 0;
+
+            Action insertAction = () =>
             {
-                await using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
+                using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
                 {
-                    string insertQuery = "INSERT INTO ConcurrentTable VALUES (1, 1.1, mystring)";
-                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
-                    await tran.Commit();
+                    for (int i = 1; i <= rowCount; i++)
+                    {
+                        string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
+                        this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync().AsTask().Wait();
+                        tran.Commit().Wait();
+                        Interlocked.Add(ref totalSum, i);
+                        Interlocked.Increment(ref totalInsert);
+                        TestContext.Out.WriteLine("Done inserting {0}", i);
+                    }
                 }
             };
 
-            IEnumerable<Tuple<int, double, string>> itemsToInsert = Enumerable.Range(0, 1000).Select(x => Tuple.Create(x, x * 1.1, x + ""));
-            Parallel.ForEach(itemsToInsert, insertAction);
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < workerCount; i++)
+            {
+                tasks.Add(Task.Run(insertAction));
+            }
+
+            await Task.WhenAll(tasks);
 
             await using (Transaction tran = new Transaction(logManager, pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
                 Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
+                Assert.AreEqual(workerCount * rowCount, totalInsert);
+
+                Assert.AreEqual(workerCount * rowCount, result.Length);
+
                 int sum = result.Sum(r => r.IntCols[0]);
-                Assert.AreEqual(1000, sum);
+                Assert.AreEqual(totalSum, sum);
                 await tran.Commit();
             }
         }

@@ -82,6 +82,11 @@ namespace LogManager
             {
                 await this.Rollback();
             }
+
+            if (this.locksHeld.Any())
+            {
+                throw new TranHoldingLockDuringDispose();
+            }
         }
 
         public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
@@ -125,9 +130,14 @@ namespace LogManager
 
             lock (lck)
             {
-                this.locksHeld.TryGetValue(lockId, out LockTypeEnum lockHeld);
-
-                if ((int)lockHeld < (int)expectedLock)
+                if (this.locksHeld.TryGetValue(lockId, out LockTypeEnum lockHeld))
+                {
+                    if ((int)lockHeld < (int)expectedLock)
+                    {
+                        throw new TranNotHoldingLock();
+                    }
+                }
+                else
                 {
                     throw new TranNotHoldingLock();
                 }

@@ -1,4 +1,5 @@
 ﻿using DataStructures;
+using LockManager.LockImplementation;
 using LogManager;
 using PageManager;
 using System;
@@ -34,16 +35,20 @@ namespace MetadataManager
 
             if (!bootPageAllocator.BootPageInitialized())
             {
-                using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "SETUP_BOOT_PAGE");
-                bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
-                this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
-                tran.Commit();
+                using (ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "SETUP_BOOT_PAGE"))
+                using (Releaser releaser = tran.AcquireLock(IBootPageAllocator.BootPageId, LockManager.LockTypeEnum.Exclusive).Result)
+                {
+                    bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
+                    this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
+                    tran.Commit();
+                }
 
                 MetadataInitialSetup();
             }
             else
             {
                 using ITransaction tran = new Transaction(this.logManager, this.pageAllocator, "GET_BOOT_PAGE");
+                using Releaser releaser = tran.AcquireLock(IBootPageAllocator.BootPageId, LockManager.LockTypeEnum.Exclusive).Result;
                 this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
                 tran.Commit();
             }
