@@ -10,10 +10,13 @@ namespace LockManager
 
         private static readonly int[] numOfLocksRange = { 769, 1543, 3079, 6151, 12289, 24593, 49157 };
         private AsyncReadWriterLock[] locks;
-        private ILockMonitor lockMonitor = new LockMonitor();
+        private ILockMonitor lockMonitor;
 
-        public LockManager()
+        public LockManager() : this(new LockMonitor()) { }
+
+        public LockManager(ILockMonitor lockMonitor)
         {
+            this.lockMonitor = lockMonitor;
             int numOfLocks = numOfLocksRange[0];
             this.locks = new AsyncReadWriterLock[numOfLocks];
 

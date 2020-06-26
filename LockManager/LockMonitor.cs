@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("LockManagerTests")]
 namespace LockManager
 {
     public class LockMonitor : ILockMonitor
@@ -31,5 +33,7 @@ namespace LockManager
                 lockMonitorRecords[ownerId].Remove(lockId);
             }
         }
+
+        internal Dictionary<ulong, Dictionary<int, LockTypeEnum>> GetSnapshot() => this.lockMonitorRecords;
     }
 }
