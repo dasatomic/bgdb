@@ -14,7 +14,3 @@ debug:
 
     - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
     - echo 'End Summary'
-    artifacts:
-      reports:
-        junit:
-          - '*.Test/TestResults/TestResults.xml'
