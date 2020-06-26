@@ -1,8 +1,7 @@
 ﻿using LockManager;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LockManagerTests
@@ -20,12 +19,49 @@ namespace LockManagerTests
 
             using var lck3 = await lckmgr.AcquireLock(LockTypeEnum.Shared, 3, 3);
 
-            var lockSnapshot = lckMonitor.GetSnapshot();
+            var lockSnapshot1 = lckMonitor.GetSnapshot(1);
+            var lockSnapshot3 = lckMonitor.GetSnapshot(3);
 
-            Assert.AreEqual(new ulong[] { 1, 3 }, lockSnapshot.Keys.OrderBy(x => x));
+            Assert.AreEqual(new ulong[] { 1, 2, 3 }, lockSnapshot1.Select(x => x.Item1).OrderBy(x => x));
+            Assert.AreEqual(new ulong[] { 3 }, lockSnapshot3.Select(x => x.Item1).OrderBy(x => x));
+        }
 
-            Assert.AreEqual(new ulong[] { 1, 2, 3 }, lockSnapshot[1].Keys.OrderBy(x => x));
-            Assert.AreEqual(new ulong[] { 3 }, lockSnapshot[3].Keys.OrderBy(x => x));
+        [Test]
+        public async Task DeadLockDetection()
+        {
+            LockMonitor lckMonitor = new LockMonitor();
+            ILockManager lckmgr = new LockManager.LockManager(lckMonitor);
+
+            AutoResetEvent evt = new AutoResetEvent(false);
+
+            Task lockAcquireTask = Task.Run(() =>
+            {
+                using var lck = lckmgr.AcquireLock(LockTypeEnum.Exclusive, 1, 1).Result;
+                using var lck1 = lckmgr.AcquireLock(LockTypeEnum.Exclusive, 2, 2).Result;
+                using var lck2 = lckmgr.AcquireLock(LockTypeEnum.Exclusive, 2, 1).Result;
+
+                evt.WaitOne();
+            });
+
+            // Insure that deadlock monitor is in a right position
+            //
+            while (true)
+            {
+                await Task.Delay(100);
+                var snapshot = lckMonitor.GetSnapshot(1);
+
+                if (snapshot.Any(x => x.Item1 == 2))
+                {
+                    break;
+                }
+            }
+
+            Assert.ThrowsAsync<DeadlockException>(async () =>
+            {
+                using var lck3 = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, 1, 2);
+            });
+
+            evt.Set();
         }
     }
 }
