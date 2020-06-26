@@ -12,5 +12,5 @@ debug:
 
   script:
 
-    - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+    - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --logger "junit" --collect:"XPlat Code Coverage"
     - echo 'End Summary'
