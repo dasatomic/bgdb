@@ -12,7 +12,7 @@ debug:
 
   script:
 
-    - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --logger "junit" --collect:"XPlat Code Coverage"
+    - dotnet test  --logger "junit" --collect:"XPlat Code Coverage" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
     - echo 'End Summary'
     artifacts:
       reports:
