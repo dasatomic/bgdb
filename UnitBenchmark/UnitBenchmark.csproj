@@ -13,7 +13,7 @@
     <ProjectReference Include="..\MetadataManager\MetadataManager.csproj" />
     <ProjectReference Include="..\PageManager\PageManager.csproj" />
     <ProjectReference Include="..\QueryProcessing\QueryProcessing.csproj" />
-    <ProjectReference Include="..\Test.Common\Test.Common.csproj" />
+    <ProjectReference Include="..\tests\\Test.Common\Test.Common.csproj" />
   </ItemGroup>
 
 </Project>

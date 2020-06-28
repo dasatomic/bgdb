@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PageManager\PageManager.csproj" />
+    <ProjectReference Include="..\..\PageManager\PageManager.csproj" />
   </ItemGroup>
 
 </Project>
