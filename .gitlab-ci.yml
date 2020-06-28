@@ -9,9 +9,7 @@ debug:
    - dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
 
   stage: test
-
   script:
-
     - dotnet test --logger "junit"
     artifacts:
       reports:
