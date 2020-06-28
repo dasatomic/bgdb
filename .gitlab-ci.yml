@@ -11,7 +11,8 @@ debug:
   stage: test
   script:
     - dotnet test --logger "junit"
-    artifacts:
-      reports:
-        junit:
-          - 'tests/*/TestResults/TestResults.xml'
+    - echo 'End Summary'
+  artifacts:
+    reports:
+      junit:
+        - 'tests/*/TestResults/TestResults.xml'
