@@ -25,6 +25,11 @@ namespace E2EQueryExecutionTests
         [SetUp]
         public async Task Setup()
         {
+            if (this.pageManager != null)
+            {
+                this.pageManager.Dispose();
+            }
+
             this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;

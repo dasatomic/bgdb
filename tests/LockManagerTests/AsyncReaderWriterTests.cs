@@ -3,6 +3,7 @@ using LockManager.LockImplementation;
 using System.Threading.Tasks;
 using System;
 using LockManager;
+using System.Threading;
 
 namespace LockManagerTests
 {
@@ -101,6 +102,96 @@ namespace LockManagerTests
             {
                 r.Dispose();
             }
+        }
+
+        [Test, Pairwise]
+        public async Task LockCombinations(
+            [Values(LockTypeEnum.Shared, LockTypeEnum.Exclusive)] LockTypeEnum lckType1,
+            [Values(LockTypeEnum.Shared, LockTypeEnum.Exclusive)] LockTypeEnum lckType2,
+            [Values(LockTypeEnum.Shared, LockTypeEnum.Exclusive)] LockTypeEnum lckType3,
+            [Values(LockTypeEnum.Shared, LockTypeEnum.Exclusive)] LockTypeEnum lckType4)
+        {
+            AsyncReadWriterLock lck = new AsyncReadWriterLock(1, lckmon);
+            Releaser[] rls = new Releaser[4];
+            AutoResetEvent[] evts = new AutoResetEvent[4];
+
+            for (int i = 0; i < evts.Length; i++)
+            {
+                evts[i] = new AutoResetEvent(false);
+            }
+
+            Task t0 = Task.Run(async () =>
+            {
+                if (lckType1 == LockTypeEnum.Shared)
+                {
+                    rls[0] = await lck.ReaderLockAsync(1);
+                }
+                else
+                {
+                    rls[0] = await lck.WriterLockAsync(1);
+                }
+
+                evts[0].WaitOne();
+
+                rls[0].Dispose();
+            });
+
+            Task t1 = Task.Run(async () =>
+            {
+                if (lckType2 == LockTypeEnum.Shared)
+                {
+                    rls[1] = await lck.ReaderLockAsync(2);
+                }
+                else
+                {
+                    rls[1] = await lck.WriterLockAsync(2);
+                }
+
+                evts[1].WaitOne();
+
+                rls[1].Dispose();
+            });
+
+            Task t2 = Task.Run(async () =>
+            {
+                if (lckType3 == LockTypeEnum.Shared)
+                {
+                    rls[2] = await lck.ReaderLockAsync(3);
+                }
+                else
+                {
+                    rls[2] = await lck.WriterLockAsync(3);
+                }
+
+                evts[2].WaitOne();
+
+                rls[2].Dispose();
+            });
+
+            Task t3 = Task.Run(async () =>
+            {
+                if (lckType4 == LockTypeEnum.Shared)
+                {
+                    rls[3] = await lck.ReaderLockAsync(4);
+                }
+                else
+                {
+                    rls[3] = await lck.WriterLockAsync(4);
+                }
+
+                evts[3].WaitOne();
+
+                rls[3].Dispose();
+            });
+
+            await Task.Delay(100);
+
+            evts[0].Set();
+            evts[1].Set();
+            evts[2].Set();
+            evts[3].Set();
+
+            Assert.IsTrue(Task.WaitAll(new Task[] { t0, t1, t2, t3 }, TimeSpan.FromSeconds(5)));
         }
     }
 }

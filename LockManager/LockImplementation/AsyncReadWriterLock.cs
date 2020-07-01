@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace LockManager.LockImplementation
@@ -75,11 +76,11 @@ namespace LockManager.LockImplementation
                     status = -1;
                     (toWakeId, toWake) = waitingWriters.Dequeue();
                 }
-            }
 
-            if (toWake != null)
-            {
-                toWake.SetResult(new Releaser(this, true, this.lockId, toWakeId));
+                if (toWake != null)
+                {
+                    toWake.SetResult(new Releaser(this, true, this.lockId, toWakeId));
+                }
             }
         }
 
@@ -93,11 +94,14 @@ namespace LockManager.LockImplementation
                 this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 if (waitingWriters.Count > 0)
                 {
+                    status = -1;
                     toWake.Add(waitingWriters.Dequeue());
                     toWakeIsWriter = true;
                 }
                 else if (readersWaiting > 0)
                 {
+                    Debug.Assert(readersWaiting == waitingReaders.Count);
+
                     while (waitingReaders.Count != 0)
                     {
                         toWake.Add(waitingReaders.Dequeue());
@@ -110,11 +114,11 @@ namespace LockManager.LockImplementation
                 {
                     status = 0;
                 }
-            }
 
-            foreach ((ulong nextOwnerId, TaskCompletionSource<Releaser>taskToWait) in toWake)
-            {
-                taskToWait.SetResult(new Releaser(this, toWakeIsWriter, this.lockId, nextOwnerId));
+                foreach ((ulong nextOwnerId, TaskCompletionSource<Releaser>taskToWait) in toWake)
+                {
+                    taskToWait.SetResult(new Releaser(this, toWakeIsWriter, this.lockId, nextOwnerId));
+                }
             }
         }
     }

@@ -45,6 +45,7 @@ namespace PageManager
                 {
                     IntegerOnlyPage allocationMapFirstPage = allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
                     this.AllocatationMapPages.Add(allocationMapFirstPage);
+                    this.persistedStream.MarkInitialized();
                 }
             }
             else
@@ -136,20 +137,26 @@ namespace PageManager
 
             await globalSemaphore.WaitAsync();
 
-            // TODO: Need to check all the locks here.
-            foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
+            try
             {
-                IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                await this.FlushPage(pageToEvict);
+                // TODO: Need to check all the locks here.
+                foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
+                {
+                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
+                    await this.FlushPage(pageToEvict);
 
-                bufferPool.EvictPage(pageToEvict.PageId());
+                    bufferPool.EvictPage(pageToEvict.PageId());
+                }
+
+                bufferPool.AddPage(page);
+
+                AddToAllocationMap(page);
+
             }
-
-            bufferPool.AddPage(page);
-
-            AddToAllocationMap(page);
-
-            globalSemaphore.Release();
+            finally
+            {
+                globalSemaphore.Release();
+            }
 
             return page;
         }
@@ -201,22 +208,30 @@ namespace PageManager
             }
 
             await this.globalSemaphore.WaitAsync();
-            IPage page = this.bufferPool.GetPage(pageId);
+            IPage page = null;
 
-            if (page == null)
+            try
             {
-                page = await this.FetchPage(pageId, pageType, columnTypes);
-                this.bufferPool.AddPage(page);
+                page = this.bufferPool.GetPage(pageId);
+
+                if (page == null)
+                {
+                    page = await this.FetchPage(pageId, pageType, columnTypes);
+                    this.bufferPool.AddPage(page);
+                }
+
+                foreach (ulong pageIdToEvict in this.pageEvictionPolicy.RecordUsageAndEvict(pageId))
+                {
+                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
+                    await this.FlushPage(pageToEvict);
+                    this.bufferPool.EvictPage(pageIdToEvict);
+                }
+            }
+            finally
+            {
+                this.globalSemaphore.Release();
             }
 
-            foreach (ulong pageIdToEvict in this.pageEvictionPolicy.RecordUsageAndEvict(pageId))
-            {
-                IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                await this.FlushPage(pageToEvict);
-                this.bufferPool.EvictPage(pageIdToEvict);
-            }
-
-            this.globalSemaphore.Release();
 
             return page;
         }

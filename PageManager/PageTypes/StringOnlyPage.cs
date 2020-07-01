@@ -110,6 +110,8 @@ namespace PageManager
             }
 
             int startPos = this.items.Length;
+
+            // This is too slow!!!
             this.items = this.items.Concat(items).ToArray();
             this.rowCount = (uint)this.items.Length;
 
@@ -147,6 +149,8 @@ namespace PageManager
 
             this.rowCount++;
             int startPos = this.items.Length;
+
+            // TODO: This is too slow.
             this.items = this.items.Append(item).ToArray();
 
             byte[] bs = new byte[item.Length + 2];
