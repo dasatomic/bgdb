@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LockManager\LockManager.csproj" />
     <ProjectReference Include="..\PageManager\PageManager.csproj" />
   </ItemGroup>
 

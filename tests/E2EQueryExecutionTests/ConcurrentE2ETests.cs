@@ -1,4 +1,5 @@
 ﻿using DataStructures;
+using LockManager;
 using LogManager;
 using NUnit.Framework;
 using PageManager;
@@ -7,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Test.Common;
@@ -30,7 +29,8 @@ namespace E2EQueryExecutionTests
                 this.pageManager.Dispose();
             }
 
-            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream);
+            ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
+            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), lm, TestGlobals.TestFileLogger);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 
@@ -64,7 +64,7 @@ namespace E2EQueryExecutionTests
             }
 
             const int rowCount = 100;
-            const int workerCount = 5;
+            const int workerCount = 10;
             int totalSum = 0;
             int totalInsert = 0;
 

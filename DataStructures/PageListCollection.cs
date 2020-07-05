@@ -82,6 +82,7 @@ namespace DataStructures
                 {
                     // Someone already inserted next page.
                     // Just retry the insert.
+                    prevPageLck.Dispose();
                     await Add(item, tran);
                 }
                 else

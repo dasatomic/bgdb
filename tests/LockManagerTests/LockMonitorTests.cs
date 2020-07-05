@@ -12,7 +12,7 @@ namespace LockManagerTests
         public async Task LockMonitorAcquire()
         {
             LockMonitor lckMonitor = new LockMonitor();
-            ILockManager lckmgr = new LockManager.LockManager(lckMonitor);
+            ILockManager lckmgr = new LockManager.LockManager(lckMonitor, new NoOpLogging());
             using var lck = await lckmgr.AcquireLock(LockTypeEnum.Shared, 1, 1);
             using var lck1 = await lckmgr.AcquireLock(LockTypeEnum.Shared, 2, 1);
             using var lck2 = await lckmgr.AcquireLock(LockTypeEnum.Shared, 3, 1);
@@ -30,7 +30,7 @@ namespace LockManagerTests
         public async Task DeadLockDetection()
         {
             LockMonitor lckMonitor = new LockMonitor();
-            ILockManager lckmgr = new LockManager.LockManager(lckMonitor);
+            ILockManager lckmgr = new LockManager.LockManager(lckMonitor, new NoOpLogging());
 
             AutoResetEvent evt = new AutoResetEvent(false);
 

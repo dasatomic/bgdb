@@ -8,7 +8,7 @@ using System;
 
 namespace Instrumentation
 {
-    public class Logger : PageManager.InstrumentationInterface
+    public class Logger : PageManager.InstrumentationInterface, LockManager.LockManagerInstrumentationInterface
     {
         private readonly ILog eventLog;
 
@@ -31,7 +31,7 @@ namespace Instrumentation
             roller.ActivateOptions();
             hierarchy.Root.AddAppender(roller);
 
-            hierarchy.Root.Level = Level.Info;
+            hierarchy.Root.Level = Level.Debug;
             hierarchy.Configured = true;
 
 

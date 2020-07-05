@@ -3,6 +3,7 @@ using LockManager;
 using LogManager;
 using MetadataManager;
 using NUnit.Framework;
+using NUnit.Framework.Internal.Commands;
 using PageManager;
 using QueryProcessing;
 using System.Collections.Generic;
@@ -179,8 +180,9 @@ namespace E2EQueryExecutionTests
             BufferPool bp = new BufferPool();
 
             IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(3, 1);
-            ILockManager lm = new LockManager.LockManager();
-            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
+            ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
+            var stream = new PersistedStream(1024 * 1024, "bufferpoolexceed.data", createNew: true);
+            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, stream, bp, lm, TestGlobals.TestFileLogger);
 
             const int rowInsert = 5000;
 
