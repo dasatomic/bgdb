@@ -70,13 +70,15 @@ namespace LockManager.LockImplementation
             }
         }
 
-        public void ReaderRelease(ulong ownerId)
+        public void ReaderRelease(ulong ownerId, TimeSpan timeHeld)
         {
             TaskCompletionSource<Releaser> toWake = null;
             ulong toWakeId = 0;
 
             lock (waitingWriters)
             {
+                this.logger.LogDebug($"Owner {ownerId} releasing reader lock {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
+
                 this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 --status;
                 if (status == 0 && waitingWriters.Count > 0)
@@ -96,13 +98,14 @@ namespace LockManager.LockImplementation
             }
         }
 
-        public void WriterRelease(ulong ownerId)
+        public void WriterRelease(ulong ownerId, TimeSpan timeHeld)
         {
             List<(ulong, DateTime, TaskCompletionSource<Releaser>)> toWake = new List<(ulong, DateTime, TaskCompletionSource<Releaser>)>();
             bool toWakeIsWriter = false;
 
             lock (waitingWriters)
             {
+                this.logger.LogDebug($"Owner {ownerId} releasing writer lock {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
                 this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 if (waitingWriters.Count > 0)
                 {
