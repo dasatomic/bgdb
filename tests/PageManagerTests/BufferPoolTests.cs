@@ -20,7 +20,7 @@ namespace PageManagerTests
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
             ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm);
+            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -36,7 +36,7 @@ namespace PageManagerTests
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
             ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm);
+            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             for (int i = 0; i < 11; i++)
             {

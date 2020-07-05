@@ -5,8 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Instrumentation\Instrumentation.csproj" />
-    <ProjectReference Include="..\..\PageManager\PageManager.csproj" />
+    <PackageReference Include="log4net" Version="2.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PageManager\PageManager.csproj" />
   </ItemGroup>
 
 </Project>

@@ -22,18 +22,20 @@ namespace PageManager
         private readonly List<IntegerOnlyPage> AllocatationMapPages;
         private readonly ILockManager lockManager;
         private SemaphoreSlim globalSemaphore = new SemaphoreSlim(1, 1);
+        private InstrumentationInterface logger = null;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager())
+            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager(), new NoOpLogging())
         {
         }
 
-        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager)
+        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager, InstrumentationInterface logger)
         {
             this.pageSize = defaultPageSize;
             this.pageEvictionPolicy = evictionPolicy;
             this.persistedStream = persistedStream;
             this.lockManager = lockManager;
+            this.logger = logger;
 
             this.bufferPool = bufferPool;
 
@@ -41,6 +43,7 @@ namespace PageManager
 
             if (!this.persistedStream.IsInitialized())
             {
+                logger.LogInfo("Initializing the persisted stream.");
                 using (ITransaction tran = new NotLoggedTransaction())
                 {
                     IntegerOnlyPage allocationMapFirstPage = allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
@@ -51,6 +54,7 @@ namespace PageManager
             else
             {
                 // TODO: Read boot page.
+                logger.LogInfo("Using already initialized stream.");
                 ulong position = AllocationMapPageId * this.pageSize;
                 IntegerOnlyPage allocationMapFirstPage = (IntegerOnlyPage)this.persistedStream.SeekAndRead(position, PageType.IntPage, null).Result;
                 this.AllocatationMapPages.Add(allocationMapFirstPage);

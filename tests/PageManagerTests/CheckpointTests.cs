@@ -23,7 +23,7 @@ namespace PageManagerTests
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
-            using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm);
+            using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -45,7 +45,7 @@ namespace PageManagerTests
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
             IntegerOnlyPage p1, p2, p3;
-            using (var pageManager = new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm))
+            using (var pageManager = new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger))
             {
                 p1 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
                 p2 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);

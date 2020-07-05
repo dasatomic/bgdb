@@ -180,7 +180,7 @@ namespace E2EQueryExecutionTests
 
             IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(3, 1);
             ILockManager lm = new LockManager.LockManager();
-            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp, lm);
+            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             const int rowInsert = 5000;
 
