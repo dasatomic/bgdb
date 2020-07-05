@@ -9,8 +9,10 @@ debug:
    - dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
 
   stage: test
-
   script:
-
-    - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+    - dotnet test --logger "junit"
     - echo 'End Summary'
+  artifacts:
+    reports:
+      junit:
+        - 'tests/*/TestResults/TestResults.xml'
