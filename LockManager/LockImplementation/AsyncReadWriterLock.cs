@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LockManager.LockImplementation
@@ -77,10 +78,19 @@ namespace LockManager.LockImplementation
 
             lock (waitingWriters)
             {
-                this.logger.LogDebug($"Owner {ownerId} releasing reader lock {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
+                this.logger.LogDebug($"Owner {ownerId} releasing reader lockId {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
 
                 this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
                 --status;
+
+                Debug.Assert(status >= 0, $"Owner {ownerId} releasing reader lockId {this.lockId} an going negative in reader counter.");
+
+                if (waitingWriters.Count == 0)
+                {
+                    // Insure that there aren't any readers waiting as well.
+                    Debug.Assert(!waitingReaders.Any());
+                }
+
                 if (status == 0 && waitingWriters.Count > 0)
                 {
                     status = -1;
@@ -88,7 +98,7 @@ namespace LockManager.LockImplementation
                     (toWakeId, toWakeWaitingStart, toWake) = waitingWriters.Dequeue();
 
                     TimeSpan waitingTime = DateTime.UtcNow - toWakeWaitingStart.Value;
-                    this.logger.LogDebug($"Owner {ownerId} releasing reader lock {this.lockId}. Waking writer {toWakeId} that waited for {waitingTime.TotalMilliseconds}ms");
+                    this.logger.LogDebug($"Owner {ownerId} releasing reader lockId {this.lockId}. Waking writer {toWakeId} that waited for {waitingTime.TotalMilliseconds}ms");
                 }
 
                 if (toWake != null)
@@ -105,8 +115,10 @@ namespace LockManager.LockImplementation
 
             lock (waitingWriters)
             {
-                this.logger.LogDebug($"Owner {ownerId} releasing writer lock {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
+                this.logger.LogDebug($"Owner {ownerId} releasing writer lockId {this.lockId} after {timeHeld.TotalMilliseconds}ms.");
                 this.lockMonitor.ReleaseRecord(ownerId, this.lockId);
+                Debug.Assert(readersWaiting == waitingReaders.Count);
+
                 if (waitingWriters.Count > 0)
                 {
                     status = -1;
@@ -115,9 +127,8 @@ namespace LockManager.LockImplementation
                 }
                 else if (readersWaiting > 0)
                 {
-                    Debug.Assert(readersWaiting == waitingReaders.Count);
 
-                    while (waitingReaders.Count != 0)
+                    while (waitingReaders.Any())
                     {
                         toWake.Add(waitingReaders.Dequeue());
                     }
@@ -135,11 +146,11 @@ namespace LockManager.LockImplementation
                     TimeSpan waitingTime = DateTime.UtcNow - waitingStart;
                     if (toWakeIsWriter)
                     {
-                        this.logger.LogDebug($"Owner {ownerId} releasing writer lock {this.lockId}. Waking writer {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
+                        this.logger.LogDebug($"Owner {ownerId} releasing writer lockId {this.lockId}. Waking writer {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
                     }
                     else
                     {
-                        this.logger.LogDebug($"Owner {ownerId} releasing writer lock {this.lockId}. Waking reader {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
+                        this.logger.LogDebug($"Owner {ownerId} releasing writer lockId {this.lockId}. Waking reader {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
                     }
 
                     taskToWait.SetResult(new Releaser(this, toWakeIsWriter, this.lockId, nextOwnerId));

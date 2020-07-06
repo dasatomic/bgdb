@@ -17,6 +17,7 @@ namespace LockManager
             {
                 if (lockMonitorRecords.TryGetValue(record.ownerId, out Dictionary<int, LockTypeEnum> subdictionary))
                 {
+                    CheckRecursiveLock(record.ownerId, record.lockId, record.lockType);
                     VerifyDeadlock(record.ownerId, record.lockId, record.lockType);
                     subdictionary.Add(record.lockId, record.lockType);
                 }
@@ -44,6 +45,19 @@ namespace LockManager
                 if (locks.Value == lockType)
                 {
                     yield return locks.Key;
+                }
+            }
+        }
+
+        protected void CheckRecursiveLock(ulong ownerId, int lockId, LockTypeEnum lockType)
+        {
+            this.lockMonitorRecords.TryGetValue(ownerId, out Dictionary<int, LockTypeEnum> myLocks);
+
+            if (myLocks != null)
+            {
+                if (myLocks.ContainsKey(lockId))
+                {
+                    throw new RecursiveLockNotSupportedException();
                 }
             }
         }

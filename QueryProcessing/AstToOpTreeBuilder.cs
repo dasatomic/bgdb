@@ -35,12 +35,7 @@ namespace QueryProcessing
 
             ColumnType[] columnTypes = table.Columns.Select(x => x.ColumnType).ToArray();
 
-            // TODO: This shouldn't be here. I don't want to have
-            // lock on root page only for PageListCollection construction.
-            // Also it doesn't make sense to build PageListCollection for every operation.
-            // This should be part of mdTable definition.
-            using Releaser lck = tran.AcquireLock(table.RootPage, LockManager.LockTypeEnum.Shared).Result;
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, await allocator.GetMixedPage(table.RootPage, tran, columnTypes));
+            PageListCollection pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();

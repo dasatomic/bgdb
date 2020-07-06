@@ -33,14 +33,16 @@ namespace E2EQueryExecutionTests
             this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), lm, TestGlobals.TestFileLogger);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
+            StringHeapCollection metadataStringHeap = null;
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: false, "SETUP"))
             {
                 stringHeap = new StringHeapCollection(pageManager, tran);
+                metadataStringHeap = new StringHeapCollection(pageManager, tran);
                 await tran.Commit();
             }
 
-            metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
+            metadataManager = new MetadataManager.MetadataManager(pageManager, metadataStringHeap, pageManager, logManager);
             AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, pageManager);
 
             this.queryEntryGate = new QueryEntryGate(
@@ -63,7 +65,7 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
 
-            const int rowCount = 100;
+            const int rowCount = 10;
             const int workerCount = 10;
             int totalSum = 0;
             int totalInsert = 0;

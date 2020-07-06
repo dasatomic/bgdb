@@ -21,7 +21,7 @@ namespace Instrumentation
             patternLayout.ActivateOptions();
 
             RollingFileAppender roller = new RollingFileAppender();
-            roller.AppendToFile = true;
+            roller.AppendToFile = false;
             roller.File = fileName;
             roller.Layout = patternLayout;
             roller.MaxSizeRollBackups = 5;

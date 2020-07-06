@@ -34,14 +34,14 @@ namespace DataStructures
             this.columnTypes = columnTypes;
         }
 
-        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, IPage initialPage)
+        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, ulong initialPageId)
         {
             if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0)
             {
                 throw new ArgumentNullException();
             }
 
-            this.collectionRootPageId = initialPage.PageId();
+            this.collectionRootPageId = initialPageId;
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
         }

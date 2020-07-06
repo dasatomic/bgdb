@@ -25,14 +25,7 @@ namespace QueryProcessing
 
             ColumnType[] columnTypes = mdTable.Columns.Select(x => x.ColumnType).ToArray();
 
-            // TODO: This shouldn't be here. I don't want to have
-            // lock on root page only for PageListCollection construction.
-            // Also it doesn't make sense to build PageListCollection for every operation.
-            // This should be part of mdTable definition.
-            using Releaser lck = tran.AcquireLock(this.mdTable.RootPage, LockManager.LockTypeEnum.Shared).Result;
-            IPage rootPage = this.pageAllocator.GetMixedPage(this.mdTable.RootPage, tran, columnTypes).Result;
-
-            this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, rootPage);
+            this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, mdTable.RootPage);
             this.stringHeap = stringHeap;
             this.input = input;
             this.tran = tran;

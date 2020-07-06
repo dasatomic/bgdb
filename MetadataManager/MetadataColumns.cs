@@ -51,7 +51,7 @@ namespace MetadataManager
                 throw new ArgumentNullException();
             }
 
-            this.pageListCollection = new PageListCollection(pageAllocator, columnDefinitions, firstPage);
+            this.pageListCollection = new PageListCollection(pageAllocator, columnDefinitions, firstPage.PageId());
             this.stringHeap = stringHeap;
         }
 

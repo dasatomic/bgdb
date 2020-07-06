@@ -39,7 +39,7 @@ namespace MetadataManager
                 using (Releaser releaser = tran.AcquireLock(IBootPageAllocator.BootPageId, LockManager.LockTypeEnum.Exclusive).Result)
                 {
                     bootPageAllocator.AllocatePageBootPage(PageType.MixedPage, this.masterPageColumnDefinition, tran);
-                    this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
+                    this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, IBootPageAllocator.BootPageId);
                     tran.Commit();
                 }
 
@@ -50,7 +50,7 @@ namespace MetadataManager
                 using (ITransaction tran = this.logManager.CreateTransaction(this.pageAllocator, false, "GET_BOOT_PAGE"))
                 {
                     using Releaser releaser = tran.AcquireLock(IBootPageAllocator.BootPageId, LockManager.LockTypeEnum.Exclusive).Result;
-                    this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, this.pageAllocator.GetMixedPage(IBootPageAllocator.BootPageId, tran, this.masterPageColumnDefinition).Result);
+                    this.masterMetadataCollection = new PageListCollection(this.pageAllocator, this.masterPageColumnDefinition, IBootPageAllocator.BootPageId);
                     tran.Commit();
                 }
             }
