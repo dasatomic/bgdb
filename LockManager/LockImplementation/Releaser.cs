@@ -17,7 +17,7 @@ namespace LockManager.LockImplementation
             this.writer = writer;
             this.lockId = lockId;
             this.ownerId = ownerId;
-            releaseCallback = null;
+            this.releaseCallback = null;
             this.lockAcquisitionStart = DateTime.UtcNow;
         }
 
@@ -37,15 +37,18 @@ namespace LockManager.LockImplementation
                 releaseCallback();
             }
 
-            TimeSpan duration = DateTime.UtcNow - lockAcquisitionStart;
+            if (toRelease != null)
+            {
+                TimeSpan duration = DateTime.UtcNow - lockAcquisitionStart;
 
-            if (writer)
-            {
-                toRelease.WriterRelease(this.ownerId, duration);
-            }
-            else
-            {
-                toRelease.ReaderRelease(this.ownerId, duration);
+                if (writer)
+                {
+                    toRelease.WriterRelease(this.ownerId, duration);
+                }
+                else
+                {
+                    toRelease.ReaderRelease(this.ownerId, duration);
+                }
             }
         }
     }

@@ -37,7 +37,7 @@ namespace LogManager
                 {
                     // Return dummy leaser. You don't really own this lock.
                     // This probably needs to change.
-                    return new Releaser();
+                    throw new TranAlreadyHoldingLock();
                 }
             }
 

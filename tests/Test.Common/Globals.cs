@@ -1,4 +1,5 @@
 ﻿using PageManager;
+using System;
 
 namespace Test.Common
 {
@@ -18,7 +19,8 @@ namespace Test.Common
         {
             get
             {
-                return new PersistedStream(1024 * 1024, "temp.data", createNew: true);
+                string fileName = string.Format("{0}.data", Guid.NewGuid());
+                return new PersistedStream(1024 * 1024, fileName, createNew: true);
             }
         }
 
