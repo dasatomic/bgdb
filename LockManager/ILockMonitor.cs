@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace LockManager
@@ -22,5 +23,7 @@ namespace LockManager
     {
         public void AddRecord(LockMonitorRecord record);
         public void ReleaseRecord(ulong ownerId, int lockId);
+        public void RecordStats(LockStatsRecord statsRecord);
+        public LockStats GetStats();
     }
 }

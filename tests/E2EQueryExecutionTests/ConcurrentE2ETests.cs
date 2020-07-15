@@ -21,6 +21,7 @@ namespace E2EQueryExecutionTests
         private IPageManager pageManager;
         private MetadataManager.MetadataManager metadataManager;
         private Instrumentation.Logger logger;
+        private ILockManager lockManager;
 
         [SetUp]
         public async Task Setup()
@@ -30,14 +31,14 @@ namespace E2EQueryExecutionTests
                 this.pageManager.Dispose();
             }
 
-            ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
+            this.lockManager = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
 
             if (this.logger == null)
             {
-                this.logger = new Instrumentation.Logger("ConcurrencyTestLog.txt", "concurrency", Instrumentation.LogLevel.Debug);
+                this.logger = new Instrumentation.Logger("ConcurrencyTestLog.txt", "concurrency", Instrumentation.LogLevel.Info);
             }
 
-            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), lm, logger);
+            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), this.lockManager, logger);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
             StringHeapCollection metadataStringHeap = null;
@@ -87,7 +88,6 @@ namespace E2EQueryExecutionTests
                         await tran.Commit();
                         Interlocked.Add(ref totalSum, i);
                         Interlocked.Increment(ref totalInsert);
-                        TestContext.Out.WriteLine("Done inserting {0}", i);
                     }
                 }
             }
@@ -113,6 +113,9 @@ namespace E2EQueryExecutionTests
                 Assert.AreEqual(totalSum, sum);
                 await tran.Commit();
             }
+
+            LockStats lockStats = this.lockManager.GetLockStats();
+            TestContext.Out.WriteLine(lockStats);
         }
 
         [Test]
@@ -142,7 +145,6 @@ namespace E2EQueryExecutionTests
                         await tran.Commit();
                         Interlocked.Add(ref totalSum, i);
                         Interlocked.Increment(ref totalInsert);
-                        TestContext.Out.WriteLine("Done inserting {0}", i);
                     }
                 }
             }
@@ -186,6 +188,9 @@ namespace E2EQueryExecutionTests
                 Assert.AreEqual(totalSum, sum);
                 await tran.Commit();
             }
+
+            LockStats lockStats = this.lockManager.GetLockStats();
+            TestContext.Out.WriteLine(lockStats);
         }
     }
 }

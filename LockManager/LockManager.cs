@@ -40,5 +40,7 @@ namespace LockManager
         }
 
         public int LockIdForPage(ulong pageId) => (int)(pageId % (ulong)locks.Length);
+
+        public LockStats GetLockStats() => this.lockMonitor.GetStats();
     }
 }

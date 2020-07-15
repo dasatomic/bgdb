@@ -7,5 +7,6 @@ namespace LockManager
     {
         Task<Releaser> AcquireLock(LockTypeEnum lockType, ulong pageId, ulong ownerId);
         int LockIdForPage(ulong pageId);
+        public LockStats GetLockStats();
     }
 }

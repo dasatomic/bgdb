@@ -4,14 +4,13 @@ using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace LockManager.LockImplementation
 {
     public class AsyncReadWriterLock
     {
         private readonly Queue<(ulong, DateTime entryTime, TaskCompletionSource<Releaser>)> waitingWriters = new Queue<(ulong, DateTime, TaskCompletionSource<Releaser>)>();
-        private Queue<(ulong, DateTime entryTime, TaskCompletionSource<Releaser>)> waitingReaders = new Queue<(ulong, DateTime, TaskCompletionSource<Releaser>)>();
+        private readonly Queue<(ulong, DateTime entryTime, TaskCompletionSource<Releaser>)> waitingReaders = new Queue<(ulong, DateTime, TaskCompletionSource<Releaser>)>();
         private int status;
 
         private readonly ILockMonitor lockMonitor;
@@ -39,6 +38,7 @@ namespace LockManager.LockImplementation
                 if (status >= 0 && waitingWriters.Count == 0)
                 {
                     this.logger.LogDebug($"Owner {ownerId} taking lockId {this.lockId} as Shared. Active readers {status}.");
+                    this.lockMonitor.RecordStats(new LockStatsRecord(this.lockId, TimeSpan.Zero, LockTypeEnum.Shared));
                     ++status;
                     return Task.FromResult(new Releaser(this, false, this.lockId, ownerId));
                 }
@@ -60,6 +60,7 @@ namespace LockManager.LockImplementation
                 this.lockMonitor.AddRecord(new LockMonitorRecord(ownerId, this.lockId, LockTypeEnum.Exclusive));
                 if (status == 0)
                 {
+                    this.lockMonitor.RecordStats(new LockStatsRecord(this.lockId, TimeSpan.Zero, LockTypeEnum.Exclusive));
                     this.logger.LogDebug($"Owner {ownerId} taking lockId {this.lockId} as Exclusive.");
                     status = -1;
                     return Task.FromResult(new Releaser(this, true, this.lockId, ownerId));
@@ -102,6 +103,8 @@ namespace LockManager.LockImplementation
 
                     TimeSpan waitingTime = DateTime.UtcNow - toWakeWaitingStart.Value;
                     this.logger.LogDebug($"Owner {ownerId} releasing reader lockId {this.lockId}. Waking writer {toWakeId} that waited for {waitingTime.TotalMilliseconds}ms");
+
+                    this.lockMonitor.RecordStats(new LockStatsRecord(this.lockId, waitingTime, LockTypeEnum.Exclusive));
                 }
             }
 
@@ -151,10 +154,12 @@ namespace LockManager.LockImplementation
                 if (toWakeIsWriter)
                 {
                     this.logger.LogDebug($"Owner {ownerId} releasing writer lockId {this.lockId}. Waking writer {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
+                    this.lockMonitor.RecordStats(new LockStatsRecord(this.lockId, waitingTime, LockTypeEnum.Exclusive));
                 }
                 else
                 {
                     this.logger.LogDebug($"Owner {ownerId} releasing writer lockId {this.lockId}. Waking reader {nextOwnerId} that waited for {waitingTime.TotalMilliseconds}ms");
+                    this.lockMonitor.RecordStats(new LockStatsRecord(this.lockId, waitingTime, LockTypeEnum.Shared));
                 }
 
                 taskToWait.SetResult(new Releaser(this, toWakeIsWriter, this.lockId, nextOwnerId));

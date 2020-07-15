@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 
 [assembly: InternalsVisibleTo("LockManagerTests")]
 namespace LockManager
@@ -10,6 +11,9 @@ namespace LockManager
     {
         private Dictionary<ulong, Dictionary<int, LockTypeEnum>> lockMonitorRecords = new Dictionary<ulong, Dictionary<int, LockTypeEnum>>();
         private object lck = new object();
+
+        // TODO: This should be a ring buffer.
+        private List<LockStatsRecord> lockStats = new List<LockStatsRecord>();
 
         public void AddRecord(LockMonitorRecord record)
         {
@@ -105,6 +109,53 @@ namespace LockManager
             lock (lck)
             {
                 return this.lockMonitorRecords[ownerId].Select(kv => (kv.Key, kv.Value)).ToArray();
+            }
+        }
+
+        public void RecordStats(LockStatsRecord statsRecord)
+        {
+            // TODO: Locking can be done better + now stats grow indefinitely.
+            lock (lck)
+            {
+                this.lockStats.Add(statsRecord);
+            }
+        }
+
+        private TimeSpan[] Percentile(IEnumerable<TimeSpan> seq, double[] percentiles)
+        {
+            var elements = seq.ToArray();
+            Array.Sort(elements);
+            TimeSpan[] res = new TimeSpan[percentiles.Length];
+            int cnt = 0;
+
+            foreach (double percentile in percentiles)
+            {
+                double realIndex = percentile * (elements.Length - 1);
+                int index = (int)realIndex;
+                double frac = realIndex - index;
+                if (index + 1 < elements.Length)
+                    res[cnt] = elements[index] * (1 - frac) + elements[index + 1] * frac;
+                else
+                    res[cnt] = elements[index];
+
+                cnt++;
+            }
+
+            return res;
+        }
+
+        public LockStats GetStats()
+        {
+            lock (lck)
+            {
+                TimeSpan[] percentiles = Percentile(this.lockStats.Select(x => x.WaitDuration), new double[] { 0.5, 0.95, 0.99, 1 });
+                return new LockStats
+                {
+                    WaitTimePercentile50th = percentiles[0],
+                    WaitTimePercentile95th = percentiles[1],
+                    WaitTimePercentile99th = percentiles[2],
+                    WaitTimePercentileMax = percentiles[3],
+                };
             }
         }
     }
