@@ -2,17 +2,31 @@
 using log4net.Appender;
 using log4net.Core;
 using log4net.Layout;
-using log4net.Repository;
 using log4net.Repository.Hierarchy;
-using System;
 
 namespace Instrumentation
 {
+    public enum LogLevel
+    {
+        Debug = 0,
+        Info = 1,
+        Warning = 2,
+        Error = 3,
+    }
+
     public class Logger : PageManager.InstrumentationInterface, LockManager.LockManagerInstrumentationInterface
     {
         private readonly ILog eventLog;
 
-        public Logger(string fileName, string repositoryName)
+        private static Level[] logLevelMapper = new Level[4]
+        {
+            Level.Debug,
+            Level.Info,
+            Level.Warn,
+            Level.Error,
+        };
+
+        private Logger(string fileName, string repositoryName, Level logLevel)
         {
             Hierarchy hierarchy = (Hierarchy)log4net.LogManager.CreateRepository(repositoryName);
 
@@ -31,11 +45,16 @@ namespace Instrumentation
             roller.ActivateOptions();
             hierarchy.Root.AddAppender(roller);
 
-            hierarchy.Root.Level = Level.Debug;
+            hierarchy.Root.Level = logLevel;
             hierarchy.Configured = true;
 
 
             this.eventLog = log4net.LogManager.GetLogger(repositoryName, "DefaultLogger");
+        }
+
+        public Logger(string fileName, string repositoryName, LogLevel logLevel)
+            : this(fileName, repositoryName, logLevelMapper[(int)logLevel])
+        {
         }
 
         public void LogInfo(string message)

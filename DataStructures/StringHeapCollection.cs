@@ -14,24 +14,27 @@ namespace DataStructures
     {
         IAllocateStringPage allocator;
         private ulong collectionRootPageId;
+        private ulong lastPageId;
 
         public StringHeapCollection(IAllocateStringPage allocator, ITransaction tran)
         {
             this.allocator = allocator;
             this.collectionRootPageId = this.allocator.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result.PageId();
+            this.lastPageId = this.collectionRootPageId;
         }
 
         public StringHeapCollection(IAllocateStringPage allocator, IPage initialPage)
         {
             this.allocator = allocator;
             this.collectionRootPageId = initialPage.PageId();
+            this.lastPageId = this.collectionRootPageId;
         }
 
         public async Task<PagePointerOffsetPair> Add(char[] item, ITransaction tran)
         {
             StringOnlyPage currPage = null;
             uint offset;
-            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
+            for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
                 currPage = await allocator.GetPageStr(currPageId, tran);
@@ -55,6 +58,7 @@ namespace DataStructures
                     currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran);
                     using Releaser lckReleaser = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
                     offset = currPage.MergeWithOffsetFetch(item, tran);
+                    this.lastPageId = currPage.PageId();
                     return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
                 }
             }

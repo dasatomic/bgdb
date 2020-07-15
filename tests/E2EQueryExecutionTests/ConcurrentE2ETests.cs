@@ -20,6 +20,7 @@ namespace E2EQueryExecutionTests
         private ILogManager logManager;
         private IPageManager pageManager;
         private MetadataManager.MetadataManager metadataManager;
+        private Instrumentation.Logger logger;
 
         [SetUp]
         public async Task Setup()
@@ -30,7 +31,13 @@ namespace E2EQueryExecutionTests
             }
 
             ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
-            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), lm, TestGlobals.TestFileLogger);
+
+            if (this.logger == null)
+            {
+                this.logger = new Instrumentation.Logger("ConcurrencyTestLog.txt", "concurrency", Instrumentation.LogLevel.Debug);
+            }
+
+            this.pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 10), TestGlobals.DefaultPersistedStream, new BufferPool(), lm, logger);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
             StringHeapCollection metadataStringHeap = null;
@@ -55,7 +62,6 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
-        [Repeat(10)]
         public async Task ConcurrentInserts()
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
@@ -65,26 +71,26 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
 
-            const int rowCount = 10;
-            const int workerCount = 10;
+            const int rowCount = 100;
+            const int workerCount = 100;
             int totalSum = 0;
             int totalInsert = 0;
 
-            Action insertAction = () =>
+            async Task insertAction()
             {
                 using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
                 {
                     for (int i = 1; i <= rowCount; i++)
                     {
                         string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
-                        this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync().AsTask().Wait();
-                        tran.Commit().Wait();
+                        await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                        await tran.Commit();
                         Interlocked.Add(ref totalSum, i);
                         Interlocked.Increment(ref totalInsert);
                         TestContext.Out.WriteLine("Done inserting {0}", i);
                     }
                 }
-            };
+            }
 
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < workerCount; i++)

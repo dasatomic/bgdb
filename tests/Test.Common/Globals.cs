@@ -26,6 +26,6 @@ namespace Test.Common
 
         public static ITransaction DummyTran = new DummyTran();
 
-        public static Instrumentation.Logger TestFileLogger = new Instrumentation.Logger("SharedTestFile", "mainrep");
+        public static Instrumentation.Logger TestFileLogger = new Instrumentation.Logger("SharedTestFile", "mainrep", Instrumentation.LogLevel.Debug);
     }
 }

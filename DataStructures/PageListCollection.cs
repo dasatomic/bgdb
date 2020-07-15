@@ -21,6 +21,7 @@ namespace DataStructures
         private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;
         private ColumnType[] columnTypes;
+        private ulong lastPageId;
 
         public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, ITransaction tran)
         {
@@ -32,6 +33,7 @@ namespace DataStructures
             this.collectionRootPageId = pageAllocator.AllocateMixedPage(columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result.PageId();
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
+            this.lastPageId = this.collectionRootPageId;
         }
 
         public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, ulong initialPageId)
@@ -44,6 +46,7 @@ namespace DataStructures
             this.collectionRootPageId = initialPageId;
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
+            this.lastPageId = this.collectionRootPageId;
         }
 
         public async Task<ulong> Count(ITransaction tran)
@@ -64,7 +67,7 @@ namespace DataStructures
         public async Task Add(RowsetHolder item, ITransaction tran)
         {
             MixedPage currPage = null;
-            for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
+            for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
@@ -80,8 +83,6 @@ namespace DataStructures
 
                 if (currPage.NextPageId() != PageManagerConstants.NullPageId)
                 {
-                    // Someone already inserted next page.
-                    // Just retry the insert.
                     prevPageLck.Dispose();
                     await Add(item, tran);
                 }
@@ -89,6 +90,7 @@ namespace DataStructures
                 {
                     currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran);
                     using Releaser currPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                    this.lastPageId = currPage.PageId();
                     currPage.Merge(item, tran);
                 }
             }

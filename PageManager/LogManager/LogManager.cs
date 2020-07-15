@@ -11,6 +11,7 @@ namespace LogManager
         private BinaryWriter storage;
         private object lck = new object();
         private static long lastTransactionId = 0;
+        private List<ITransaction> transactionList = new List<ITransaction>();
 
         public LogManager(BinaryWriter storage)
         {
@@ -142,26 +143,26 @@ namespace LogManager
         public ITransaction CreateTransaction(IPageManager manager, bool isReadOnly, string name)
         {
             long tranId = Interlocked.Increment(ref lastTransactionId);
-            if (isReadOnly)
+
+            ITransaction tran = isReadOnly switch
             {
-                return new ReadonlyTransaction(manager.GetLockManager(), (ulong)tranId);
-            }
-            else
-            {
-                return new Transaction(this, manager, (ulong)tranId, name);
-            }
+                true => new ReadonlyTransaction(manager.GetLockManager(), (ulong)tranId),
+                false => new Transaction(this, manager, (ulong)tranId, name)
+            };
+
+            this.transactionList.Add(tran);
+
+            return tran;
         }
 
         public ITransaction CreateTransaction(IPageManager manager, string name)
         {
-            long tranId = Interlocked.Increment(ref lastTransactionId);
-            return new Transaction(this, manager, (ulong)tranId, name);
+            return CreateTransaction(manager, false, name);
         }
 
         public ITransaction CreateTransaction(IPageManager manager)
         {
-            long tranId = Interlocked.Increment(ref lastTransactionId);
-            return new Transaction(this, manager, (ulong)tranId, "NO_NAME");
+            return CreateTransaction(manager, false, "NO_NAME");
         }
     }
 }

@@ -98,10 +98,7 @@ namespace LockManagerTests
             secondWriter.Wait();
             Assert.IsTrue(writerProceed);
 
-            foreach (var r in rls)
-            {
-                r.Dispose();
-            }
+            rls[1].Dispose();
         }
 
         [Test, Pairwise]
