@@ -1,4 +1,5 @@
 ﻿using LockManager;
+using LockManager.LockImplementation;
 using LogManager;
 using System;
 using System.Collections.Concurrent;
@@ -139,13 +140,14 @@ namespace PageManager
                 nextPage.SetPrevPageId(page.PageId());
             }
 
+            // TODO: This global semaphore needs to be removed.
             await globalSemaphore.WaitAsync();
 
             try
             {
-                // TODO: Need to check all the locks here.
                 foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
                 {
+                    using Releaser lckReleaser = await tran.AcquireLock(pageIdToEvict, LockTypeEnum.Exclusive);
                     IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
                     await this.FlushPage(pageToEvict);
 
