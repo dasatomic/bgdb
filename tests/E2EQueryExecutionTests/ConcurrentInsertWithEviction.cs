@@ -99,9 +99,7 @@ namespace E2EQueryExecutionTests
                 string query = @"SELECT a, b, c FROM ConcurrentTableWithEviction";
                 Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
 
-                Assert.AreEqual(workerCount * rowCount, totalInsert);
-
-                Assert.AreEqual(workerCount * rowCount, result.Length);
+                Assert.AreEqual(result.Length, totalInsert);
 
                 int sum = result.Sum(r => r.IntCols[0]);
                 Assert.AreEqual(totalSum, sum);
