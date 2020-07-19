@@ -122,7 +122,6 @@ namespace PageManager
 
         public override void Persist(BinaryWriter destination)
         {
-            Debug.Assert(destination.BaseStream.Position == (long)(this.pageId * this.pageSize));
             Debug.Assert(this.PageType() == global::PageManager.PageType.MixedPage);
             Debug.Assert(this.rowCount == this.items.GetRowCount());
 
