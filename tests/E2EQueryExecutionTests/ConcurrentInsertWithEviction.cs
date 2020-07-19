@@ -19,6 +19,7 @@ namespace E2EQueryExecutionTests
     public class ConcurrentInsertWithEviction
     {
         [Test]
+        [Repeat(100)]
         public async Task ConcurrentInsertWithEvictionTest()
         {
             var lockManager = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
@@ -99,10 +100,11 @@ namespace E2EQueryExecutionTests
                 string query = @"SELECT a, b, c FROM ConcurrentTableWithEviction";
                 Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
 
-                Assert.AreEqual(result.Length, totalInsert);
+                Assert.AreEqual(result.Length, Interlocked.CompareExchange(ref totalInsert, 0, 0));
 
                 int sum = result.Sum(r => r.IntCols[0]);
-                Assert.AreEqual(totalSum, sum);
+
+                Assert.AreEqual(totalSum, Interlocked.CompareExchange(ref sum, 0, 0));
                 await tran.Commit();
             }
 
