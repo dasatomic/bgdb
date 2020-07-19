@@ -61,6 +61,7 @@ namespace PageManager
                 // Maybe list is better choice for values?
                 double val = BitConverter.ToDouble(redoContent.DataToApply);
                 this.items = this.items.Concat(new double[1] { val }).ToArray();
+                this.rowCount = (uint)this.items.Length;
             }
             else
             {
@@ -83,6 +84,7 @@ namespace PageManager
                 }
 
                 this.items = this.items.Take(this.items.Length - 1).ToArray();
+                this.rowCount = (uint)this.items.Length;
             }
             else
             {

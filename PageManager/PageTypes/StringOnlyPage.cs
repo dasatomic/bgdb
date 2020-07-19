@@ -245,6 +245,7 @@ namespace PageManager
 
                     int elemSize = br.ReadUInt16();
                     this.items = this.items.Concat(new char[][] { br.ReadChars(elemSize) }).ToArray();
+                    this.rowCount = (uint)this.items.Length;
                 }
                 else
                 {
@@ -268,6 +269,7 @@ namespace PageManager
             else if (record.GetRecordType() == LogRecordType.RowInsert)
             {
                 this.items = this.items.Take(this.items.Length - 1).ToArray();
+                this.rowCount = (uint)this.items.Length;
             }
             else
             {
@@ -316,6 +318,14 @@ namespace PageManager
         public override void Update(char[][] item, ushort position, ITransaction transaction)
         {
             throw new NotImplementedException();
+        }
+
+        private void Validate()
+        {
+            if (this.rowCount != this.items.Length)
+            {
+                throw new PageCorruptedException();
+            }
         }
     }
 }

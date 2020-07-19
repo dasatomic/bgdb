@@ -154,6 +154,7 @@ namespace PageManager
                     }
 
                     this.items.Merge(rs);
+                    this.rowCount = this.items.GetRowCount();
                 }
                 else
                 {
