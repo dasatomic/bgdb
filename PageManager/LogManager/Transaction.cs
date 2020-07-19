@@ -2,6 +2,7 @@
 using LockManager.LockImplementation;
 using PageManager;
 using PageManager.Exceptions;
+using PageManager.LogManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,9 +19,14 @@ namespace LogManager
         private readonly string name;
         private TransactionState state;
         private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
+        private List<Releaser> myLocks = new List<Releaser>();
+        private IsolationLevelEnum isolationLevel;
         private object lck = new object();
 
         public Transaction(ILogManager logManager, IPageManager pageManager, ulong transactionId, string name)
+            : this(logManager, pageManager, transactionId, name, IsolationLevelEnum.ReadCommitted) { }
+
+        public Transaction(ILogManager logManager, IPageManager pageManager, ulong transactionId, string name, IsolationLevelEnum isolationLevel)
         {
             this.transactionId = transactionId;
             this.logRecords = new List<ILogRecord>();
@@ -28,6 +34,8 @@ namespace LogManager
             this.name = name;
             this.state = TransactionState.Open;
             this.pageManager = pageManager;
+            this.isolationLevel = isolationLevel;
+
         }
 
         public void AddRecord(ILogRecord logRecord)
@@ -37,12 +45,30 @@ namespace LogManager
 
         public async Task Commit()
         {
+            if (this.state != TransactionState.Open)
+            {
+                throw new InvalidTransactionOperationException();
+            }
+
             await this.logManager.CommitTransaction(this);
             this.state = TransactionState.Committed;
+
+            this.myLocks.Reverse();
+            foreach (Releaser releaser in this.myLocks)
+            {
+                releaser.Dispose();
+            }
+
+            this.myLocks.Clear();
         }
 
         public async Task Rollback()
         {
+            if (this.state != TransactionState.Open)
+            {
+                throw new InvalidTransactionOperationException();
+            }
+
             this.logRecords.Reverse();
             foreach (ILogRecord record in this.logRecords)
             {
@@ -50,6 +76,14 @@ namespace LogManager
             }
 
             this.state = TransactionState.RollBacked;
+
+            this.myLocks.Reverse();
+            foreach (Releaser releaser in this.myLocks)
+            {
+                releaser.Dispose();
+            }
+
+            this.myLocks.Clear();
         }
 
         public ulong TranscationId() => this.transactionId;
@@ -72,6 +106,11 @@ namespace LogManager
             {
                 throw new TranHoldingLockDuringDispose();
             }
+
+            if (this.myLocks.Any())
+            {
+                throw new TranHoldingLockDuringDispose();
+            }
         }
 
         public async ValueTask DisposeAsync()
@@ -87,7 +126,7 @@ namespace LogManager
             }
         }
 
-        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        private async Task<Releaser> AcquireLockInternal(ulong pageId, LockTypeEnum lockType, bool forceCallerOwnership)
         {
             ILockManager lockManager = this.pageManager.GetLockManager();
             int lockId = lockManager.LockIdForPage(pageId);
@@ -96,7 +135,7 @@ namespace LogManager
             {
                 if (locksHeld.ContainsKey(lockId))
                 {
-                    throw new TranAlreadyHoldingLock();
+                    return new Releaser();
                 }
             }
 
@@ -107,17 +146,72 @@ namespace LogManager
                 locksHeld.Add(lockId, lockType);
             }
 
-            releaser.SetReleaseCallback(() => this.ReleaseLock(lockId));
+            releaser.SetReleaseCallback(() => this.ReleaseLockCallback(lockId));
 
-            return releaser;
+            if (forceCallerOwnership)
+            {
+                return releaser;
+            }
+
+            // TODO: Implement Isolation Level strategy.
+            if (this.isolationLevel == IsolationLevelEnum.ReadCommitted)
+            {
+                // If this is a read lock return to caller.
+                // If write transaction is the owner.
+                if (lockType == LockTypeEnum.Shared)
+                {
+                    return releaser;
+                }
+                else if (lockType == LockTypeEnum.Exclusive)
+                {
+                    this.myLocks.Add(releaser);
+                    return new Releaser();
+                }
+                else
+                {
+                    throw new InvalidProgramException();
+                }
+            }
+            else
+            {
+                throw new InvalidProgramException();
+            }
         }
 
-        private void ReleaseLock(int lockId)
+        public async Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType)
+        {
+            return await AcquireLockInternal(pageId, lockType, true);
+        }
+
+        public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
+        {
+            return await AcquireLockInternal(pageId, lockType, false);
+        }
+
+        private void ReleaseLockCallback(int lockId)
         {
             lock (lck)
             {
                 this.locksHeld.Remove(lockId);
             }
+        }
+
+        public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType)
+        {
+            ILockManager lockManager = this.pageManager.GetLockManager();
+            int lockId = lockManager.LockIdForPage(pageId);
+
+            lock (lck)
+            {
+                if (locksHeld.TryGetValue(lockId, out LockTypeEnum myLock))
+                {
+                    lockType = myLock;
+                    return true;
+                }
+            }
+
+            lockType = LockTypeEnum.Shared;
+            return false;
         }
 
         public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
@@ -138,6 +232,11 @@ namespace LogManager
                     throw new TranNotHoldingLock();
                 }
             }
+        }
+
+        public IEnumerable<ulong> LockedPages()
+        {
+            throw new NotImplementedException();
         }
     }
 }

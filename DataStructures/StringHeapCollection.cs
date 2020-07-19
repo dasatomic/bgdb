@@ -36,12 +36,20 @@ namespace DataStructures
             uint offset;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+                using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await allocator.GetPageStr(currPageId, tran);
                 if (currPage.CanFit(item))
                 {
-                    offset = currPage.MergeWithOffsetFetch(item, tran);
-                    return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+                    lckReleaser.Dispose();
+
+                    using Releaser writeLock = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+
+                    // Need to check can fit one more time.
+                    if (currPage.CanFit(item))
+                    {
+                        offset = currPage.MergeWithOffsetFetch(item, tran);
+                        return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
+                    }
                 }
             }
 

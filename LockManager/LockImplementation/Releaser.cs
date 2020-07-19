@@ -10,6 +10,7 @@ namespace LockManager.LockImplementation
         private readonly ulong ownerId;
         private Action releaseCallback;
         private readonly DateTime lockAcquisitionStart;
+        private bool isDisposed;
 
         internal Releaser(AsyncReadWriterLock toRelease, bool writer, int lockId, ulong ownerId)
         {
@@ -19,6 +20,7 @@ namespace LockManager.LockImplementation
             this.ownerId = ownerId;
             this.releaseCallback = null;
             this.lockAcquisitionStart = DateTime.UtcNow;
+            this.isDisposed = false;
         }
 
         internal bool IsWriter() => writer;
@@ -32,23 +34,25 @@ namespace LockManager.LockImplementation
 
         public void Dispose()
         {
-            if (releaseCallback != null)
+            if (!isDisposed)
             {
-                releaseCallback();
-            }
+                releaseCallback?.Invoke();
 
-            if (toRelease != null)
-            {
-                TimeSpan duration = DateTime.UtcNow - lockAcquisitionStart;
+                if (toRelease != null)
+                {
+                    TimeSpan duration = DateTime.UtcNow - lockAcquisitionStart;
 
-                if (writer)
-                {
-                    toRelease.WriterRelease(this.ownerId, duration);
+                    if (writer)
+                    {
+                        toRelease.WriterRelease(this.ownerId, duration);
+                    }
+                    else
+                    {
+                        toRelease.ReaderRelease(this.ownerId, duration);
+                    }
                 }
-                else
-                {
-                    toRelease.ReaderRelease(this.ownerId, duration);
-                }
+
+                isDisposed = true;
             }
         }
     }

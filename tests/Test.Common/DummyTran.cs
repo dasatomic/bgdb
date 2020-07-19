@@ -14,8 +14,19 @@ namespace Test.Common
             return new Releaser();
         }
 
+        public async Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType)
+        {
+            return new Releaser();
+        }
+
         public void AddRecord(ILogRecord logRecord)
         {
+        }
+
+        public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType)
+        {
+            lockType = LockTypeEnum.Exclusive;
+            return false;
         }
 
         public Task Commit()

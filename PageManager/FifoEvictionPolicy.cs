@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using PageManager.Exceptions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PageManager
 {
@@ -18,7 +20,9 @@ namespace PageManager
 
         public ulong InMemoryPageCountLimit() => this.pageCountLimit;
 
-        public IEnumerable<ulong> RecordUsageAndEvict(ulong pageId)
+        public IEnumerable<ulong> RecordUsageAndEvict(ulong pageId) => this.RecordUsageAndEvict(pageId, Enumerable.Empty<ulong>());
+
+        public IEnumerable<ulong> RecordUsageAndEvict(ulong pageId, IEnumerable<ulong> pagesToAvoid)
         {
             lock (lck)
             {
@@ -37,10 +41,27 @@ namespace PageManager
                 List<ulong> pagesToRemove = new List<ulong>();
                 if (pages.Count > (int)pageCountLimit)
                 {
-                    for (int i = 0; i < evictCountOnReachingLimit; i++)
+                    if (pages.Count - pagesToAvoid.Count() < this.evictCountOnReachingLimit)
                     {
-                        pagesToRemove.Add(pages.Last.Value);
-                        pages.RemoveLast();
+                        throw new OutOfBufferPoolSpaceException();
+                    }
+
+                    int i = 0;
+                    LinkedListNode<ulong> lastUsedPage = pages.Last;
+                    while (i < evictCountOnReachingLimit)
+                    {
+                        if (pagesToAvoid.Contains(lastUsedPage.Value))
+                        {
+                            lastUsedPage = lastUsedPage.Previous;
+                        }
+                        else
+                        {
+                            pagesToRemove.Add(lastUsedPage.Value);
+                            LinkedListNode<ulong> tmpToRemove = lastUsedPage;
+                            lastUsedPage = lastUsedPage.Previous;
+                            pages.Remove(tmpToRemove);
+                            i++;
+                        }
                     }
                 }
 

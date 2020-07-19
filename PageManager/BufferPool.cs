@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PageManager
@@ -14,16 +16,20 @@ namespace PageManager
 
     public class BufferPool : IBufferPool
     {
-        private Dictionary<ulong, IPage> pageCollection = new Dictionary<ulong, IPage>();
+        private ConcurrentDictionary<ulong, IPage> pageCollection = new ConcurrentDictionary<ulong, IPage>();
 
         public void AddPage(IPage page)
         {
-            pageCollection.Add(page.PageId(), page);
+            // TODO: For now even failure to add is fine.
+            // It is possible that during fetch two concurrent readers try to fetch the same page
+            // and both of them will try to update the BP.
+            // It is Ok if only one of the succeeds.
+            pageCollection.TryAdd(page.PageId(), page);
         }
 
         public void EvictPage(ulong id)
         {
-            pageCollection.Remove(id);
+            pageCollection.Remove(id, out IPage _);
         }
 
         public IEnumerable<IPage> GetAllDirtyPages()

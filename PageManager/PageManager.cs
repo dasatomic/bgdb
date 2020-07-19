@@ -1,10 +1,12 @@
 ﻿using LockManager;
 using LockManager.LockImplementation;
 using LogManager;
+using PageManager.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,7 +24,6 @@ namespace PageManager
         private const int AllocationMapPageId = 1;
         private readonly List<IntegerOnlyPage> AllocatationMapPages;
         private readonly ILockManager lockManager;
-        private SemaphoreSlim globalSemaphore = new SemaphoreSlim(1, 1);
         private InstrumentationInterface logger = null;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
@@ -96,6 +97,7 @@ namespace PageManager
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
         {
+            logger.LogDebug($"Allocating new page {pageId}");
             IPage page;
 
             if (this.pageIds.Contains(pageId))
@@ -125,6 +127,7 @@ namespace PageManager
                     throw new ArgumentException("Breaking the link");
                 }
 
+                // TODO: Set next page id needs to be logged as well...
                 prevPage.SetNextPageId(page.PageId());
             }
 
@@ -140,35 +143,54 @@ namespace PageManager
                 nextPage.SetPrevPageId(page.PageId());
             }
 
-            // TODO: This global semaphore needs to be removed.
-            await globalSemaphore.WaitAsync();
+            await RecordUsageAndEvict(page.PageId(), tran);
 
-            try
-            {
-                foreach (ulong pageIdToEvict in pageEvictionPolicy.RecordUsageAndEvict(page.PageId()))
-                {
-                    using Releaser lckReleaser = await tran.AcquireLock(pageIdToEvict, LockTypeEnum.Exclusive);
-                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                    await this.FlushPage(pageToEvict);
+            bufferPool.AddPage(page);
 
-                    bufferPool.EvictPage(pageToEvict.PageId());
-                }
-
-                bufferPool.AddPage(page);
-
-                AddToAllocationMap(page);
-
-            }
-            finally
-            {
-                globalSemaphore.Release();
-            }
+            AddToAllocationMap(page);
 
             return page;
         }
 
+        private async Task RecordUsageAndEvict(ulong pageId, ITransaction tran)
+        {
+            ulong[] pageIdsToEvict = pageEvictionPolicy.RecordUsageAndEvict(pageId).ToArray();
+
+            foreach (ulong pageIdToEvict in pageIdsToEvict)
+            {
+                if (tran.AmIHoldingALock(pageIdToEvict, out LockTypeEnum heldLockType))
+                {
+                    continue;
+
+                    // It is not right to continue here.
+                    /*
+                    await tran.Rollback();
+
+                    throw new TransactionRollbackException();
+                    */
+                }
+
+                using Releaser lckReleaser = await tran.AcquireLockWithCallerOwnership(pageIdToEvict, LockTypeEnum.Exclusive);
+                logger.LogDebug($"Evicting page {pageIdToEvict}");
+                IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
+
+                // Somebody came before us and evicted the page.
+                if (pageToEvict == null)
+                {
+                    continue;
+                }
+
+                await this.FlushPage(pageToEvict);
+
+                bufferPool.EvictPage(pageToEvict.PageId());
+
+                // TODO: I need some logging that now page is clean.
+            }
+        }
+
         private void AddToAllocationMap(IPage page)
         {
+            // TODO: This needs to be revisited.
             IntegerOnlyPage AMPage = this.AllocatationMapPages.Last();
             uint maxFit = AMPage.MaxRowCount() * sizeof(int) * 8;
             uint allocationMapPage = (uint)(page.PageId() / maxFit);
@@ -206,6 +228,7 @@ namespace PageManager
 
         public async Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes)
         {
+            logger.LogDebug($"Fetching page {pageId}");
             tran.VerifyLock(pageId, LockTypeEnum.Shared);
 
             if (!this.pageIds.Contains(pageId))
@@ -213,30 +236,22 @@ namespace PageManager
                 throw new PageNotFoundException();
             }
 
-            await this.globalSemaphore.WaitAsync();
-            IPage page = null;
+            IPage page = this.bufferPool.GetPage(pageId);
 
-            try
+            if (page == null)
             {
-                page = this.bufferPool.GetPage(pageId);
+                // It is not sufficient to have shared lock here...
 
-                if (page == null)
-                {
-                    page = await this.FetchPage(pageId, pageType, columnTypes);
-                    this.bufferPool.AddPage(page);
-                }
-
-                foreach (ulong pageIdToEvict in this.pageEvictionPolicy.RecordUsageAndEvict(pageId))
-                {
-                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-                    await this.FlushPage(pageToEvict);
-                    this.bufferPool.EvictPage(pageIdToEvict);
-                }
+                logger.LogDebug($"Page {pageId} not present in buffer pool. Reading from disk.");
+                page = await this.FetchPage(pageId, pageType, columnTypes);
+                this.bufferPool.AddPage(page);
             }
-            finally
+            else
             {
-                this.globalSemaphore.Release();
+                logger.LogDebug($"Page {pageId} present in buffer pool.");
             }
+
+            await RecordUsageAndEvict(pageId, tran);
 
 
             return page;

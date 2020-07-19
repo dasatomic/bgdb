@@ -55,7 +55,7 @@ namespace DataStructures
 
             IPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
-            {
+           {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
                 rowCount += currPage.RowCount();
@@ -69,12 +69,20 @@ namespace DataStructures
             MixedPage currPage = null;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
                 if (currPage.CanFit(item, tran))
                 {
-                    currPage.Merge(item, tran);
-                    return;
+                    lck.Dispose();
+
+                    using Releaser writeLock = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+
+                    // Need to check can fit one more time.
+                    if (currPage.CanFit(item, tran))
+                    {
+                        currPage.Merge(item, tran);
+                        return;
+                    }
                 }
             }
 
@@ -83,6 +91,8 @@ namespace DataStructures
 
                 if (currPage.NextPageId() != PageManagerConstants.NullPageId)
                 {
+                    // TODO: it would be good if caller had ability to control this lock.
+                    // This dispose doesn't mean anything in current implementation of read committed.
                     prevPageLck.Dispose();
                     await Add(item, tran);
                 }

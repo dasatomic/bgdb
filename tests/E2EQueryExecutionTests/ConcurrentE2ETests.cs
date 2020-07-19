@@ -3,6 +3,7 @@ using LockManager;
 using LogManager;
 using NUnit.Framework;
 using PageManager;
+using PageManager.Exceptions;
 using QueryProcessing;
 using System;
 using System.Collections.Generic;
@@ -72,23 +73,23 @@ namespace E2EQueryExecutionTests
                 await tran.Commit();
             }
 
-            const int rowCount = 100;
+            const int rowCount = 10;
             const int workerCount = 100;
             int totalSum = 0;
             int totalInsert = 0;
 
             async Task insertAction()
             {
-                using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
-                {
                     for (int i = 1; i <= rowCount; i++)
                     {
-                        string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
-                        await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
-                        await tran.Commit();
-                        Interlocked.Add(ref totalSum, i);
-                        Interlocked.Increment(ref totalInsert);
-                    }
+                        using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+                        {
+                            string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
+                            await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                            await tran.Commit();
+                            Interlocked.Add(ref totalSum, i);
+                            Interlocked.Increment(ref totalInsert);
+                        }
                 }
             }
 
@@ -134,30 +135,45 @@ namespace E2EQueryExecutionTests
             int totalSum = 0;
             int totalInsert = 0;
 
+            // TODO: Rollback shouldn't really happen in this case.
             async Task insertAction()
             {
-                using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT_ROWS"))
+                for (int i = 1; i <= rowCount; i++)
                 {
-                    for (int i = 1; i <= rowCount; i++)
+                    bool success = false;
+                    while (!success)
                     {
-                        string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
-                        await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
-                        await tran.Commit();
-                        Interlocked.Add(ref totalSum, i);
-                        Interlocked.Increment(ref totalInsert);
+                        using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT_ROWS"))
+                        {
+                            try
+                            {
+                                string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
+                                await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                                await tran.Commit();
+                                Interlocked.Add(ref totalSum, i);
+                                Interlocked.Increment(ref totalInsert);
+                                success = true;
+                            }
+                            catch (DeadlockException)
+                            {
+                            }
+                        }
                     }
                 }
             }
 
             async Task selectAction()
             {
-                using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+                using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "GET_ROWS"))
                 {
-                    for (int i = 1; i <= rowCount; i++)
+                    try
                     {
                         string selectQuery = @"SELECT a, b, c FROM ConcurrentTable";
                         Row[] result = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
-                        await tran.Commit();
+                    }
+                    catch (DeadlockException)
+                    {
+
                     }
                 }
             }

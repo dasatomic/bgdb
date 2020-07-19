@@ -79,7 +79,7 @@ namespace LogManager
 
         public async Task Undo(IPageManager pageManager, ITransaction tran)
         {
-            using Releaser lck = await tran.AcquireLock(this.PageId, LockManager.LockTypeEnum.Exclusive);
+            tran.VerifyLock(this.PageId, LockManager.LockTypeEnum.Exclusive);
             IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
             page.UndoLog(this, tran);
         }

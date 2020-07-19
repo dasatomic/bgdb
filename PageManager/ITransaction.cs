@@ -22,6 +22,8 @@ namespace PageManager
         IEnumerable<ILogRecord> GetRecords();
         TransactionState GetTransactionState();
         Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType);
+        Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType);
         void VerifyLock(ulong pageId, LockTypeEnum expectedLock);
+        public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType);
     }
 }

@@ -22,11 +22,16 @@ namespace LogManager
             this.transactionId = transactionId;
         }
 
+        public async Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType)
+        {
+            return await AcquireLock(pageId, lockType);
+        }
+
         public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
         {
             int lockId = lockManager.LockIdForPage(pageId);
 
-            if (lockType != LockTypeEnum.Exclusive)
+            if (lockType != LockTypeEnum.Shared)
             {
                 throw new ArgumentException("Can't request EX lock in readonly tran.");
             }
@@ -41,7 +46,7 @@ namespace LogManager
                 }
             }
 
-            var releaser = await lockManager.AcquireLock(lockType, pageId, 0);
+            var releaser = await lockManager.AcquireLock(lockType, pageId, this.transactionId);
 
             lock (lck)
             {
@@ -94,7 +99,7 @@ namespace LogManager
             throw new InvalidTransactionOperationException();
         }
 
-        public ulong TranscationId() => 0;
+        public ulong TranscationId() => this.transactionId;
 
         public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
         {
@@ -109,6 +114,15 @@ namespace LogManager
                 {
                     throw new TranNotHoldingLock();
                 }
+            }
+        }
+
+        public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType)
+        {
+            lock (lck)
+            {
+                lockType = LockTypeEnum.Shared;
+                return this.locksHeld.ContainsKey(this.lockManager.LockIdForPage(pageId));
             }
         }
     }

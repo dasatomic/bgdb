@@ -3,7 +3,6 @@ using LockManager;
 using LogManager;
 using MetadataManager;
 using NUnit.Framework;
-using NUnit.Framework.Internal.Commands;
 using PageManager;
 using QueryProcessing;
 using System.Collections.Generic;
@@ -175,44 +174,6 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
-        public async Task E2EBufferPoolExceed()
-        {
-            BufferPool bp = new BufferPool();
-
-            IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(3, 1);
-            ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
-            var stream = new PersistedStream(1024 * 1024, "bufferpoolexceed.data", createNew: true);
-            this.pageManager =  new PageManager.PageManager(4096, restrictiveEviction, stream, bp, lm, TestGlobals.TestFileLogger);
-
-            const int rowInsert = 5000;
-
-            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
-            {
-                string createTableQuery = "CREATE TABLE LargeTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
-                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
-                await tran.Commit();
-            }
-
-            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
-            {
-                for (int i = 0; i < rowInsert; i++)
-                {
-                    string insertQuery = $"INSERT INTO LargeTable VALUES ({i}, {i}.1, mystring{i})";
-                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
-                }
-
-                await tran.Commit();
-            }
-
-            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "SELECT"))
-            {
-                string query = @"SELECT a, b, c FROM LargeTable";
-                Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
-
-                Assert.AreEqual(rowInsert, result.Length);
-            }
-        }
-        [Test]
         public void InsertInvalidName()
         {
             Assert.ThrowsAsync<KeyNotFoundException>(async () =>
@@ -238,6 +199,66 @@ namespace E2EQueryExecutionTests
                     await tran.Commit();
                 }
             });
+        }
+    }
+
+    public class E2EBufferPoolLimits
+    {
+        [Test]
+        public async Task E2EBufferPoolExceed()
+        {
+            BufferPool bp = new BufferPool();
+
+            IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(6, 1);
+            ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
+            var stream = new PersistedStream(1024 * 1024, "bufferpoolexceed.data", createNew: true);
+            var pageManager = new PageManager.PageManager(4096, restrictiveEviction, stream, bp, lm, TestGlobals.TestFileLogger);
+
+            var logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            StringHeapCollection stringHeap = null;
+
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "SETUP"))
+            {
+                stringHeap = new StringHeapCollection(pageManager, tran);
+                await tran.Commit();
+            }
+
+            var metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, pageManager);
+
+            var queryEntryGate = new QueryEntryGate(
+                statementHandlers: new ISqlStatement[]
+                {
+                    new CreateTableStatement(metadataManager),
+                    new InsertIntoTableStatement(treeBuilder),
+                    new SelectStatement(treeBuilder),
+                });
+            const int rowInsert = 1000;
+
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE LargeTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            for (int i = 0; i < rowInsert; i++)
+            {
+                await using (ITransaction tran = logManager.CreateTransaction(pageManager, "INSERT"))
+                {
+                    string insertQuery = $"INSERT INTO LargeTable VALUES ({i}, {i}.1, mystring{i})";
+                    await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                    await tran.Commit();
+                }
+            }
+
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "SELECT"))
+            {
+                string query = @"SELECT a, b, c FROM LargeTable";
+                Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
+
+                Assert.AreEqual(rowInsert, result.Length);
+            }
         }
     }
 }

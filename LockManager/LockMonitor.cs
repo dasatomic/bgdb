@@ -9,26 +9,27 @@ namespace LockManager
 {
     public class LockMonitor : ILockMonitor
     {
-        private Dictionary<ulong, Dictionary<int, LockTypeEnum>> lockMonitorRecords = new Dictionary<ulong, Dictionary<int, LockTypeEnum>>();
+        private Dictionary<ulong, Dictionary<int, (LockTypeEnum, ulong)>> lockMonitorRecords = new Dictionary<ulong, Dictionary<int, (LockTypeEnum, ulong)>>();
         private object lck = new object();
 
         // TODO: This should be a ring buffer.
         private List<LockStatsRecord> lockStats = new List<LockStatsRecord>();
+        private ulong timestampId;
 
         public void AddRecord(LockMonitorRecord record)
         {
             lock (lck)
             {
-                if (lockMonitorRecords.TryGetValue(record.ownerId, out Dictionary<int, LockTypeEnum> subdictionary))
+                if (lockMonitorRecords.TryGetValue(record.ownerId, out Dictionary<int, (LockTypeEnum, ulong)> subdictionary))
                 {
                     CheckRecursiveLock(record.ownerId, record.lockId, record.lockType);
                     VerifyDeadlock(record.ownerId, record.lockId, record.lockType);
-                    subdictionary.Add(record.lockId, record.lockType);
+                    subdictionary.Add(record.lockId, (record.lockType, timestampId++));
                 }
                 else
                 {
-                    Dictionary<int, LockTypeEnum> newSubDictionary = new Dictionary<int, LockTypeEnum>();
-                    newSubDictionary.Add(record.lockId, record.lockType);
+                    var newSubDictionary = new Dictionary<int, (LockTypeEnum, ulong)>();
+                    newSubDictionary.Add(record.lockId, (record.lockType, timestampId++));
                     lockMonitorRecords.Add(record.ownerId, newSubDictionary);
                 }
             }
@@ -42,20 +43,9 @@ namespace LockManager
             }
         }
 
-        private IEnumerable<int> GetLocksOfTypeForOwner(ulong ownerId, LockTypeEnum lockType)
-        {
-            foreach (KeyValuePair<int, LockTypeEnum> locks in this.lockMonitorRecords[ownerId])
-            {
-                if (locks.Value == lockType)
-                {
-                    yield return locks.Key;
-                }
-            }
-        }
-
         protected void CheckRecursiveLock(ulong ownerId, int lockId, LockTypeEnum lockType)
         {
-            this.lockMonitorRecords.TryGetValue(ownerId, out Dictionary<int, LockTypeEnum> myLocks);
+            this.lockMonitorRecords.TryGetValue(ownerId, out Dictionary<int, (LockTypeEnum, ulong)> myLocks);
 
             if (myLocks != null)
             {
@@ -68,17 +58,13 @@ namespace LockManager
 
         protected void VerifyDeadlock(ulong ownerId, int lockId, LockTypeEnum lockType)
         {
-            if (lockType == LockTypeEnum.Shared)
-            {
-                // Don't do deadlock detection for shared for now.
-                return;
-            }
-
             lock (lck)
             {
-                foreach (KeyValuePair<ulong, Dictionary<int, LockTypeEnum>> ownersLocks in this.lockMonitorRecords)
+                Dictionary<int, (LockTypeEnum, ulong)> requesterLocks = this.lockMonitorRecords[ownerId];
+
+                foreach (KeyValuePair<ulong, Dictionary<int, (LockTypeEnum, ulong)>> ownersLocks in this.lockMonitorRecords)
                 {
-                    if (ownersLocks.Value.TryGetValue(lockId, out LockTypeEnum holderLockType))
+                    if (ownersLocks.Value.TryGetValue(lockId, out (LockTypeEnum holderLockType, ulong holderTimestamp) holder))
                     {
                         // this lock is already taken. Need to check for deadlocks
                         if (ownersLocks.Key == ownerId)
@@ -86,17 +72,46 @@ namespace LockManager
                             throw new InvalidProgramException("No support for nested locks");
                         }
 
-                        if (holderLockType == LockTypeEnum.Shared)
+                        // Check if locks are compatible.
+                        if (lockType == LockTypeEnum.Shared && holder.holderLockType == LockTypeEnum.Shared)
                         {
+                            // Both can proceed. This is fine.
                             continue;
                         }
 
-                        // Check intersection.
-                        IEnumerable<int> requesterLocks = GetLocksOfTypeForOwner(ownerId, LockTypeEnum.Exclusive);
-                        IEnumerable<int> ownerLocks = GetLocksOfTypeForOwner(ownersLocks.Key, LockTypeEnum.Exclusive);
+                        // check if this guy depends on any locks that I am holding.
 
-                        if (requesterLocks.Intersect(ownerLocks).Any())
+                        // Check intersection.
+                        Dictionary<int, (LockTypeEnum, ulong)> ownerLocks = this.lockMonitorRecords[ownersLocks.Key];
+
+                        foreach (int intersectionLockId in requesterLocks.Keys.Intersect(ownerLocks.Keys))
                         {
+                            if (requesterLocks[intersectionLockId].Item1 == LockTypeEnum.Shared && ownerLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
+                            {
+                                // Again, we are not mutually blocking.
+                                continue;
+                            }
+
+                            // TODO: Need to check timestamps here as well...
+
+                            // This must be RW combination.
+
+                            /*
+                            if (lockType == LockTypeEnum.Shared && requesterLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
+                            {
+                                continue;
+                            }
+
+                            if (holder.holderLockType == LockTypeEnum.Shared && ownerLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
+                            {
+                                continue;
+                            }
+                            */
+
+                            // TODO: Even timestamp is not enough...
+                            // Lock itself needs to build a graph...
+
+                            // This is a deadlock.
                             throw new DeadlockException(ownerId, ownersLocks.Key, lockId);
                         }
                     }
@@ -108,7 +123,7 @@ namespace LockManager
         {
             lock (lck)
             {
-                return this.lockMonitorRecords[ownerId].Select(kv => (kv.Key, kv.Value)).ToArray();
+                return this.lockMonitorRecords[ownerId].Select(kv => (kv.Key, kv.Value.Item1)).ToArray();
             }
         }
 

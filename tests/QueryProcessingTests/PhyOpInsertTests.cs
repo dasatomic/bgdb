@@ -43,7 +43,6 @@ namespace QueryProcessingTests
             await using ITransaction tranInsert = logManager.CreateTransaction(allocator);
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tranInsert);
             await op.Invoke();
-            await tran.Commit();
         }
     }
 }

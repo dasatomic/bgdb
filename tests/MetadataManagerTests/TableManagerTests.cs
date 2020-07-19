@@ -68,7 +68,7 @@ namespace MetadataManagerTests
             var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
-            const int repCount = 100;
+            const int repCount = 10;
 
             for (int i = 1; i < repCount; i++)
             {
