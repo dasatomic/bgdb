@@ -19,7 +19,7 @@ namespace E2EQueryExecutionTests
     public class ConcurrentInsertWithEviction
     {
         [Test]
-        [Repeat(100)]
+        // [Repeat(100)]
         public async Task ConcurrentInsertWithEvictionTest()
         {
             var lockManager = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
