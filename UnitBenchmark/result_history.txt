@@ -1,0 +1,18 @@
+7/23/2020
+
+|          Method | RowsInTableNumber |          Mean |         Error |      StdDev |
+|---------------- |------------------ |--------------:|--------------:|------------:|
+| InsertIntoTable |                10 |      2.368 ms |     0.0447 ms |   0.0418 ms |
+| InsertIntoTable |               100 |     12.622 ms |     0.1896 ms |   0.1773 ms |
+| InsertIntoTable |              1000 |    201.822 ms |     3.8499 ms |   7.5089 ms |
+| InsertIntoTable |             10000 | 73,970.690 ms | 1,001.8836 ms | 888.1437 ms |
+
+7/23/2020
+Buffer pool extension
+
+|          Method | RowsInTableNumber |        Mean |     Error |    StdDev |      Median |
+|---------------- |------------------ |------------:|----------:|----------:|------------:|
+| InsertIntoTable |              1000 |    218.3 ms |   5.90 ms |  17.39 ms |    213.6 ms |
+| InsertIntoTable |             10000 | 36,676.1 ms | 684.90 ms | 640.66 ms | 36,828.1 ms |
+
+This is X2 speed up.
