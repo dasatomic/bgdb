@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +15,7 @@ namespace PageManager
     {
         private ConcurrentBag<ulong> pageIds = new ConcurrentBag<ulong>();
         private uint pageSize;
-        private ulong lastUsedPageId = 2;
+        private long lastUsedPageId = 2;
         private readonly IPageEvictionPolicy pageEvictionPolicy;
         private readonly IPersistedStream persistedStream;
         private readonly IBufferPool bufferPool;
@@ -87,7 +86,8 @@ namespace PageManager
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
-            return await AllocatePage(pageType, columnTypes, prevPageId, nextPageId, lastUsedPageId++, tran);
+            long newPageId = Interlocked.Increment(ref lastUsedPageId);
+            return await AllocatePage(pageType, columnTypes, prevPageId, nextPageId, (ulong)newPageId++, tran);
         }
 
         public async Task<IPage> AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran)
@@ -252,7 +252,6 @@ namespace PageManager
             }
 
             await RecordUsageAndEvict(pageId, tran);
-
 
             return page;
         }
