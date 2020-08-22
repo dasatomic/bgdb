@@ -53,7 +53,7 @@ namespace PageManagerTests
                 tasks.Add(generatePagesAction());
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         [Test]
@@ -68,7 +68,7 @@ namespace PageManagerTests
 
             long maxPageId = 0;
 
-            const int workerCount = 100;
+            const int workerCount = 10;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
@@ -80,7 +80,7 @@ namespace PageManagerTests
                     {
                         try
                         {
-                            var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
+                            var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran).ConfigureAwait(false);
                             await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive).ConfigureAwait(false);
                             RowsetHolder holder = new RowsetHolder(types);
                             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
@@ -120,7 +120,7 @@ namespace PageManagerTests
                             { }
                         }
 
-                        await tran.Commit();
+                        await tran.Commit().ConfigureAwait(false);
                     }
                 }
             }
@@ -132,7 +132,7 @@ namespace PageManagerTests
                 tasks.Add(readRandomPages());
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
     }
 }
