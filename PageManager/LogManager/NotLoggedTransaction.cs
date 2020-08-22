@@ -13,12 +13,12 @@ namespace LogManager
         public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
         {
             // TODO: Even not logged tran needs to go through locks..
-            return new Releaser();
+            return await Task.FromResult(new Releaser());
         }
 
         public async Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType)
         {
-            return new Releaser();
+            return await Task.FromResult(new Releaser());
         }
 
         public void AddRecord(ILogRecord logRecord)
