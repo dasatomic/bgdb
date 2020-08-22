@@ -50,8 +50,8 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = logManager.CreateTransaction(pageManager))
             {
                 string createTableQuery = "CREATE TABLE ConcurrentTableWithEviction (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
-                await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
-                await tran.Commit();
+                await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync().ConfigureAwait(false);
+                await tran.Commit().ConfigureAwait(false);
             }
 
             const int rowCount = 10;
@@ -68,19 +68,19 @@ namespace E2EQueryExecutionTests
                         try
                         {
                             string insertQuery = $"INSERT INTO ConcurrentTableWithEviction VALUES ({i}, {i + 0.001}, mystring)";
-                            await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
-                            await tran.Commit();
+                            await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync().ConfigureAwait(false);
+                            await tran.Commit().ConfigureAwait(false);
                             Interlocked.Add(ref totalSum, i);
                             Interlocked.Increment(ref totalInsert);
                         }
                         catch (TransactionRollbackException)
                         {
-                            await tran.Rollback();
+                            await tran.Rollback().ConfigureAwait(false);
                             TestContext.Out.Write("Transaction rollback exception");
                         }
                         catch (DeadlockException)
                         {
-                            await tran.Rollback();
+                            await tran.Rollback().ConfigureAwait(false);
                             TestContext.Out.Write("Transaction deadlock exception");
                         }
                     }
@@ -93,19 +93,19 @@ namespace E2EQueryExecutionTests
                 tasks.Add(insertAction());
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTableWithEviction";
-                Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync().ConfigureAwait(false);
 
                 Assert.AreEqual(result.Length, Interlocked.CompareExchange(ref totalInsert, 0, 0));
 
                 int sum = result.Sum(r => r.IntCols[0]);
 
                 Assert.AreEqual(totalSum, Interlocked.CompareExchange(ref sum, 0, 0));
-                await tran.Commit();
+                await tran.Commit().ConfigureAwait(false);
             }
 
             LockStats lockStats = lockManager.GetLockStats();
