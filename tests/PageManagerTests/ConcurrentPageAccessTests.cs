@@ -21,13 +21,13 @@ namespace PageManagerTests
         [Repeat(10)]
         public async Task ConcurrentWriteTests()
         {
-            PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true);
+            PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             using var pm =  new PageManager.PageManager(DefaultSize, new FifoEvictionPolicy(1, 1), persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
-            const int workerCount = 100;
+            const int workerCount = 10;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
@@ -57,10 +57,10 @@ namespace PageManagerTests
         }
 
         [Test]
-        [Repeat(1)]
+        [Repeat(10)]
         public async Task ConcurrentReadAndWriteTests()
         {
-            PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true);
+            PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
@@ -68,7 +68,7 @@ namespace PageManagerTests
 
             long maxPageId = 0;
 
-            const int workerCount = 100;
+            const int workerCount = 10;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
@@ -78,13 +78,18 @@ namespace PageManagerTests
                 {
                     using (ITransaction tran = lgm.CreateTransaction(pm))
                     {
-                        var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
-                        await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive);
-                        RowsetHolder holder = new RowsetHolder(types);
-                        holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-                        mp.Merge(holder, tran);
-                        await tran.Commit();
-                        Interlocked.Exchange(ref maxPageId, (long)mp.PageId());
+                        try
+                        {
+                            var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
+                            await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive).ConfigureAwait(false);
+                            RowsetHolder holder = new RowsetHolder(types);
+                            holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
+                            mp.Merge(holder, tran);
+                            await tran.Commit();
+                            Interlocked.Exchange(ref maxPageId, (long)mp.PageId());
+                        }
+                        catch (DeadlockException)
+                        { }
                     }
                 }
             }
@@ -97,17 +102,22 @@ namespace PageManagerTests
                     {
                         long currMaxPageId = Interlocked.Read(ref maxPageId);
 
-                        if (maxPageId < 2)
+                        if (maxPageId < 3)
                         {
                             continue;
                         }
 
                         Random rnd = new Random();
-                        ulong pageToRead = (ulong)rnd.Next(2, (int)currMaxPageId);
+                        ulong pageToRead = (ulong)rnd.Next(3, (int)currMaxPageId);
 
-                        using (var _ = await tran.AcquireLock(pageToRead, LockTypeEnum.Shared))
+                        using (var _ = await tran.AcquireLock(pageToRead, LockTypeEnum.Shared).ConfigureAwait(false))
                         {
-                            await pm.GetMixedPage(pageToRead, tran, types);
+                            try
+                            {
+                                await pm.GetMixedPage(pageToRead, tran, types);
+                            }
+                            catch (DeadlockException)
+                            { }
                         }
 
                         await tran.Commit();

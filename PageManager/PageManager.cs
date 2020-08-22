@@ -105,6 +105,8 @@ namespace PageManager
                 throw new PageCorruptedException();
             }
 
+            using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive);
+
             page = pageType switch
             {
                 PageType.IntPage => new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
@@ -160,31 +162,28 @@ namespace PageManager
             {
                 if (tran.AmIHoldingALock(pageIdToEvict, out LockTypeEnum heldLockType))
                 {
+                    // If this page is needed for myself don't release the lock.
+                    // Just ignore for now.
                     continue;
-
-                    // It is not right to continue here.
-                    /*
-                    await tran.Rollback();
-
-                    throw new TransactionRollbackException();
-                    */
                 }
 
-                using Releaser lckReleaser = await tran.AcquireLockWithCallerOwnership(pageIdToEvict, LockTypeEnum.Exclusive);
-                logger.LogDebug($"Evicting page {pageIdToEvict}");
-                IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
-
-                // Somebody came before us and evicted the page.
-                if (pageToEvict == null)
+                using (Releaser lckReleaser = await tran.AcquireLockWithCallerOwnership(pageIdToEvict, LockTypeEnum.Exclusive))
                 {
-                    continue;
+                    logger.LogDebug($"Evicting page {pageIdToEvict}");
+                    IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
+
+                    // Somebody came before us and evicted the page.
+                    if (pageToEvict == null)
+                    {
+                        continue;
+                    }
+
+                    await this.FlushPage(pageToEvict);
+
+                    bufferPool.EvictPage(pageToEvict.PageId());
+
+                    logger.LogDebug($"Page {pageIdToEvict} evicted from buffer pool and flushed to the disk.");
                 }
-
-                await this.FlushPage(pageToEvict);
-
-                bufferPool.EvictPage(pageToEvict.PageId());
-
-                // TODO: I need some logging that now page is clean.
             }
         }
 
@@ -258,6 +257,7 @@ namespace PageManager
 
         internal async Task FlushPage(IPage page)
         {
+            logger.LogDebug($"Flushing page {page.PageId()}. State IsDirty {page.IsDirty()}");
             if (page.IsDirty())
             {
                 ulong position = page.PageId() * this.pageSize;

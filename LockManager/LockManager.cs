@@ -17,7 +17,7 @@ namespace LockManager
         public LockManager(ILockMonitor lockMonitor, LockManagerInstrumentationInterface logger)
         {
             this.lockMonitor = lockMonitor;
-            int numOfLocks = numOfLocksRange[0];
+            int numOfLocks = numOfLocksRange[1];
             this.locks = new AsyncReadWriterLock[numOfLocks];
             this.logger = logger;
 

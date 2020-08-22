@@ -139,7 +139,7 @@ namespace LogManager
                 }
             }
 
-            var releaser = await lockManager.AcquireLock(lockType, pageId, this.transactionId);
+            var releaser = await lockManager.AcquireLock(lockType, pageId, this.transactionId).ConfigureAwait(continueOnCapturedContext: false);
 
             lock (lck)
             {

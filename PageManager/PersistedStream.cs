@@ -26,9 +26,15 @@ namespace PageManager
         private BinaryReader binaryReader;
         private bool isInitialized;
         private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+        InstrumentationInterface logger = null;
 
         public PersistedStream(ulong startFileSize, string fileName, bool createNew)
+            : this(startFileSize, fileName, createNew, new NoOpLogging()) { }
+
+        public PersistedStream(ulong startFileSize, string fileName, bool createNew, InstrumentationInterface logger)
         {
+            this.logger = logger;
+
             if (File.Exists(fileName) && !createNew)
             {
                 this.fileStream = new FileStream(fileName, FileMode.Open, FileAccess.ReadWrite);
@@ -85,7 +91,10 @@ namespace PageManager
                 this.fileStream.Seek((long)position, SeekOrigin.Begin);
                 page.Persist(this.binaryWriter);
 
+                this.binaryWriter.Flush();
+
                 await this.fileStream.FlushAsync();
+                this.logger.LogDebug($"Flushed at location {position} to disk.");
             }
             finally
             {
@@ -114,6 +123,7 @@ namespace PageManager
             finally
             {
                 semaphore.Release();
+                this.logger.LogDebug($"Read from location {position} in buffer pool.");
             }
         }
 

@@ -55,7 +55,7 @@ namespace E2EQueryExecutionTests
             }
 
             const int rowCount = 10;
-            const int workerCount = 100;
+            const int workerCount = 10;
             int totalSum = 0;
             int totalInsert = 0;
 
