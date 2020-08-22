@@ -90,7 +90,7 @@ namespace E2EQueryExecutionTests
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < workerCount; i++)
             {
-                tasks.Add(Task.Run(insertAction));
+                tasks.Add(insertAction());
             }
 
             await Task.WhenAll(tasks);

@@ -50,14 +50,14 @@ namespace PageManagerTests
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < workerCount; i++)
             {
-                tasks.Add(Task.Run(generatePagesAction));
+                tasks.Add(generatePagesAction());
             }
 
             await Task.WhenAll(tasks);
         }
 
         [Test]
-        [Repeat(10)]
+        // [Repeat(10)]
         public async Task ConcurrentReadAndWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
@@ -68,7 +68,7 @@ namespace PageManagerTests
 
             long maxPageId = 0;
 
-            const int workerCount = 10;
+            const int workerCount = 100;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
@@ -85,7 +85,7 @@ namespace PageManagerTests
                             RowsetHolder holder = new RowsetHolder(types);
                             holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
                             mp.Merge(holder, tran);
-                            await tran.Commit();
+                            await tran.Commit().ConfigureAwait(false);
                             Interlocked.Exchange(ref maxPageId, (long)mp.PageId());
                         }
                         catch (DeadlockException)
@@ -114,7 +114,7 @@ namespace PageManagerTests
                         {
                             try
                             {
-                                await pm.GetMixedPage(pageToRead, tran, types);
+                                await pm.GetMixedPage(pageToRead, tran, types).ConfigureAwait(false);
                             }
                             catch (DeadlockException)
                             { }
@@ -128,8 +128,8 @@ namespace PageManagerTests
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < workerCount; i++)
             {
-                tasks.Add(Task.Run(generatePagesAction));
-                tasks.Add(Task.Run(readRandomPages));
+                tasks.Add(generatePagesAction());
+                tasks.Add(readRandomPages());
             }
 
             await Task.WhenAll(tasks);

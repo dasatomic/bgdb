@@ -33,8 +33,8 @@ namespace LockManager
         {
             return lockType switch
             {
-                LockTypeEnum.Shared => await this.locks[pageId % (ulong)locks.Length].ReaderLockAsync(ownerId),
-                LockTypeEnum.Exclusive => await this.locks[pageId % (ulong)locks.Length].WriterLockAsync(ownerId),
+                LockTypeEnum.Shared => await this.locks[pageId % (ulong)locks.Length].ReaderLockAsync(ownerId).ConfigureAwait(false),
+                LockTypeEnum.Exclusive => await this.locks[pageId % (ulong)locks.Length].WriterLockAsync(ownerId).ConfigureAwait(false),
                 _ => throw new ArgumentException()
             };
         }
