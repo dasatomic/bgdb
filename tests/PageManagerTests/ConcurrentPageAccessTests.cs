@@ -52,7 +52,10 @@ namespace PageManagerTests
                 tasks.Add(generatePagesAction());
             }
 
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            Task allDoneTask = Task.WhenAll(tasks);
+            Task winner = await Task.WhenAny(allDoneTask, Task.Delay(TimeSpan.FromMinutes(2)));
+
+            Assert.IsTrue(winner == allDoneTask);
         }
 
         [Test, MaxTime(120000)]
@@ -135,7 +138,10 @@ namespace PageManagerTests
                 tasks.Add(readRandomPages());
             }
 
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            Task allDoneTask = Task.WhenAll(tasks);
+            Task winner = await Task.WhenAny(allDoneTask, Task.Delay(TimeSpan.FromMinutes(2)));
+
+            Assert.IsTrue(winner == allDoneTask);
         }
     }
 }
