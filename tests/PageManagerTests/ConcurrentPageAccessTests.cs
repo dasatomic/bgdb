@@ -17,8 +17,7 @@ namespace PageManagerTests
         private const ulong DefaultPrevPage = PageManagerConstants.NullPageId;
         private const ulong DefaultNextPage = PageManagerConstants.NullPageId;
 
-        [Test]
-        [Repeat(10)]
+        [Test, MaxTime(120000)]
         public async Task ConcurrentWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
@@ -56,8 +55,7 @@ namespace PageManagerTests
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
-        [Test]
-        // [Repeat(10)]
+        [Test, MaxTime(120000)]
         public async Task ConcurrentReadAndWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
