@@ -141,6 +141,16 @@ namespace PageManagerTests
             Task allDoneTask = Task.WhenAll(tasks);
             Task winner = await Task.WhenAny(allDoneTask, Task.Delay(TimeSpan.FromMinutes(2)));
 
+            if (winner != allDoneTask)
+            {
+                var stats = lm.GetActiveLocks();
+
+                foreach (var stat in stats)
+                {
+                    TestContext.Progress.WriteLine($"Owner - {stat.ownerId}, on lock - {stat.lockId}, type - {stat.lockType}");
+                }
+            }
+
             Assert.IsTrue(winner == allDoneTask);
         }
     }

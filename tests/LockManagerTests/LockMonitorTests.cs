@@ -63,5 +63,23 @@ namespace LockManagerTests
 
             evt.Set();
         }
+
+        [Test]
+        public async Task ActiveLockSnapshotTest()
+        {
+            LockMonitor lckMonitor = new LockMonitor();
+            ILockManager lckmgr = new LockManager.LockManager(lckMonitor, new NoOpLogging());
+
+            var rel1 = await lckmgr.AcquireLock(LockTypeEnum.Shared, 1, 1);
+            var rel2 = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, 2, 2);
+            var rel3 = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, 3, 3);
+            rel3.Dispose();
+            Assert.AreEqual(
+                new[] { 
+                    new LockMonitorRecord(1, 1, LockTypeEnum.Shared),
+                    new LockMonitorRecord(2, 2, LockTypeEnum.Exclusive) 
+                },
+                lckMonitor.GetActiveLocks());
+        }
     }
 }

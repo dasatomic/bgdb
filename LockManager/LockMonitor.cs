@@ -173,5 +173,19 @@ namespace LockManager
                 };
             }
         }
+
+        public IEnumerable<LockMonitorRecord> GetActiveLocks()
+        {
+            lock (lck)
+            {
+                foreach (var record in this.lockMonitorRecords)
+                {
+                    foreach (var entry in record.Value)
+                    {
+                        yield return new LockMonitorRecord(record.Key, entry.Key, entry.Value.Item1);
+                    }
+                }
+            }
+        }
     }
 }
