@@ -1,5 +1,4 @@
 ﻿using LockManager;
-using LogManager;
 using NUnit.Framework;
 using PageManager;
 using System;
@@ -18,6 +17,7 @@ namespace PageManagerTests
         private const ulong DefaultNextPage = PageManagerConstants.NullPageId;
 
         [Test, MaxTime(120000)]
+        [Repeat(1000)]
         public async Task ConcurrentWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
@@ -36,12 +36,12 @@ namespace PageManagerTests
                 {
                     using (ITransaction tran = lgm.CreateTransaction(pm))
                     {
-                        var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
-                        await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive);
+                        var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran).ConfigureAwait(false);
+                        await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive).ConfigureAwait(false);
                         RowsetHolder holder = new RowsetHolder(types);
                         holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
                         mp.Merge(holder, tran);
-                        await tran.Commit();
+                        await tran.Commit().ConfigureAwait(false);
                     }
                 }
             }
@@ -56,6 +56,7 @@ namespace PageManagerTests
         }
 
         [Test, MaxTime(120000)]
+        [Repeat(1000)]
         public async Task ConcurrentReadAndWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);

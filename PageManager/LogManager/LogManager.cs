@@ -100,7 +100,7 @@ namespace LogManager
                 {
                     if (committedTransactions.Contains(rc.TransactionId()))
                     {
-                        await rc.Redo(pageManager, tran);
+                        await rc.Redo(pageManager, tran).ConfigureAwait(false);
                     }
                     else
                     {
@@ -114,7 +114,7 @@ namespace LogManager
             undoTranList.Reverse();
             foreach (ILogRecord rc in undoTranList)
             {
-                await rc.Undo(pageManager, tran);
+                await rc.Undo(pageManager, tran).ConfigureAwait(false);
             }
         }
 
@@ -131,12 +131,12 @@ namespace LogManager
                 storage.Write(tran.TranscationId());
             }
 
-            await storage.BaseStream.FlushAsync();
+            await storage.BaseStream.FlushAsync().ConfigureAwait(false);
         }
 
         public async Task Flush()
         {
-            await this.storage.BaseStream.FlushAsync();
+            await this.storage.BaseStream.FlushAsync().ConfigureAwait(false);
         }
 
         public ITransaction CreateTransaction(IPageManager manager, bool isReadOnly, string name)

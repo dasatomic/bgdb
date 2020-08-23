@@ -23,7 +23,7 @@ namespace QueryProcessing
 
             Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
 
-            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran);
+            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
 
             await foreach (Row row in rootOp.Iterate(tran))
             {

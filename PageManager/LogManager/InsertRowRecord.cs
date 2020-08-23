@@ -73,14 +73,14 @@ namespace LogManager
 
         public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
+            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes).ConfigureAwait(false);
             page.RedoLog(this, tran);
         }
 
         public async Task Undo(IPageManager pageManager, ITransaction tran)
         {
             tran.VerifyLock(this.PageId, LockManager.LockTypeEnum.Exclusive);
-            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
+            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes).ConfigureAwait(false);
             page.UndoLog(this, tran);
         }
 

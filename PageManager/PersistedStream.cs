@@ -84,7 +84,7 @@ namespace PageManager
 
         public async Task SeekAndWrite(ulong position, IPage page)
         {
-            await semaphore.WaitAsync();
+            await semaphore.WaitAsync().ConfigureAwait(false);
 
             try
             {
@@ -93,7 +93,7 @@ namespace PageManager
 
                 this.binaryWriter.Flush();
 
-                await this.fileStream.FlushAsync();
+                await this.fileStream.FlushAsync().ConfigureAwait(false);
                 this.logger.LogDebug($"Flushed at location {position} to disk.");
             }
             finally
@@ -104,7 +104,7 @@ namespace PageManager
 
         public async Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnType[] columnTypes)
         {
-            await semaphore.WaitAsync();
+            await semaphore.WaitAsync().ConfigureAwait(false);
 
             try
             {

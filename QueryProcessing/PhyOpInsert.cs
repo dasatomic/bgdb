@@ -37,7 +37,7 @@ namespace QueryProcessing
         {
             await foreach (Row row in this.input.Iterate(this.tran))
             {
-                await this.pageCollection.Add(await row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap, tran), tran);
+                await this.pageCollection.Add(await row.ToRowsetHolder(mdTable.Columns.Select(c => c.ColumnType).ToArray(), stringHeap, tran), tran).ConfigureAwait(false);
             }
         }
 

@@ -41,7 +41,7 @@ namespace QueryProcessing
                 else throw new ArgumentException();
             }).ToArray();
 
-            await tableManager.CreateObject(tableCreateDefinition, tran);
+            await tableManager.CreateObject(tableCreateDefinition, tran).ConfigureAwait(false);
 
             yield return null;
         }

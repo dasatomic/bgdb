@@ -63,5 +63,41 @@ namespace LockManagerTests
 
             await Task.WhenAll(tasks);
         }
+
+        [Test]
+        public async Task LockStressWithRollbacks()
+        {
+            ILockManager lckmgr = new LockManager.LockManager(new LockMonitor(), new Instrumentation.Logger("SharedTestFile", "mainrep", Instrumentation.LogLevel.Debug));
+
+            async Task acquireLockShared(int owner)
+            {
+                Random rnd = new Random();
+                int id = rnd.Next(1, 100);
+                using var rel = await lckmgr.AcquireLock(LockTypeEnum.Shared, (ulong)id, (ulong)owner).ConfigureAwait(false);
+            }
+
+            async Task acquireLockEx(int owner)
+            {
+                Random rnd = new Random();
+                int id = rnd.Next(1, 100);
+                using var rel = await lckmgr.AcquireLock(LockTypeEnum.Exclusive, (ulong)id, (ulong)owner).ConfigureAwait(false);
+            }
+
+            List<Task> tasks = new List<Task>();
+
+            const int taskCount = 10000;
+            const int locksPerTask = 100;
+
+            for (int i = 0; i < taskCount; i++)
+            {
+                for (int j = 0; j < locksPerTask; j++)
+                {
+                    tasks.Add(acquireLockShared(i));
+                    tasks.Add(acquireLockEx(i));
+                }
+            }
+
+            await Task.WhenAll(tasks);
+        }
     }
 }

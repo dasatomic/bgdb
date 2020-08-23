@@ -100,7 +100,7 @@ namespace QueryProcessing
                 doubleColsPrep[i] = new double[1] { doubleCols[0] };
             }
 
-            PagePointerOffsetPair[] offsetCols = await PushStringsToStringHeap(stringAlloc, tran);
+            PagePointerOffsetPair[] offsetCols = await PushStringsToStringHeap(stringAlloc, tran).ConfigureAwait(false);
             PagePointerOffsetPair[][] offsetPreps = new PagePointerOffsetPair[offsetCols.Length][];
             for (int i = 0; i < offsetCols.Length; i++)
             {
@@ -118,7 +118,7 @@ namespace QueryProcessing
             int i = 0;
             foreach (string str in stringCols)
             {
-                locs[i++] = await stringAloc.Add(str.ToCharArray(), tran);
+                locs[i++] = await stringAloc.Add(str.ToCharArray(), tran).ConfigureAwait(false);
             }
 
             return locs;

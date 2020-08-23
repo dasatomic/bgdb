@@ -81,18 +81,18 @@ namespace PageManager
 
         public async Task<IPage> AllocatePage(PageType pageType, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
-            return await AllocatePage(pageType, null, prevPageId, nextPageId, tran);
+            return await AllocatePage(pageType, null, prevPageId, nextPageId, tran).ConfigureAwait(false);
         }
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
             long newPageId = Interlocked.Increment(ref lastUsedPageId);
-            return await AllocatePage(pageType, columnTypes, prevPageId, nextPageId, (ulong)newPageId++, tran);
+            return await AllocatePage(pageType, columnTypes, prevPageId, nextPageId, (ulong)newPageId++, tran).ConfigureAwait(false);
         }
 
         public async Task<IPage> AllocatePageBootPage(PageType pageType, ColumnType[] columnTypes, ITransaction tran)
         {
-            return await AllocatePage(pageType, columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, IBootPageAllocator.BootPageId, tran);
+            return await AllocatePage(pageType, columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, IBootPageAllocator.BootPageId, tran).ConfigureAwait(false);
         }
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
@@ -105,7 +105,7 @@ namespace PageManager
                 throw new PageCorruptedException();
             }
 
-            using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive);
+            using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive).ConfigureAwait(false);
 
             page = pageType switch
             {
@@ -122,7 +122,7 @@ namespace PageManager
             if (prevPageId != PageManagerConstants.NullPageId)
             {
                 tran.VerifyLock(prevPageId, LockTypeEnum.Exclusive);
-                IPage prevPage = await GetPage(prevPageId, tran, pageType, columnTypes);
+                IPage prevPage = await GetPage(prevPageId, tran, pageType, columnTypes).ConfigureAwait(false);
 
                 if (prevPage.NextPageId() != page.NextPageId())
                 {
@@ -135,7 +135,7 @@ namespace PageManager
 
             if (nextPageId != PageManagerConstants.NullPageId)
             {
-                IPage nextPage = await GetPage(nextPageId, tran, pageType, columnTypes);
+                IPage nextPage = await GetPage(nextPageId, tran, pageType, columnTypes).ConfigureAwait(false);
 
                 if (nextPage.PrevPageId() != page.PrevPageId())
                 {
@@ -145,7 +145,7 @@ namespace PageManager
                 nextPage.SetPrevPageId(page.PageId());
             }
 
-            await RecordUsageAndEvict(page.PageId(), tran);
+            await RecordUsageAndEvict(page.PageId(), tran).ConfigureAwait(false);
 
             bufferPool.AddPage(page);
 
@@ -167,7 +167,7 @@ namespace PageManager
                     continue;
                 }
 
-                using (Releaser lckReleaser = await tran.AcquireLockWithCallerOwnership(pageIdToEvict, LockTypeEnum.Exclusive))
+                using (Releaser lckReleaser = await tran.AcquireLockWithCallerOwnership(pageIdToEvict, LockTypeEnum.Exclusive).ConfigureAwait(false))
                 {
                     logger.LogDebug($"Evicting page {pageIdToEvict}");
                     IPage pageToEvict = this.bufferPool.GetPage(pageIdToEvict);
@@ -178,7 +178,7 @@ namespace PageManager
                         continue;
                     }
 
-                    await this.FlushPage(pageToEvict);
+                    await this.FlushPage(pageToEvict).ConfigureAwait(false);
 
                     bufferPool.EvictPage(pageToEvict.PageId());
 
@@ -242,7 +242,7 @@ namespace PageManager
                 // It is not sufficient to have shared lock here...
 
                 logger.LogDebug($"Page {pageId} not present in buffer pool. Reading from disk.");
-                page = await this.FetchPage(pageId, pageType, columnTypes);
+                page = await this.FetchPage(pageId, pageType, columnTypes).ConfigureAwait(false);
                 this.bufferPool.AddPage(page);
             }
             else
@@ -250,7 +250,7 @@ namespace PageManager
                 logger.LogDebug($"Page {pageId} present in buffer pool.");
             }
 
-            await RecordUsageAndEvict(pageId, tran);
+            await RecordUsageAndEvict(pageId, tran).ConfigureAwait(false);
 
             return page;
         }
@@ -261,7 +261,7 @@ namespace PageManager
             if (page.IsDirty())
             {
                 ulong position = page.PageId() * this.pageSize;
-                await this.persistedStream.SeekAndWrite(position, page);
+                await this.persistedStream.SeekAndWrite(position, page).ConfigureAwait(false);
                 page.ResetDirty();
             }
         }
@@ -269,18 +269,18 @@ namespace PageManager
         internal async Task<IPage> FetchPage(ulong pageId, PageType pageType, ColumnType[] columnTypes)
         {
             ulong position = pageId * this.pageSize;
-            return await this.persistedStream.SeekAndRead(position, pageType, columnTypes);
+            return await this.persistedStream.SeekAndRead(position, pageType, columnTypes).ConfigureAwait(false);
         }
 
         public async Task<IntegerOnlyPage> AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = await AllocatePage(PageType.IntPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.IntPage, prevPage, nextPage, tran).ConfigureAwait(false);
             return (IntegerOnlyPage)page;
         }
 
         public async Task<IntegerOnlyPage> GetPageInt(ulong pageId, ITransaction tran)
         {
-            IPage page = await this.GetPage(pageId, tran, PageType.IntPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.IntPage, null).ConfigureAwait(false);
 
             if (page.PageType() != PageType.IntPage)
             {
@@ -292,13 +292,13 @@ namespace PageManager
 
         public async Task<DoubleOnlyPage> AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = await AllocatePage(PageType.DoublePage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.DoublePage, prevPage, nextPage, tran).ConfigureAwait(false);
             return (DoubleOnlyPage)page;
         }
 
         public async Task<DoubleOnlyPage> GetPageDouble(ulong pageId, ITransaction tran)
         {
-            IPage page = await this.GetPage(pageId, tran, PageType.DoublePage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.DoublePage, null).ConfigureAwait(false);
 
             if (page.PageType() != PageType.DoublePage)
             {
@@ -310,13 +310,13 @@ namespace PageManager
 
         public async Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = await AllocatePage(PageType.StringPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.StringPage, prevPage, nextPage, tran).ConfigureAwait(false);
             return (StringOnlyPage)page;
         }
 
         public async Task<StringOnlyPage> GetPageStr(ulong pageId, ITransaction tran)
         {
-            IPage page = await this.GetPage(pageId, tran, PageType.StringPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.StringPage, null).ConfigureAwait(false);
 
             if (page.PageType() != PageType.StringPage)
             {
@@ -328,13 +328,13 @@ namespace PageManager
 
         public async Task<LongOnlyPage> AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = await AllocatePage(PageType.LongPage, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.LongPage, prevPage, nextPage, tran).ConfigureAwait(false);
             return (LongOnlyPage)page;
         }
 
         public async Task<LongOnlyPage> GetPageLong(ulong pageId, ITransaction tran)
         {
-            IPage page = await this.GetPage(pageId, tran, PageType.LongPage, null);
+            IPage page = await this.GetPage(pageId, tran, PageType.LongPage, null).ConfigureAwait(false);
 
             if (page.PageType() != PageType.LongPage)
             {
@@ -346,13 +346,13 @@ namespace PageManager
 
         public async Task<MixedPage> AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran)
         {
-            IPage page = await AllocatePage(PageType.MixedPage, columnTypes, prevPage, nextPage, tran);
+            IPage page = await AllocatePage(PageType.MixedPage, columnTypes, prevPage, nextPage, tran).ConfigureAwait(false);
             return (MixedPage)page;
         }
 
         public async Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes)
         {
-            IPage page = await this.GetPage(pageId, tran, PageType.MixedPage, columnTypes);
+            IPage page = await this.GetPage(pageId, tran, PageType.MixedPage, columnTypes).ConfigureAwait(false);
 
             if (page.PageType() != PageType.MixedPage)
             {
@@ -374,12 +374,12 @@ namespace PageManager
         {
             foreach (IPage page in bufferPool.GetAllDirtyPages())
             {
-                await FlushPage(page);
+                await FlushPage(page).ConfigureAwait(false);
             }
 
             foreach (IPage page in this.AllocatationMapPages)
             {
-                await FlushPage(page);
+                await FlushPage(page).ConfigureAwait(false);
             }
         }
 

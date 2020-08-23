@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Instrumentation\Instrumentation.csproj" />
     <ProjectReference Include="..\..\LockManager\LockManager.csproj" />
   </ItemGroup>
 

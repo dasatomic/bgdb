@@ -31,7 +31,7 @@ namespace QueryProcessing
             string[] columns = sqlStatement.Columns.ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = await tableManager.GetByName(tableName, tran);
+            MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
             ColumnType[] columnTypes = table.Columns.Select(x => x.ColumnType).ToArray();
 
@@ -54,7 +54,7 @@ namespace QueryProcessing
             string tableName = insertStatement.Table;
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = await tableManager.GetByName(tableName, tran);
+            MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
             List<int> intCols = new List<int>();
             List<double> doubleCols = new List<double>();

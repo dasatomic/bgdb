@@ -56,8 +56,8 @@ namespace DataStructures
             IPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
            {
-                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
-                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
+                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 rowCount += currPage.RowCount();
             }
 
@@ -69,13 +69,13 @@ namespace DataStructures
             MixedPage currPage = null;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
-                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
+                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 if (currPage.CanFit(item, tran))
                 {
                     lck.Dispose();
 
-                    using Releaser writeLock = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive);
+                    using Releaser writeLock = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
 
                     // Need to check can fit one more time.
                     if (currPage.CanFit(item, tran))
@@ -87,19 +87,19 @@ namespace DataStructures
             }
 
             {
-                using Releaser prevPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                using Releaser prevPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
 
                 if (currPage.NextPageId() != PageManagerConstants.NullPageId)
                 {
                     // TODO: it would be good if caller had ability to control this lock.
                     // This dispose doesn't mean anything in current implementation of read committed.
                     prevPageLck.Dispose();
-                    await Add(item, tran);
+                    await Add(item, tran).ConfigureAwait(false);
                 }
                 else
                 {
-                    currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran);
-                    using Releaser currPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive);
+                    currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran).ConfigureAwait(false);
+                    using Releaser currPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                     this.lastPageId = currPage.PageId();
                     currPage.Merge(item, tran);
                 }
@@ -112,8 +112,8 @@ namespace DataStructures
             List<RowsetHolder> result = new List<RowsetHolder>();
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
-                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared);
+                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
+                using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 RowsetHolder holder = currPage.Fetch(tran);
 
                 if (filter(holder))
@@ -132,8 +132,8 @@ namespace DataStructures
 
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
-                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
+                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 RowsetHolder holder = currPage.Fetch(tran);
 
                 U curr = projector(holder);
@@ -152,8 +152,8 @@ namespace DataStructures
             MixedPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
-                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared);
-                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes);
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
+                currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 RowsetHolder holder = currPage.Fetch(tran);
 
                 yield return holder;
@@ -162,7 +162,7 @@ namespace DataStructures
 
         public async Task<bool> IsEmpty(ITransaction tran)
         {
-            return await this.Count(tran) == 0;
+            return await this.Count(tran).ConfigureAwait(false) == 0;
         }
     }
 }

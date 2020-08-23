@@ -23,8 +23,8 @@ namespace QueryProcessing
             }
 
             Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
-            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran);
-            await rootOp.Invoke();
+            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran).ConfigureAwait(false);
+            await rootOp.Invoke().ConfigureAwait(false);
 
             yield return null;
         }

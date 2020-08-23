@@ -50,7 +50,7 @@ namespace LogManager
                 throw new InvalidTransactionOperationException();
             }
 
-            await this.logManager.CommitTransaction(this);
+            await this.logManager.CommitTransaction(this).ConfigureAwait(false);
             this.state = TransactionState.Committed;
 
             this.myLocks.Reverse();
@@ -72,7 +72,7 @@ namespace LogManager
             this.logRecords.Reverse();
             foreach (ILogRecord record in this.logRecords)
             {
-                await record.Undo(this.pageManager, this);
+                await record.Undo(this.pageManager, this).ConfigureAwait(false);
             }
 
             this.state = TransactionState.RollBacked;
@@ -117,7 +117,7 @@ namespace LogManager
         {
             if (this.state == TransactionState.Open)
             {
-                await this.Rollback();
+                await this.Rollback().ConfigureAwait(false);
             }
 
             if (this.locksHeld.Any())
@@ -180,12 +180,12 @@ namespace LogManager
 
         public async Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType)
         {
-            return await AcquireLockInternal(pageId, lockType, true);
+            return await AcquireLockInternal(pageId, lockType, true).ConfigureAwait(false);
         }
 
         public async Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType)
         {
-            return await AcquireLockInternal(pageId, lockType, false);
+            return await AcquireLockInternal(pageId, lockType, false).ConfigureAwait(false);
         }
 
         private void ReleaseLockCallback(int lockId)
