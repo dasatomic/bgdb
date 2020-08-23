@@ -87,7 +87,9 @@ namespace PageManagerTests
                             Interlocked.Exchange(ref maxPageId, (long)mp.PageId());
                         }
                         catch (DeadlockException)
-                        { }
+                        {
+                            await tran.Rollback().ConfigureAwait(false);
+                        }
                     }
                 }
             }
@@ -115,7 +117,9 @@ namespace PageManagerTests
                                 await pm.GetMixedPage(pageToRead, tran, types).ConfigureAwait(false);
                             }
                             catch (DeadlockException)
-                            { }
+                            {
+                                await tran.Rollback().ConfigureAwait(false);
+                            }
                         }
 
                         await tran.Commit().ConfigureAwait(false);
