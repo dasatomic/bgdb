@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
@@ -9,27 +10,26 @@ namespace LockManager
 {
     public class LockMonitor : ILockMonitor
     {
-        private Dictionary<ulong, Dictionary<int, (LockTypeEnum, ulong)>> lockMonitorRecords = new Dictionary<ulong, Dictionary<int, (LockTypeEnum, ulong)>>();
+        private Dictionary<ulong /* owner id */, Dictionary<int /* lock id */, LockTypeEnum>> lockMonitorRecords = new Dictionary<ulong, Dictionary<int, LockTypeEnum>>();
         private object lck = new object();
 
         // TODO: This should be a ring buffer.
         private List<LockStatsRecord> lockStats = new List<LockStatsRecord>();
-        private ulong timestampId;
 
         public void AddRecord(LockMonitorRecord record)
         {
             lock (lck)
             {
-                if (lockMonitorRecords.TryGetValue(record.ownerId, out Dictionary<int, (LockTypeEnum, ulong)> subdictionary))
+                if (lockMonitorRecords.TryGetValue(record.ownerId, out Dictionary<int, LockTypeEnum> subdictionary))
                 {
                     CheckRecursiveLock(record.ownerId, record.lockId, record.lockType);
                     VerifyDeadlock(record.ownerId, record.lockId, record.lockType);
-                    subdictionary.Add(record.lockId, (record.lockType, timestampId++));
+                    subdictionary.Add(record.lockId, record.lockType);
                 }
                 else
                 {
-                    var newSubDictionary = new Dictionary<int, (LockTypeEnum, ulong)>();
-                    newSubDictionary.Add(record.lockId, (record.lockType, timestampId++));
+                    var newSubDictionary = new Dictionary<int, LockTypeEnum>();
+                    newSubDictionary.Add(record.lockId, record.lockType);
                     lockMonitorRecords.Add(record.ownerId, newSubDictionary);
                 }
             }
@@ -45,7 +45,7 @@ namespace LockManager
 
         protected void CheckRecursiveLock(ulong ownerId, int lockId, LockTypeEnum lockType)
         {
-            this.lockMonitorRecords.TryGetValue(ownerId, out Dictionary<int, (LockTypeEnum, ulong)> myLocks);
+            this.lockMonitorRecords.TryGetValue(ownerId, out Dictionary<int, LockTypeEnum> myLocks);
 
             if (myLocks != null)
             {
@@ -56,66 +56,91 @@ namespace LockManager
             }
         }
 
-        protected void VerifyDeadlock(ulong ownerId, int lockId, LockTypeEnum lockType)
+        protected void VerifyDeadlock(ulong reqOwnerId, int reqLockId, LockTypeEnum reqLockType)
         {
+            // TODO: This needs to be optimized.
+            // Only aiming for correctness here.
             lock (lck)
             {
-                Dictionary<int, (LockTypeEnum, ulong)> requesterLocks = this.lockMonitorRecords[ownerId];
+                Dictionary<int, LockTypeEnum> locksVisited = new Dictionary<int, LockTypeEnum>();
+                Queue<(int, LockTypeEnum)> locksToCheck = new Queue<(int, LockTypeEnum)>();
 
-                foreach (KeyValuePair<ulong, Dictionary<int, (LockTypeEnum, ulong)>> ownersLocks in this.lockMonitorRecords)
                 {
-                    if (ownersLocks.Value.TryGetValue(lockId, out (LockTypeEnum holderLockType, ulong holderTimestamp) holder))
+                    Dictionary<int, LockTypeEnum> lockToCheckBuilder = new Dictionary<int, LockTypeEnum>();
+                    foreach ((ulong depOwnerId, Dictionary<int, LockTypeEnum> depLocks) in this.lockMonitorRecords)
                     {
-                        // this lock is already taken. Need to check for deadlocks
-                        if (ownersLocks.Key == ownerId)
+                        if (depLocks.ContainsKey(reqLockId))
                         {
-                            throw new InvalidProgramException("No support for nested locks");
+                            foreach ((int lockId, LockTypeEnum lockType) in depLocks)
+                            {
+                                if (lockId != reqLockId)
+                                {
+                                    if (!(lockType == LockTypeEnum.Shared && reqLockType == LockTypeEnum.Shared))
+                                    {
+                                        if (lockToCheckBuilder.TryGetValue(lockId, out LockTypeEnum insertedLockType))
+                                        {
+                                            if (insertedLockType < lockType)
+                                            {
+                                                lockToCheckBuilder[lockId] = insertedLockType;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            lockToCheckBuilder.Add(lockId, lockType);
+                                        }
+                                    }
+                                }
+                            }
                         }
+                    }
 
-                        // Check if locks are compatible.
-                        if (lockType == LockTypeEnum.Shared && holder.holderLockType == LockTypeEnum.Shared)
+                    foreach (var lck in lockToCheckBuilder)
+                    {
+                        locksToCheck.Enqueue((lck.Key, lck.Value));
+                    }
+                }
+
+                Debug.Assert(!locksVisited.Any());
+
+                while (locksToCheck.Any())
+                {
+                    (int lockToCheck, LockTypeEnum lockTypeToCheck) = locksToCheck.Dequeue();
+
+                    foreach ((ulong depOwnerId, Dictionary<int, LockTypeEnum> depLocks) in this.lockMonitorRecords)
+                    {
+                        if (depLocks.ContainsKey(lockToCheck))
                         {
-                            // Both can proceed. This is fine.
-                            continue;
-                        }
-
-                        // check if this guy depends on any locks that I am holding.
-
-                        // Check intersection.
-                        Dictionary<int, (LockTypeEnum, ulong)> ownerLocks = this.lockMonitorRecords[ownersLocks.Key];
-
-                        foreach (int intersectionLockId in requesterLocks.Keys.Intersect(ownerLocks.Keys))
-                        {
-                            if (requesterLocks[intersectionLockId].Item1 == LockTypeEnum.Shared && ownerLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
+                            if (depOwnerId == reqOwnerId)
                             {
-                                // Again, we are not mutually blocking.
-                                continue;
+                                // We came back to the original owner. This means that this is a deadlock.
+                                // TODO: This doesn't take into account lock type.
+                                // E.g., even for a circle of readonly locks it will detect cycle.
+                                throw new DeadlockException(reqOwnerId, depOwnerId, reqLockId);
                             }
 
-                            // TODO: Need to check timestamps here as well...
-
-                            // This must be RW combination.
-
-                            /*
-                            if (lockType == LockTypeEnum.Shared && requesterLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
+                            // Find all the locks that haven't been in the to visit list so far.
+                            foreach ((int depLockId, LockTypeEnum depLockType) in depLocks)
                             {
-                                continue;
+                                if (locksVisited.TryGetValue(depLockId, out LockTypeEnum visitedLockType))
+                                {
+                                    // If this is an upgrade I will need to visit it.
+                                    if (visitedLockType < depLockType)
+                                    {
+                                        locksToCheck.Enqueue((depLockId, depLockType));
+                                        locksVisited[depLockId] = depLockType;
+                                    }
+                                }
+                                else
+                                {
+                                    locksToCheck.Enqueue((depLockId, depLockType));
+                                    locksVisited.Add(depLockId, depLockType);
+                                }
                             }
-
-                            if (holder.holderLockType == LockTypeEnum.Shared && ownerLocks[intersectionLockId].Item1 == LockTypeEnum.Shared)
-                            {
-                                continue;
-                            }
-                            */
-
-                            // TODO: Even timestamp is not enough...
-                            // Lock itself needs to build a graph...
-
-                            // This is a deadlock.
-                            throw new DeadlockException(ownerId, ownersLocks.Key, lockId);
                         }
                     }
                 }
+
+                return;
             }
         }
 
@@ -123,7 +148,7 @@ namespace LockManager
         {
             lock (lck)
             {
-                return this.lockMonitorRecords[ownerId].Select(kv => (kv.Key, kv.Value.Item1)).ToArray();
+                return this.lockMonitorRecords[ownerId].Select(kv => (kv.Key, kv.Value)).ToArray();
             }
         }
 
@@ -182,7 +207,7 @@ namespace LockManager
                 {
                     foreach (var entry in record.Value)
                     {
-                        yield return new LockMonitorRecord(record.Key, entry.Key, entry.Value.Item1);
+                        yield return new LockMonitorRecord(record.Key, entry.Key, entry.Value);
                     }
                 }
             }

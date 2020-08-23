@@ -85,7 +85,7 @@ namespace LockManagerTests
 
             List<Task> tasks = new List<Task>();
 
-            const int taskCount = 1000;
+            const int taskCount = 100;
             const int locksPerTask = 100;
 
             for (int i = 0; i < taskCount; i++)
