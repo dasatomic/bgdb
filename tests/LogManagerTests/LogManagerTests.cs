@@ -8,6 +8,7 @@ using System.Text;
 using System.Linq;
 using Test.Common;
 using LockManager;
+using System.Collections.Generic;
 
 namespace LogManagerTests
 {
@@ -63,7 +64,7 @@ namespace LogManagerTests
         }
 
         private async Task RollbackTest1<T>(
-            Func<IPageManager, ITransaction, PageSerializerBase<T[]>> pageCreate)
+            Func<IPageManager, ITransaction, IPageSerializer<IEnumerable<T>, T>> pageCreate)
         {
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
@@ -79,14 +80,14 @@ namespace LogManagerTests
 
                 await using ITransaction tran2 = manager.CreateTransaction(pageManager);
                 using var lck = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Shared);
-                T[] pageContent = page.Fetch(tran2);
+                T[] pageContent = page.Fetch(tran2).ToArray();
                 Assert.AreEqual(0, pageContent.Length);
             }
         }
 
         private async Task RollbackTest2<T>(
-            Func<IPageManager, ITransaction, PageSerializerBase<T[]>> pageCreate,
-            Action<PageSerializerBase<T[]>, ITransaction> pageModify,
+            Func<IPageManager, ITransaction, IPageSerializer<IEnumerable<T>, T>> pageCreate,
+            Action<IPageSerializer<IEnumerable<T>, T>, ITransaction> pageModify,
             Action<T[]> verify)
         {
             using (Stream stream = new MemoryStream())
@@ -111,7 +112,7 @@ namespace LogManagerTests
 
                 await using ITransaction tran3 = manager.CreateTransaction(pageManager);
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
-                T[] pageContent = page.Fetch(tran3);
+                T[] pageContent = page.Fetch(tran3).ToArray();
                 verify(pageContent);
             }
         }

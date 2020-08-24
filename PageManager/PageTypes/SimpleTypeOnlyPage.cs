@@ -1,5 +1,6 @@
 ﻿using LogManager;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -7,7 +8,7 @@ using System.Runtime.Serialization;
 
 namespace PageManager
 {
-    public abstract class SimpleTypeOnlyPage<T> : PageSerializerBase<T[]>
+    public abstract class SimpleTypeOnlyPage<T> : PageSerializerBase<T[], IEnumerable<T>, T>
         where T : struct
     {
         private readonly PageType pageType;
@@ -74,20 +75,20 @@ namespace PageManager
             return (this.pageSize - IPage.FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
         }
 
-        public override bool CanFit(T[] items, ITransaction transaction)
+        public override bool CanFit(IEnumerable<T> items, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T)) * items.Length;
+            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T)) * items.Count();
         }
 
-        public override uint GetSizeNeeded(T[] items)
+        public override uint GetSizeNeeded(IEnumerable<T> items)
         {
-            return (uint)items.Length * (uint)Marshal.SizeOf(default(T));
+            return (uint)items.Count() * (uint)Marshal.SizeOf(default(T));
         }
 
         protected abstract byte[] SerializeItem(T item);
 
-        public override void Merge(T[] items, ITransaction transaction)
+        public override void Merge(IEnumerable<T> items, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
@@ -100,17 +101,19 @@ namespace PageManager
             this.items = this.items.Concat(items).ToArray();
             this.rowCount = (uint)this.items.Length;
 
-            for (int i = 0; i < items.Length; i++)
+            int i = 0;
+            foreach (T item in items)
             {
-                byte[] bs = SerializeItem(items[i]);
+                byte[] bs = SerializeItem(item);
                 ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.pageType);
                 transaction.AddRecord(rc);
+                i++;
             }
 
             this.isDirty = true;
         }
 
-        public override void Update(T[] item, ushort position, ITransaction transaction)
+        public override void Update(T item, ushort position, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
@@ -120,14 +123,14 @@ namespace PageManager
             }
 
             byte[] oldVal = SerializeItem(this.items[position]);
-            this.items[position] = item[0];
+            this.items[position] = item;
             byte[] newVal = SerializeItem(this.items[position]);
 
             ILogRecord rc = new UpdateRowRecord(this.pageId, position, oldVal, newVal, transaction.TranscationId(), this.pageType);
             transaction.AddRecord(rc);
         }
 
-        public override T[] Fetch(ITransaction tran)
+        public override IEnumerable<T> Fetch(ITransaction tran)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.items;
@@ -135,7 +138,7 @@ namespace PageManager
 
         protected abstract void SerializeInternal(BinaryReader stream);
 
-        public override bool Equals(PageSerializerBase<T[]> other, ITransaction tran)
+        public override bool Equals(PageSerializerBase<T[], IEnumerable<T>, T> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {

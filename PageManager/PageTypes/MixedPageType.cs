@@ -13,7 +13,7 @@ namespace PageManager
         Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
     }
 
-    public class MixedPage : PageSerializerBase<RowsetHolder>
+    public class MixedPage : PageSerializerBase<RowsetHolder, RowsetHolder, RowsetHolder>
     {
         private readonly ColumnType[] columnTypes;
 
@@ -198,7 +198,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals(PageSerializerBase<RowsetHolder> other, ITransaction tran)
+        public override bool Equals(PageSerializerBase<RowsetHolder, RowsetHolder, RowsetHolder> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {

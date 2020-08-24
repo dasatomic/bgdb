@@ -40,7 +40,7 @@ namespace PageManagerTests
         public void VerifyDeserializationEmpty()
         {
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            int[] content = intPage.Fetch(TestGlobals.DummyTran);
+            int[] content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.IsTrue(content.Length == 0);
         }
 
@@ -50,7 +50,7 @@ namespace PageManagerTests
             int[] startArray = new int[] { 1, 2, 3, 4 };
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             intPage.Merge(startArray, new DummyTran());
-            int[] content = intPage.Fetch(TestGlobals.DummyTran);
+            int[] content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray, content);
         }
 
@@ -72,11 +72,11 @@ namespace PageManagerTests
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             intPage.Merge(startArray, new DummyTran());
-            int[] content = intPage.Fetch(TestGlobals.DummyTran);
+            int[] content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray, content);
 
             intPage.Merge(secondArray, new DummyTran());
-            content = intPage.Fetch(TestGlobals.DummyTran);
+            content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
 
@@ -102,7 +102,7 @@ namespace PageManagerTests
             IntegerOnlyPage intPage = new IntegerOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             int[] startArray = new int[intPage.MaxRowCount()];
             intPage.Merge(startArray, new DummyTran());
-            int[] content = intPage.Fetch(TestGlobals.DummyTran);
+            int[] content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray, content);
         }
 
@@ -116,7 +116,7 @@ namespace PageManagerTests
             intPage.Merge(startArray, new DummyTran());
             intPage.Merge(secondArray, new DummyTran());
 
-            int[] content = intPage.Fetch(TestGlobals.DummyTran);
+            int[] content = intPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray.Concat(secondArray).ToArray(), content);
         }
 

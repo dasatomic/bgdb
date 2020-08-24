@@ -1,5 +1,6 @@
 ﻿using LogManager;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -21,20 +22,20 @@ namespace PageManager
         public bool CanFit(T item);
     }
 
-    public class StringOnlyPage : PageSerializerBase<char[][]>, IPageWithOffsets<char[]>
+    public class StringOnlyPage : PageSerializerBase<char[], IEnumerable<char[]>, char[]>, IPageWithOffsets<char[]>
     {
         public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
-            if (pageSize < IPage.FirstElementPosition + sizeof(char) * 2)
+            if (pageSize < IPage.FirstElementPosition + sizeof(ushort))
             {
-                throw new ArgumentException("Size can't be less than size of char and null termination");
+                throw new ArgumentException("Size can't be less than size of char + sizeof(ushort) for length.");
             }
 
             this.pageSize = pageSize;
             this.pageId = pageId;
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
-            this.items = new char[0][];
+            this.items = new char[this.MaxRowCount()];
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.StringPage, pageSize, nextPageId, prevPageId, null);
             tran.AddRecord(logRecord);
@@ -64,28 +65,27 @@ namespace PageManager
                 throw new SerializationException();
             }
 
-            this.items = new char[this.rowCount][];
+            this.items = new char[pageSize - IPage.FirstElementPosition];
 
-            for (int elemCount = 0; elemCount < this.rowCount; elemCount++)
-            {
-                int charLength = stream.ReadInt16();
-                this.items[elemCount] = stream.ReadChars(charLength);
-            }
+            Array.Copy(stream.ReadChars((int)this.rowCount), this.items, this.rowCount);
 
             this.isDirty = false;
         }
 
+        private (char lower, char upper) Int16ToCharPair(Int16 size) => ((char)size, (char)(size >> 8));
+        private Int16 CharPairToSize(char lower, char upper) => (Int16)(((Int16)upper << 8) + lower);
+
         public override PageType PageType() => global::PageManager.PageType.StringPage;
 
-        public override uint GetSizeNeeded(char[][] items)
+        public override uint GetSizeNeeded(IEnumerable<char[]> items)
         {
-            uint byteCount = 0;
+            uint totalSize = 0;
             foreach (char[] item in items)
             {
-                byteCount += (uint)item.Length + sizeof(short);
+                totalSize += (uint)item.Length + sizeof(ushort);
             }
 
-            return byteCount;
+            return totalSize;
         }
 
         public override uint MaxRowCount()
@@ -93,72 +93,86 @@ namespace PageManager
             return this.pageSize - IPage.FirstElementPosition;
         }
 
-        public override bool CanFit(char[][] items, ITransaction transaction)
+        public override bool CanFit(IEnumerable<char[]> items, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
+            uint size = this.rowCount + this.GetSizeNeeded(items);
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
-        public override void Merge(char[][] items, ITransaction transaction)
+        public override void Merge(IEnumerable<char[]> itemsToInsert, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
-            uint size = this.GetSizeNeeded(this.items) + this.GetSizeNeeded(items);
+            uint size = this.rowCount + this.GetSizeNeeded(itemsToInsert);
             if (this.pageSize - IPage.FirstElementPosition < size)
             {
                 throw new NotEnoughSpaceException();
             }
 
-            int startPos = this.items.Length;
-
-            // This is too slow!!!
-            this.items = this.items.Concat(items).ToArray();
-            this.rowCount = (uint)this.items.Length;
-
-            for (int i = 0; i < items.Length; i++)
+            foreach (char[] item in itemsToInsert)
             {
-                byte[] bs = new byte[items[i].Length + 2];
+                uint startPos = this.rowCount;
+                (char lowSize, char highSize) = this.Int16ToCharPair((short)item.Length);
+                this.items[this.rowCount] = lowSize;
+                this.items[this.rowCount + 1] = highSize;
+
+                Array.Copy(item, 0, this.items, this.rowCount + sizeof(short), item.Length);
+
+                byte[] bs = new byte[items.Length + 2];
                 using (MemoryStream ms = new MemoryStream(bs))
                 using (BinaryWriter bw = new BinaryWriter(ms))
                 {
-                    bw.Write((ushort)items[i].Length);
-                    bw.Write(items[i]);
-                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.PageType());
+                    bw.Write((ushort)item.Length);
+                    bw.Write(item);
+                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos), bs, transaction.TranscationId(), this.PageType());
                     transaction.AddRecord(rc);
                 }
+
+                this.rowCount += sizeof(short) + (uint)item.Length;
             }
 
             this.isDirty = true;
         }
 
-        public uint MergeWithOffsetFetch(char[] item, ITransaction transaction)
+        public override uint RowCount()
+        {
+            int posInBuffer = 0;
+            int totalItems = 0;
+            while (posInBuffer < this.rowCount)
+            {
+                posInBuffer += this.CharPairToSize(this.items[posInBuffer], this.items[posInBuffer + 1]) + sizeof(ushort);
+                totalItems++;
+            }
+
+            return (uint)totalItems;
+        }
+
+        public uint MergeWithOffsetFetch(char[] itemToInsert, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
-            uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
+            uint size = this.rowCount + (uint)itemToInsert.Length + sizeof(short);
 
             if (this.pageSize - IPage.FirstElementPosition < size)
             {
                 throw new NotEnoughSpaceException();
             }
 
-            uint positionInBuffer = IPage.FirstElementPosition;
-            foreach (var arr in this.items)
-            {
-                positionInBuffer += (uint)arr.Length + sizeof(short);
-            }
+            uint positionInBuffer = this.rowCount;
 
-            this.rowCount++;
-            int startPos = this.items.Length;
+            int startPos = (int)this.rowCount;
+            this.rowCount += (uint)itemToInsert.Length + sizeof(short);
 
-            // TODO: This is too slow.
-            this.items = this.items.Append(item).ToArray();
+            (char lowSize, char highSize) = this.Int16ToCharPair((short)itemToInsert.Length);
+            this.items[positionInBuffer] = lowSize;
+            this.items[positionInBuffer + 1] = highSize;
+            Array.Copy(itemToInsert, 0, this.items, positionInBuffer + sizeof(short), itemToInsert.Length);
 
-            byte[] bs = new byte[item.Length + 2];
+            byte[] bs = new byte[itemToInsert.Length + sizeof(short)];
             using (MemoryStream ms = new MemoryStream(bs))
             using (BinaryWriter bw = new BinaryWriter(ms))
             {
-                bw.Write((ushort)item.Length);
-                bw.Write(item);
+                bw.Write((ushort)itemToInsert.Length);
+                bw.Write(itemToInsert);
                 ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos), bs, transaction.TranscationId(), this.PageType());
                 transaction.AddRecord(rc);
             }
@@ -171,57 +185,44 @@ namespace PageManager
         public char[] FetchWithOffset(uint offset, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            if (offset < IPage.FirstElementPosition || offset >= this.pageSize)
+            if (offset >= this.pageSize - IPage.FirstElementPosition)
             {
                 throw new ArgumentException();
             }
 
-            uint currOfset = IPage.FirstElementPosition;
-            foreach (char[] item in this.items)
-            {
-                if (currOfset == offset)
-                {
-                    return item;
-                }
-                else
-                {
-                    currOfset += (uint)item.Length + sizeof(short);
-                }
-            }
+            short size = this.CharPairToSize(this.items[offset], this.items[offset + 1]);
 
-            throw new PageCorruptedException();
+            // TODO: Consider making span part of this API to remove need for copying the data.
+            return this.items.AsSpan((int)offset + sizeof(short), size).ToArray();
         }
 
         public override void Persist(BinaryWriter destination)
         {
-            if (this.rowCount != this.items.Length)
-            {
-                throw new PageCorruptedException();
-            }
-
             destination.Write(this.pageId);
             destination.Write(this.pageSize);
             destination.Write((int)this.PageType());
             destination.Write(this.rowCount);
             destination.Write(this.prevPageId);
             destination.Write(this.nextPageId);
-
-            foreach (char[] item in this.items)
-            {
-                destination.Write((short)item.Length);
-                destination.Write(item);
-            }
+            destination.Write(this.items);
         }
 
-        public override char[][] Fetch(ITransaction tran)
+        public override IEnumerable<char[]> Fetch(ITransaction tran)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.items;
+
+            int posInBuffer = 0;
+            while (posInBuffer < this.rowCount)
+            {
+                short size = this.CharPairToSize(this.items[posInBuffer], this.items[posInBuffer + 1]);
+                yield return this.items.AsSpan(posInBuffer + sizeof(ushort), size).ToArray();
+                posInBuffer += size + sizeof(short);
+            }
         }
 
         public bool CanFit(char[] item)
         {
-            uint size = this.GetSizeNeeded(this.items) + (uint)item.Length + sizeof(short);
+            uint size = (uint)(this.rowCount + item.Length + sizeof(ushort));
             return this.pageSize - IPage.FirstElementPosition >= size;
         }
 
@@ -233,8 +234,14 @@ namespace PageManager
             {
                 if (record.GetRecordType() == LogRecordType.RowModify)
                 {
-                    int elemSize = br.ReadUInt16();
-                    this.items[redoContent.RowPosition] = br.ReadChars(elemSize);
+                    // TODO: This is not working properly.
+                    // As part of update work this needs to be updated.
+                    // If size of previous entry is different from new one this leads to corruption.
+                    short elemSize = br.ReadInt16();
+                    (char lower, char higher) = this.Int16ToCharPair(elemSize);
+                    this.items[redoContent.RowPosition] = lower;
+                    this.items[redoContent.RowPosition + 1] = higher;
+                    Array.Copy(br.ReadChars(elemSize), 0, this.items, redoContent.RowPosition + sizeof(short), elemSize);
                 }
                 else if (record.GetRecordType() == LogRecordType.RowInsert)
                 {
@@ -243,9 +250,14 @@ namespace PageManager
                         throw new LogCorruptedException();
                     }
 
-                    int elemSize = br.ReadUInt16();
-                    this.items = this.items.Concat(new char[][] { br.ReadChars(elemSize) }).ToArray();
-                    this.rowCount = (uint)this.items.Length;
+                    short elemSize = br.ReadInt16();
+                    (char lower, char higher) = this.Int16ToCharPair(elemSize);
+
+                    this.items[this.rowCount] = lower;
+                    this.items[this.rowCount + 1] = higher;
+
+                    Array.Copy(items, 0, this.items, this.rowCount + sizeof(short), items.Length);
+                    this.rowCount += sizeof(short) + (uint)items.Length;
                 }
                 else
                 {
@@ -262,14 +274,20 @@ namespace PageManager
                 using (MemoryStream ms = new MemoryStream(undoContent.DataToUndo))
                 using (BinaryReader br = new BinaryReader(ms))
                 {
-                    int elemSize = br.ReadUInt16();
-                    this.items[undoContent.RowPosition] = br.ReadChars(elemSize);
+                    // TODO: This is not working properly.
+                    // As part of update work this needs to be updated.
+                    // If size of previous entry is different from new one this leads to corruption.
+                    short elemSize = br.ReadInt16();
+                    (char lower, char higher) = this.Int16ToCharPair(elemSize);
+                    this.items[undoContent.RowPosition] = lower;
+                    this.items[undoContent.RowPosition + 1] = higher;
+                    Array.Copy(br.ReadChars(elemSize), 0, this.items, undoContent.RowPosition + sizeof(short), elemSize);
                 }
             }
             else if (record.GetRecordType() == LogRecordType.RowInsert)
             {
-                this.items = this.items.Take(this.items.Length - 1).ToArray();
-                this.rowCount = (uint)this.items.Length;
+                // TODO: Need to figure how to find the insert location.
+                this.rowCount = undoContent.RowPosition;
             }
             else
             {
@@ -277,7 +295,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals([AllowNull] PageSerializerBase<char[][]> other, ITransaction tran)
+        public override bool Equals([AllowNull] PageSerializerBase<char[], IEnumerable<char[]>, char[]> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -299,33 +317,22 @@ namespace PageManager
                 return false;
             }
 
-            if (this.Fetch(tran).Length != other.Fetch(tran).Length)
+            if (this.Fetch(tran).Count() != other.Fetch(tran).Count())
             {
                 return false;
             }
 
-            foreach (var pairs in this.Fetch(tran).Zip(other.Fetch(tran)))
+            if (!Enumerable.SequenceEqual(this.Fetch(tran), other.Fetch(tran)))
             {
-                if (Enumerable.SequenceEqual(pairs.First, pairs.Second))
-                {
-                    return false;
-                }
+                return false;
             }
 
             return true;
         }
 
-        public override void Update(char[][] item, ushort position, ITransaction transaction)
+        public override void Update(char[] item, ushort position, ITransaction transaction)
         {
             throw new NotImplementedException();
-        }
-
-        private void Validate()
-        {
-            if (this.rowCount != this.items.Length)
-            {
-                throw new PageCorruptedException();
-            }
         }
     }
 }

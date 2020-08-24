@@ -26,7 +26,7 @@ namespace PageManagerTests
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             using var pm =  new PageManager.PageManager(DefaultSize, new FifoEvictionPolicy(1, 1), persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
-            const int workerCount = 10;
+            const int workerCount = 50;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
@@ -70,7 +70,7 @@ namespace PageManagerTests
 
             long maxPageId = 0;
 
-            const int workerCount = 10;
+            const int workerCount = 50;
 
             GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 

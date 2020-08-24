@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Threading;
 
 namespace PageManager
 {
-    public interface IPageSerializer<T> : IPage
+    public interface IPageSerializer<T, ST> : IPage
     {
         public bool CanFit(T items, ITransaction transaction);
         public uint GetSizeNeeded(T items);
         public void Merge(T items, ITransaction transaction);
-        public void Update(T item, ushort position, ITransaction transaction);
+        public void Update(ST item, ushort position, ITransaction transaction);
         public T Fetch(ITransaction tran);
     }
 
-    public abstract class PageSerializerBase<T> : IPageSerializer<T>
+    public abstract class PageSerializerBase<S /* Storage */, T /* Interface Type */, ST> : IPageSerializer<T, ST>
     {
         protected uint pageSize;
         protected ulong pageId;
@@ -22,7 +21,7 @@ namespace PageManager
         protected ulong nextPageId;
         protected uint rowCount;
         protected bool isDirty = false;
-        protected T items;
+        protected S items;
 
         public ulong NextPageId() => this.nextPageId;
         public ulong PageId() => this.pageId;
@@ -41,7 +40,7 @@ namespace PageManager
             this.isDirty = true;
         }
 
-        public uint RowCount() => this.rowCount;
+        public virtual uint RowCount() => this.rowCount;
 
         // Abstract fields.
         public abstract uint MaxRowCount();
@@ -54,7 +53,7 @@ namespace PageManager
         public abstract T Fetch(ITransaction tran);
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);
-        public abstract bool Equals([AllowNull] PageSerializerBase<T> other, ITransaction tran);
+        public abstract bool Equals([AllowNull] PageSerializerBase<S, T, ST> other, ITransaction tran);
 
         public bool IsDirty() => this.isDirty;
 
@@ -63,6 +62,6 @@ namespace PageManager
             this.isDirty = false;
         }
 
-        public abstract void Update(T item, ushort position, ITransaction transaction);
+        public abstract void Update(ST item, ushort position, ITransaction transaction);
     }
 }

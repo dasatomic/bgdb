@@ -152,7 +152,7 @@ namespace PageManagerTests
 
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.IsTrue(allocationMaps.Count == 1);
-            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran);
+            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(1, items.Length);
 
             int expectedMask = 1 << (int)page1.PageId() | 1 << (int)page2.PageId() | 1 << (int)page3.PageId();
@@ -174,7 +174,7 @@ namespace PageManagerTests
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.AreEqual(1, allocationMaps.Count);
 
-            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran);
+            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(11, items.Length);
             foreach (ulong pageId in pageIds)
             {

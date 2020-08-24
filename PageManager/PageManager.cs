@@ -210,13 +210,13 @@ namespace PageManager
 
                 if (gamPage.RowCount() * sizeof(int) * 8 > positionInPage)
                 {
-                    int[] elems = gamPage.Fetch(gamUpdateTran);
+                    int[] elems = gamPage.Fetch(gamUpdateTran).ToArray();
 
                     int elemPos = positionInPage / (8 * sizeof(int));
                     int offset = positionInPage % (8 * sizeof(int));
                     elems[elemPos] |= 0x1 << offset;
 
-                    gamPage.Update(new int[1] { elems[elemPos] }, (ushort)elemPos, gamUpdateTran);
+                    gamPage.Update(elems[elemPos], (ushort)elemPos, gamUpdateTran);
                 }
                 else
                 {
