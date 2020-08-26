@@ -6,6 +6,7 @@ using LogManager;
 using MetadataManager;
 using PageManager;
 using QueryProcessing;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,9 +43,10 @@ namespace UnitBenchmark
         }
     }
 
-    public class CreateTableBenchmarks
+    [RPlotExporter]
+    public class CreateTableBenchmark
     {
-        [Params(10, 100, 1000)]
+        [Params(100, 1000)]
         public int TableNumber;
 
         [Benchmark]
@@ -56,7 +58,7 @@ namespace UnitBenchmark
             {
                 await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
                 {
-                    string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                    string createTableQuery = $"CREATE TABLE Table{i} (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
                     await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                     await tran.Commit();
                 }
@@ -64,9 +66,10 @@ namespace UnitBenchmark
         }
     }
 
-    public class InsertTableSingleThreaded
+    [RPlotExporter]
+    public class InsertTableSingleThreadedBenchmark
     {
-        [Params(1000, 10000)]
+        [Params(100, 1000, 2000, 3000, 4000, 5000)]
         public int RowsInTableNumber;
 
         [Benchmark]
@@ -94,9 +97,6 @@ namespace UnitBenchmark
 
     class Program
     {
-        static void Main(string[] args)
-        {
-            var summary = BenchmarkRunner.Run<InsertTableSingleThreaded>();
-        }
+        static void Main(string[] args) => BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
     }
 }
