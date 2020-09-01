@@ -1,4 +1,6 @@
-﻿namespace PageManager
+﻿using System;
+
+namespace PageManager
 {
     public enum ColumnType
     {
@@ -8,4 +10,20 @@
         PagePointer = 3,
         MaxColumnType = 4,
     }
+
+    public static class ColumnTypeSize
+    {
+        public static ushort GetSize(ColumnType ct)
+        {
+            return ct switch
+            {
+                ColumnType.Double => sizeof(double),
+                ColumnType.Int => sizeof(int),
+                ColumnType.PagePointer => (ushort)PagePointerOffsetPair.Size,
+                ColumnType.StringPointer => sizeof(long),
+                _ => throw new ArgumentException()
+            };
+        }
+    }
+
 }

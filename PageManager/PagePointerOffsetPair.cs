@@ -1,5 +1,8 @@
-﻿namespace PageManager
+﻿using System.Runtime.InteropServices;
+
+namespace PageManager
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct PagePointerOffsetPair
     {
         public const uint Size = sizeof(long) + sizeof(int);
