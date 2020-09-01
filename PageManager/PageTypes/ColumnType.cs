@@ -19,8 +19,8 @@ namespace PageManager
             {
                 ColumnType.Double => sizeof(double),
                 ColumnType.Int => sizeof(int),
-                ColumnType.PagePointer => (ushort)PagePointerOffsetPair.Size,
-                ColumnType.StringPointer => sizeof(long),
+                ColumnType.StringPointer => (ushort)PagePointerOffsetPair.Size,
+                ColumnType.PagePointer => sizeof(long),
                 _ => throw new ArgumentException()
             };
         }

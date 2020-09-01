@@ -1,12 +1,47 @@
 ﻿using PageManager.UtilStructures;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace PageManager
 {
+    public unsafe struct RowHolderFixed
+    {
+        private byte[] storage;
+        private byte[] columnPosition;
+
+        public RowHolderFixed(ColumnType[] columnTypes)
+        {
+            this.columnPosition = new byte[columnTypes.Length];
+
+            for (int i = 0; i < columnTypes.Length - 1; i++)
+            {
+                this.columnPosition[i + 1] = (byte)(this.columnPosition[i] + ColumnTypeSize.GetSize(columnTypes[i]));
+            }
+
+            int totalSize = this.columnPosition[columnTypes.Length - 1] + ColumnTypeSize.GetSize(columnTypes[columnTypes.Length - 1]);
+
+            this.storage = new byte[totalSize];
+        }
+
+        public void Fill(Span<byte> arr)
+        {
+            arr.CopyTo(this.storage);
+        }
+
+        public T GetField<T>(int col) where T : unmanaged
+        {
+            fixed (byte* ptr = this.storage)
+            {
+                return *(T*)(ptr + columnPosition[col]);
+            }
+        }
+    }
+
     /// <summary>
     /// Structure:
     /// | bitmask | tuple beginnings | data |
@@ -46,7 +81,6 @@ namespace PageManager
             this.storage[pos] = 0;
             for (int i = 0; i < columnTypes.Length - 1; i++)
             {
-                // TODO: need to check the offsets.
                 this.storage[pos + 1] = (byte)(this.storage[pos] + (byte)ColumnTypeSize.GetSize(columnTypes[i]));
                 pos++;
             }
@@ -74,6 +108,11 @@ namespace PageManager
             }
         }
 
+        public void GetRowGeneric(int row, RowHolderFixed rowHolder)
+        {
+            ushort position = (ushort)(row * this.rowSize + this.dataStartPosition);
+            rowHolder.Fill(new Span<byte>(Unsafe.AsPointer(ref this.storage[position]), this.rowSize));
+        }
 
         // Private fields.
 
