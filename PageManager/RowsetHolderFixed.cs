@@ -11,7 +11,7 @@ namespace PageManager
 {
     public unsafe struct RowHolderFixed
     {
-        private byte[] storage;
+        public readonly byte[] Storage;
         private byte[] columnPosition;
 
         public RowHolderFixed(ColumnType[] columnTypes)
@@ -25,19 +25,27 @@ namespace PageManager
 
             int totalSize = this.columnPosition[columnTypes.Length - 1] + ColumnTypeSize.GetSize(columnTypes[columnTypes.Length - 1]);
 
-            this.storage = new byte[totalSize];
+            this.Storage = new byte[totalSize];
         }
 
         public void Fill(Span<byte> arr)
         {
-            arr.CopyTo(this.storage);
+            arr.CopyTo(this.Storage);
         }
 
         public T GetField<T>(int col) where T : unmanaged
         {
-            fixed (byte* ptr = this.storage)
+            fixed (byte* ptr = this.Storage)
             {
                 return *(T*)(ptr + columnPosition[col]);
+            }
+        }
+
+        public void SetField<T>(int col, T val) where T : unmanaged
+        {
+            fixed (byte* ptr = this.Storage)
+            {
+                *(T*)(ptr + columnPosition[col]) = val;
             }
         }
     }
@@ -51,20 +59,22 @@ namespace PageManager
     {
         private const int StorageSize = 4096;
         private fixed byte storage[StorageSize];
-        private ushort rowSize;
+        private readonly ushort rowSize;
 
         /// <summary>
         /// Reserved number of bytes for bitmask.
         /// </summary>
-        private ushort reservedPresenceBitmaskCount;
+        private readonly ushort reservedPresenceBitmaskCount;
 
         /// <summary>
         /// Reserved number of bytes for information about beginnings of individual rows
         /// in a tuple.
         /// </summary>
-        private ushort reservedColumnTupleOffsetsCount;
+        private readonly ushort reservedColumnTupleOffsetsCount;
 
-        private ushort dataStartPosition;
+        private readonly ushort dataStartPosition;
+
+        private readonly ushort maxRowCount;
 
         public RowsetHolderFixed(ColumnType[] columnTypes)
         {
@@ -89,6 +99,8 @@ namespace PageManager
             // TODO: Need to measure perf.
             int dataStartUnAligned = this.reservedPresenceBitmaskCount + this.reservedColumnTupleOffsetsCount;
             this.dataStartPosition = (ushort)(((dataStartUnAligned + 4 - 1) / 4) * 4);
+
+            maxRowCount = (ushort)((StorageSize - dataStartPosition) / rowSize);
         }
 
         public T GetRowGeneric<T>(int row, int col) where T : unmanaged
@@ -118,10 +130,35 @@ namespace PageManager
             rowHolder.Fill(new Span<byte>(Unsafe.AsPointer(ref this.storage[position]), this.rowSize));
         }
 
-        public void InsertRow(RowHolderFixed rowHolder)
+        public void SetRow(int row, RowHolderFixed rowHolder)
         {
+            ushort position = (ushort)(row * this.rowSize + this.dataStartPosition);
 
+            fixed (byte* ptr = this.storage)
+            {
+                BitArray.Set(row, ptr);
+                Marshal.Copy(rowHolder.Storage, 0, (IntPtr)(ptr + position), rowHolder.Storage.Length);
+            }
         }
+
+        public bool InsertRow(RowHolderFixed rowHolder)
+        {
+            fixed (byte* ptr = this.storage)
+            {
+                int emptyPosition = BitArray.FindUnset(ptr, this.maxRowCount);
+
+                if (emptyPosition == -1)
+                {
+                    return false;
+                }
+
+                this.SetRow(emptyPosition, rowHolder);
+
+                return true;
+            }
+        }
+
+        public ushort MaxRowCount() => this.maxRowCount;
 
         // Private fields.
 
