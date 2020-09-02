@@ -90,5 +90,82 @@ namespace PageManagerTests
                 }
             }
         }
+
+        [Test]
+        public void BitArrayFindUnset()
+        {
+            byte[] data = new byte[4] { byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                PageManager.UtilStructures.BitArray.Unset(13, ptr);
+
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 32);
+                Assert.AreEqual(13, position);
+            }
+        }
+
+        [Test]
+        public void BitArrayFindUnsetNoFind()
+        {
+            byte[] data = new byte[4] { byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 32);
+                Assert.AreEqual(-1, position);
+            }
+        }
+
+        [Test]
+        public void BitArrayFindUnsetFirstEmpty()
+        {
+            byte[] data = new byte[4] { byte.MinValue, byte.MaxValue, byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 32);
+                Assert.AreEqual(0, position);
+            }
+        }
+
+        [Test]
+        public void BitArrayFindUnsetSearchHalfWord()
+        {
+            byte[] data = new byte[2] { byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                PageManager.UtilStructures.BitArray.Unset(13, ptr);
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 15);
+                Assert.AreEqual(13, position);
+            }
+        }
+
+        [Test]
+        public void BitArrayFindUnsetSearchHalfWordNoFind()
+        {
+            byte[] data = new byte[2] { byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                PageManager.UtilStructures.BitArray.Unset(13, ptr);
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 13);
+                Assert.AreEqual(-1, position);
+            }
+        }
+
+        [Test]
+        public void BitArrayFindUnsetSearchHalfWordFindBoundary()
+        {
+            byte[] data = new byte[2] { byte.MaxValue, byte.MaxValue };
+
+            fixed (byte* ptr = data)
+            {
+                PageManager.UtilStructures.BitArray.Unset(12, ptr);
+                int position = PageManager.UtilStructures.BitArray.FindUnset(ptr, 13);
+                Assert.AreEqual(12, position);
+            }
+        }
     }
 }

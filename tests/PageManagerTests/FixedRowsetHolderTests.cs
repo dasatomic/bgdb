@@ -44,7 +44,7 @@ namespace PageManagerTests
             rs.SetRowGeneric(3, 3, new PagePointerOffsetPair(1, 17));
 
             RowHolderFixed rh = new RowHolderFixed(columnTypes);
-            rs.GetRowGeneric(3, rh);
+            rs.GetRow(3, rh);
 
             Assert.AreEqual(42, rh.GetField<int>(0));
             Assert.AreEqual(17, rh.GetField<int>(1));

@@ -85,6 +85,8 @@ namespace PageManager
                 pos++;
             }
 
+            // Align so start is divisible by 4.
+            // TODO: Need to measure perf.
             int dataStartUnAligned = this.reservedPresenceBitmaskCount + this.reservedColumnTupleOffsetsCount;
             this.dataStartPosition = (ushort)(((dataStartUnAligned + 4 - 1) / 4) * 4);
         }
@@ -108,10 +110,17 @@ namespace PageManager
             }
         }
 
-        public void GetRowGeneric(int row, RowHolderFixed rowHolder)
+        public void GetRow(int row, RowHolderFixed rowHolder)
         {
+            System.Diagnostics.Debug.Assert(IsPresent(row));
+
             ushort position = (ushort)(row * this.rowSize + this.dataStartPosition);
             rowHolder.Fill(new Span<byte>(Unsafe.AsPointer(ref this.storage[position]), this.rowSize));
+        }
+
+        public void InsertRow(RowHolderFixed rowHolder)
+        {
+
         }
 
         // Private fields.
