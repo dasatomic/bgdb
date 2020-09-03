@@ -13,7 +13,7 @@ namespace PageManager
         public const ulong BootPageId = 0;
     }
 
-    public interface IPageManager :  IAllocateIntegerPage, IAllocateDoublePage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator, IDisposable
+    public interface IPageManager :  IAllocateIntegerPage, IAllocateStringPage, IAllocateLongPage, IAllocateMixedPage, IBootPageAllocator, IDisposable
     {
         public Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnType[] columnTypes);
         public Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran);

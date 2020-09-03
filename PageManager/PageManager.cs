@@ -110,7 +110,6 @@ namespace PageManager
             page = pageType switch
             {
                 PageType.IntPage => new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
-                PageType.DoublePage => new DoubleOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.StringPage => new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran),
                 PageType.LongPage => new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
@@ -288,24 +287,6 @@ namespace PageManager
             }
 
             return (IntegerOnlyPage)page;
-        }
-
-        public async Task<DoubleOnlyPage> AllocatePageDouble(ulong prevPage, ulong nextPage, ITransaction tran)
-        {
-            IPage page = await AllocatePage(PageType.DoublePage, prevPage, nextPage, tran).ConfigureAwait(false);
-            return (DoubleOnlyPage)page;
-        }
-
-        public async Task<DoubleOnlyPage> GetPageDouble(ulong pageId, ITransaction tran)
-        {
-            IPage page = await this.GetPage(pageId, tran, PageType.DoublePage, null).ConfigureAwait(false);
-
-            if (page.PageType() != PageType.DoublePage)
-            {
-                throw new InvalidCastException("Can't cast to double page");
-            }
-
-            return (DoubleOnlyPage)page;
         }
 
         public async Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)

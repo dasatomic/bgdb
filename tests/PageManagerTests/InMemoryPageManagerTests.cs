@@ -57,19 +57,15 @@ namespace PageManagerTests
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
             var intPage = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-            var doublePage = await pageManager.AllocatePageDouble(DefaultPrevPage, DefaultNextPage, tran);
             var strPage = await pageManager.AllocatePageStr(DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
-            Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
 
             intPage = await pageManager.GetPageInt(intPage.PageId(), tran);
-            doublePage = await pageManager.GetPageDouble(doublePage.PageId(), tran);
             strPage = await pageManager.GetPageStr(strPage.PageId(), tran);
 
             Assert.AreEqual(PageType.IntPage, intPage.PageType());
-            Assert.AreEqual(PageType.DoublePage, doublePage.PageType());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
         }
 
@@ -79,7 +75,7 @@ namespace PageManagerTests
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             var intPage = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
 
-            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageDouble(intPage.PageId(), tran); });
+            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageStr(intPage.PageId(), tran); });
         }
 
         [Test]

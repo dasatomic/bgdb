@@ -24,7 +24,7 @@ namespace UnitBenchmark
 
             for (int i = 0; i < IterNum; i++)
             {
-                RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, memory);
+                RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, memory, true);
 
                 for (int j = 0; j < 10; j++)
                 {

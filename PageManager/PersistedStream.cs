@@ -112,7 +112,6 @@ namespace PageManager
 
                 return pageType switch
                 {
-                    PageType.DoublePage => new DoubleOnlyPage(this.binaryReader),
                     PageType.IntPage => new IntegerOnlyPage(this.binaryReader),
                     PageType.LongPage => new LongOnlyPage(this.binaryReader),
                     PageType.MixedPage => new MixedPage(this.binaryReader, columnTypes),

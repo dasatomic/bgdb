@@ -144,19 +144,6 @@ namespace LogManagerTests
         }
 
         [Test]
-        public async Task RollbackDoublePage()
-        {
-            await RollbackTest1<double>(
-                (pm, tran) =>
-                {
-                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
-                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(new double[] { 3, 2, 1 }, tran);
-                    return page;
-                });
-        }
-
-        [Test]
         public async Task RollbackStrPage()
         {
             await RollbackTest1<char[]>(
@@ -205,25 +192,6 @@ namespace LogManagerTests
                     p.Merge(new long[] { 3, 2, 1 }, tran);
                 },
                 (i) => Assert.AreEqual(new long[] { 3, 2, 1 }, i));
-        }
-
-        [Test]
-        public async Task RollbackDoublePage2()
-        {
-            await RollbackTest2<double>(
-                (pm, tran) =>
-                {
-                    var page = pm.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
-                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(new double[] { 3, 2, 1 }, tran);
-                    return page;
-                },
-                (p, tran) =>
-                {
-                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    p.Merge(new double[] { 3, 2, 1 }, tran);
-                },
-                (i) => Assert.AreEqual(new double[] { 3, 2, 1 }, i));
         }
 
         [Test]
@@ -360,11 +328,10 @@ namespace LogManagerTests
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
                 GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                const int pageCount = 3;
+                const int pageCount = 2;
 
                 var p1 = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-                var p2 = await pageManager.AllocatePageDouble(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-                var p3 = await pageManager.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var p2 = await pageManager.AllocatePageInt(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 await tran1.Commit();
 
@@ -382,12 +349,10 @@ namespace LogManagerTests
                 Assert.AreEqual(pageCount, pageManager.PageCount());
 
                 var np1 = await pageManager.GetMixedPage(p1.PageId(), new DummyTran(), types1);
-                var np2 = await pageManager.GetPageDouble(p2.PageId(), new DummyTran());
-                var np3 = await pageManager.GetPageInt(p3.PageId(), new DummyTran());
+                var np2 = await pageManager.GetPageInt(p2.PageId(), new DummyTran());
 
                 Assert.IsTrue(p1.Equals(np1, TestGlobals.DummyTran));
                 Assert.IsTrue(p2.Equals(np2, TestGlobals.DummyTran));
-                Assert.IsTrue(p3.Equals(np3, TestGlobals.DummyTran));
             }
         }
     }
