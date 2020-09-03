@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using PageManager;
 using System;
+using System.Linq;
 
 namespace PageManagerTests
 {
@@ -148,6 +149,35 @@ namespace PageManagerTests
 
             Assert.AreEqual(rh, rhnew);
             Assert.AreEqual(oldFreeSpace, rsnew.FreeSpaceForItems());
+        }
+
+        [Test]
+        public void Iterate()
+        {
+            Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
+            var columnTypes = new ColumnType[] { ColumnType.Int, ColumnType.Int, ColumnType.Double, ColumnType.StringPointer };
+            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+
+            for (int i = 0; i < rs.MaxRowCount(); i++)
+            {
+                RowHolderFixed rh = new RowHolderFixed(columnTypes);
+                rh.SetField<int>(0, i);
+                rh.SetField<int>(1, i + 1);
+                rh.SetField<double>(2, 3.1);
+                rh.SetField(3, new PagePointerOffsetPair(i, i));
+                Assert.AreNotEqual(-1, rs.InsertRow(rh));
+            }
+
+            var iter = rs.Iterate(columnTypes).ToArray();
+
+            for (int i = 0; i < rs.MaxRowCount(); i++)
+            {
+                var rh = iter[i];
+                Assert.AreEqual(i, rh.GetField<int>(0));
+                Assert.AreEqual(i + 1, rh.GetField<int>(1));
+                Assert.AreEqual(3.1, rh.GetField<double>(2));
+                Assert.AreEqual(new PagePointerOffsetPair(i, i), rh.GetField<PagePointerOffsetPair>(3));
+            }
         }
     }
 }
