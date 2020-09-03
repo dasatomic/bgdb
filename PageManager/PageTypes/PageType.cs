@@ -4,7 +4,6 @@
     {
         IntPage,
         StringPage,
-        LongPage,
         MixedPage,
     }
 }

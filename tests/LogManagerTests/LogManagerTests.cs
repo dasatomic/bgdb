@@ -131,19 +131,6 @@ namespace LogManagerTests
         }
 
         [Test]
-        public async Task RollbackLongPage()
-        {
-            await RollbackTest1<long>(
-                (pm, tran) =>
-                {
-                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
-                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(new long [] { 3, 2, 1 }, tran);
-                    return page;
-                });
-        }
-
-        [Test]
         public async Task RollbackStrPage()
         {
             await RollbackTest1<char[]>(
@@ -173,25 +160,6 @@ namespace LogManagerTests
                     p.Merge(new[] { 3, 2, 1 }, tran);
                 },
                 (i) => Assert.AreEqual(new int[] { 3, 2, 1 }, i));
-        }
-
-        [Test]
-        public async Task RollbackLongPage2()
-        {
-            await RollbackTest2<long>(
-                (pm, tran) =>
-                {
-                    var page = pm.AllocatePageLong(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
-                    using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(new long[] { 3, 2, 1 }, tran);
-                    return page;
-                },
-                (p, tran) =>
-                {
-                    using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    p.Merge(new long[] { 3, 2, 1 }, tran);
-                },
-                (i) => Assert.AreEqual(new long[] { 3, 2, 1 }, i));
         }
 
         [Test]

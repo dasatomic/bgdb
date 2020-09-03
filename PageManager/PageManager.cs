@@ -112,7 +112,6 @@ namespace PageManager
                 PageType.IntPage => new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.StringPage => new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran),
-                PageType.LongPage => new LongOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 _ => throw new ArgumentException("Unknown page type")
             };
 
@@ -305,24 +304,6 @@ namespace PageManager
             }
 
             return (StringOnlyPage)page;
-        }
-
-        public async Task<LongOnlyPage> AllocatePageLong(ulong prevPage, ulong nextPage, ITransaction tran)
-        {
-            IPage page = await AllocatePage(PageType.LongPage, prevPage, nextPage, tran).ConfigureAwait(false);
-            return (LongOnlyPage)page;
-        }
-
-        public async Task<LongOnlyPage> GetPageLong(ulong pageId, ITransaction tran)
-        {
-            IPage page = await this.GetPage(pageId, tran, PageType.LongPage, null).ConfigureAwait(false);
-
-            if (page.PageType() != PageType.LongPage)
-            {
-                throw new InvalidCastException("Can't cast to long page");
-            }
-
-            return (LongOnlyPage)page;
         }
 
         public async Task<MixedPage> AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran)
