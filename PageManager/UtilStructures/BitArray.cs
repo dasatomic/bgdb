@@ -1,4 +1,6 @@
-﻿namespace PageManager.UtilStructures
+﻿using System;
+
+namespace PageManager.UtilStructures
 {
     public static class BitArray
     {
@@ -15,6 +17,11 @@
         public static unsafe void Unset(int row, byte* storage)
         {
             storage[row / 8] &= (byte)(~(1 << (row % 8)));
+        }
+
+        public static bool IsSet(int row, Span<byte> storage)
+        {
+            return (storage[row / 8] & (byte)(1 << (row % 8))) != 0;
         }
 
         public static unsafe int FindUnset(byte* storage, int max)
