@@ -47,7 +47,7 @@ namespace PageManager
                 logger.LogInfo("Initializing the persisted stream.");
                 using (ITransaction tran = new NotLoggedTransaction())
                 {
-                    IntegerOnlyPage allocationMapFirstPage = allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    IntegerOnlyPage allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
                     this.AllocatationMapPages.Add(allocationMapFirstPage);
                     this.persistedStream.MarkInitialized();
                 }
