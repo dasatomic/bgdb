@@ -17,55 +17,16 @@ namespace PageManagerTests
         private DummyTran tran = new DummyTran();
 
         [Test]
-        public async Task VerifyAllocatePage()
-        {
-            var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-
-            IPage page1 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            IPage page2 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            IPage page3 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-
-            Assert.IsNotNull(page1);
-            Assert.IsNotNull(page2);
-            Assert.IsNotNull(page3);
-
-            Assert.IsTrue(page1.PageId() != page2.PageId());
-            Assert.IsTrue(page2.PageId() != page3.PageId());
-        }
-
-        [Test]
         public async Task GetPageById()
         {
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
-            await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-            var page2 = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
-
-            ulong pageId = page2.PageId();
-
-            int[] items = new int[] { 1, 2, 3 };
-            page2.Merge(items, new DummyTran());
-
-            page2 = await pageManager.GetPageInt(pageId, tran);
-
-            Assert.AreEqual(items, page2.Fetch(TestGlobals.DummyTran));
-        }
-
-        [Test]
-        public async Task MixedTypePages()
-        {
-            IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-
-            var intPage = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
             var strPage = await pageManager.AllocatePageStr(DefaultPrevPage, DefaultNextPage, tran);
 
-            Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
 
-            intPage = await pageManager.GetPageInt(intPage.PageId(), tran);
             strPage = await pageManager.GetPageStr(strPage.PageId(), tran);
 
-            Assert.AreEqual(PageType.IntPage, intPage.PageType());
             Assert.AreEqual(PageType.StringPage, strPage.PageType());
         }
 
@@ -73,9 +34,9 @@ namespace PageManagerTests
         public async Task GetPageOfInvalidType()
         {
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-            var intPage = await pageManager.AllocatePageInt(DefaultPrevPage, DefaultNextPage, tran);
+            var strPage = await pageManager.AllocatePageStr(DefaultPrevPage, DefaultNextPage, tran);
 
-            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageStr(intPage.PageId(), tran); });
+            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageStr(strPage.PageId(), tran); });
         }
 
         [Test]
@@ -142,9 +103,9 @@ namespace PageManagerTests
         {
             var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
-            IPage page1 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            IPage page2 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            IPage page3 = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            IPage page1 = await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
+            IPage page2 = await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
+            IPage page3 = await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
 
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.IsTrue(allocationMaps.Count == 1);
@@ -163,7 +124,7 @@ namespace PageManagerTests
 
             for (int i = 2; i < 32 * 10 + 5; i++)
             {
-                IPage page = await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+                IPage page = await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
                 pageIds.Add(page.PageId());
             }
 

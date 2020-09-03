@@ -270,24 +270,6 @@ namespace PageManager
             return await this.persistedStream.SeekAndRead(position, pageType, columnTypes).ConfigureAwait(false);
         }
 
-        public async Task<IntegerOnlyPage> AllocatePageInt(ulong prevPage, ulong nextPage, ITransaction tran)
-        {
-            IPage page = await AllocatePage(PageType.IntPage, prevPage, nextPage, tran).ConfigureAwait(false);
-            return (IntegerOnlyPage)page;
-        }
-
-        public async Task<IntegerOnlyPage> GetPageInt(ulong pageId, ITransaction tran)
-        {
-            IPage page = await this.GetPage(pageId, tran, PageType.IntPage, null).ConfigureAwait(false);
-
-            if (page.PageType() != PageType.IntPage)
-            {
-                throw new InvalidCastException("Can't cast to int page");
-            }
-
-            return (IntegerOnlyPage)page;
-        }
-
         public async Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)
         {
             IPage page = await AllocatePage(PageType.StringPage, prevPage, nextPage, tran).ConfigureAwait(false);
