@@ -9,6 +9,9 @@ namespace PageManager
     /// <summary>
     /// Structure:
     /// | page data | bitmask | tuple beginnings | data |
+    /// Page is marked as unsafe struct which initializes it self
+    /// directly from loaded memory (i.e. from buffer pool which just loads raw bytes from disk.
+    /// It doesn't care about Endianess and presumes that data is loaded in the same format as it was stored.
     /// </summary>
     public unsafe struct RowsetHolderFixed
     {
@@ -34,6 +37,8 @@ namespace PageManager
 
         public RowsetHolderFixed(ColumnType[] columnTypes, Memory<byte> storage, bool init)
         {
+            System.Diagnostics.Debug.Assert(BitConverter.IsLittleEndian, "Rowset holder fixed assumes that we are running on little endian");
+
             this.rowSize = GetRowSize(columnTypes);
             this.storage = storage;
             this.rowCount = 0;
