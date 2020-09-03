@@ -167,5 +167,19 @@ namespace PageManagerTests
                 Assert.AreEqual(12, position);
             }
         }
+
+        [Test]
+        public void BitArrayCount1()
+        {
+            byte[] data = new byte[2] { 7, 1 };
+            Assert.AreEqual(4, PageManager.UtilStructures.BitArray.CountSet(new Span<byte>(data)));
+        }
+
+        [Test]
+        public void BitArrayCount2()
+        {
+            byte[] data = BitConverter.GetBytes(ulong.MaxValue);
+            Assert.AreEqual(8 * sizeof(ulong), PageManager.UtilStructures.BitArray.CountSet(new Span<byte>(data)));
+        }
     }
 }

@@ -139,6 +139,7 @@ namespace PageManagerTests
             rh.SetField(3, new PagePointerOffsetPair(5, 5));
 
             Assert.AreEqual(0, rs.InsertRow(rh));
+            int oldFreeSpace = rs.FreeSpaceForItems();
 
             RowsetHolderFixed rsnew = new RowsetHolderFixed(columnTypes, mem, false);
 
@@ -146,6 +147,7 @@ namespace PageManagerTests
             rsnew.GetRow(0, ref rhnew);
 
             Assert.AreEqual(rh, rhnew);
+            Assert.AreEqual(oldFreeSpace, rsnew.FreeSpaceForItems());
         }
     }
 }

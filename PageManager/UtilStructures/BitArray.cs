@@ -24,6 +24,23 @@ namespace PageManager.UtilStructures
             return (storage[row / 8] & (byte)(1 << (row % 8))) != 0;
         }
 
+        public static ushort CountSet(Span<byte> storage)
+        {
+            ushort cnt = 0;
+            foreach (byte b in storage)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    if ((b & (1 << j)) != 0)
+                    {
+                        cnt++;
+                    }
+                }
+            }
+
+            return cnt;
+        }
+
         public static unsafe int FindUnset(byte* storage, int max)
         {
             for (int i = 0; i < max / 8; i++)

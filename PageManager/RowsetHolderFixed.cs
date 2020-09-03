@@ -47,6 +47,12 @@ namespace PageManager
 
             if (init)
             {
+                // set bitmask to 0.
+                for (int i = 0; i < this.reservedPresenceBitmaskCount; i++)
+                {
+                    this.storage.Span[i] = 0;
+                }
+
                 int pos = this.reservedPresenceBitmaskCount;
                 this.storage.Span[pos] = 0;
                 for (int i = 0; i < columnTypes.Length - 1; i++)
@@ -54,6 +60,11 @@ namespace PageManager
                     this.storage.Span[pos + 1] = (byte)(this.storage.Span[pos] + (byte)ColumnTypeSize.GetSize(columnTypes[i]));
                     pos++;
                 }
+            }
+            else
+            {
+                // Set row count.
+                this.rowCount = BitArray.CountSet(storage.Span.Slice(0, this.reservedPresenceBitmaskCount));
             }
 
             // Align so start is divisible by 4.
