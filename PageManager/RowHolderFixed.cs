@@ -22,6 +22,18 @@ namespace PageManager
             this.Storage = new byte[totalSize];
         }
 
+        public RowHolderFixed(ColumnType[] columnTypes, byte[] byteArr)
+        {
+            this.ColumnPosition = new byte[columnTypes.Length];
+
+            for (int i = 0; i < columnTypes.Length - 1; i++)
+            {
+                this.ColumnPosition[i + 1] = (byte)(this.ColumnPosition[i] + ColumnTypeSize.GetSize(columnTypes[i]));
+            }
+
+            this.Storage = byteArr;
+        }
+
         public void Fill(Span<byte> arr)
         {
             arr.CopyTo(this.Storage);

@@ -218,7 +218,7 @@ namespace PageManager
                 }
                 else
                 {
-                    gamPage.Merge(new int[1] { 1 << positionInPage }, gamUpdateTran);
+                    gamPage.Insert(1 << positionInPage, gamUpdateTran);
                 }
             }
         }

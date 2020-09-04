@@ -34,31 +34,29 @@ namespace PageManagerTests
         public async Task GetPageOfInvalidType()
         {
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-            var strPage = await pageManager.AllocatePageStr(DefaultPrevPage, DefaultNextPage, tran);
+            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
-            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageStr(strPage.PageId(), tran); });
+            MixedPage page = await pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+
+            Assert.ThrowsAsync<InvalidCastException>(async () => { await pageManager.GetPageStr(page.PageId(), tran); });
         }
 
         [Test]
         public async Task PagesOfMixedType()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
 
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
 
-            RowsetHolder holder = new RowsetHolder(types);
-            holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-            page.Merge(holder, new DummyTran());
+
+            rows.ForEach(r => page.Insert(r, tran));
 
             page = await pageManager.GetMixedPage(page.PageId(), tran, types);
 
-            RowsetHolder holder2 = page.Fetch(TestGlobals.DummyTran);
+            var holder2 = page.Fetch(TestGlobals.DummyTran);
 
-            Assert.AreEqual(holder2.GetIntColumn(0), intColumns[0]);
-            Assert.AreEqual(holder2.GetIntColumn(1), intColumns[1]);
-            Assert.AreEqual(holder2.GetDoubleColumn(2), doubleColumns[0]);
-            Assert.AreEqual(holder2.GetIntColumn(3), intColumns[2]);
+            Assert.AreEqual(rows.ToArray(), holder2.Iterate(types).ToArray());
         }
 
         [Test]

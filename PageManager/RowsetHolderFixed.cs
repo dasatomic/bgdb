@@ -1,6 +1,7 @@
 ﻿using PageManager.UtilStructures;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -138,6 +139,12 @@ namespace PageManager
             }
         }
 
+        public void DeleteRow(int position)
+        {
+            BitArray.Unset(position, this.storage.Span);
+            this.rowCount--;
+        }
+
         // TODO: This is not performant and it is not natural to pass column type here.
         public IEnumerable<RowHolderFixed> Iterate(ColumnType[] columnTypes)
         {
@@ -157,6 +164,38 @@ namespace PageManager
         public int FreeSpaceForItems()
         {
             return this.maxRowCount - this.rowCount;
+        }
+
+        public int GetRowCount()
+        {
+            return this.rowCount;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is RowsetHolderFixed)
+            {
+                RowsetHolderFixed c = (RowsetHolderFixed)obj;
+
+                if (this.storage.Length != c.storage.Length)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < this.storage.Length; i++)
+                {
+                    if (this.storage.Span[i] != c.storage.Span[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         // Private fields.

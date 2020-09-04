@@ -19,6 +19,11 @@ namespace PageManager.UtilStructures
             storage[row / 8] &= (byte)(~(1 << (row % 8)));
         }
 
+        public static unsafe void Unset(int row, Span<byte> storage)
+        {
+            storage[row / 8] &= (byte)(~(1 << (row % 8)));
+        }
+
         public static bool IsSet(int row, Span<byte> storage)
         {
             return (storage[row / 8] & (byte)(1 << (row % 8))) != 0;

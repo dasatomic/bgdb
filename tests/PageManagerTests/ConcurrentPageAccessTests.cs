@@ -28,7 +28,7 @@ namespace PageManagerTests
 
             const int workerCount = 50;
 
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
 
             async Task generatePagesAction()
             {
@@ -38,9 +38,7 @@ namespace PageManagerTests
                     {
                         var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran).ConfigureAwait(false);
                         await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive).ConfigureAwait(false);
-                        RowsetHolder holder = new RowsetHolder(types);
-                        holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-                        mp.Merge(holder, tran);
+                        rows.ForEach(r => mp.Insert(r, tran));
                         await tran.Commit().ConfigureAwait(false);
                     }
                 }
@@ -72,7 +70,7 @@ namespace PageManagerTests
 
             const int workerCount = 50;
 
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
 
             async Task generatePagesAction()
             {
@@ -84,9 +82,7 @@ namespace PageManagerTests
                         {
                             var mp = await pm.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran).ConfigureAwait(false);
                             await tran.AcquireLock(mp.PageId(), LockTypeEnum.Exclusive).ConfigureAwait(false);
-                            RowsetHolder holder = new RowsetHolder(types);
-                            holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-                            mp.Merge(holder, tran);
+                            rows.ForEach(r => mp.Insert(r, tran));
                             await tran.Commit().ConfigureAwait(false);
                             Interlocked.Exchange(ref maxPageId, (long)mp.PageId());
                         }

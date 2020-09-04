@@ -125,7 +125,9 @@ namespace LogManagerTests
                 {
                     var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() }, tran);
+                    page.Insert("TST".ToCharArray(), tran);
+                    page.Insert("TST".ToCharArray(), tran);
+                    page.Insert("TST".ToCharArray(), tran);
                     return page;
                 });
         }
@@ -133,19 +135,19 @@ namespace LogManagerTests
         [Test]
         public async Task RollbackStrPage2()
         {
-            var pageContent = new char[][] { "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() };
+            var pageContent = new List<char[]>{ "TST".ToCharArray(), "TST".ToCharArray(), "TST".ToCharArray() };
             await RollbackTest2<char[]>(
                 (pm, tran) =>
                 {
                     var page = pm.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
                     using var rs = tran.AcquireLock(page.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    page.Merge(pageContent, tran);
+                    pageContent.ForEach(r => page.Insert(r, tran));
                     return page;
                 },
                 (p, tran) =>
                 {
                     using var rs = tran.AcquireLock(p.PageId(), LockManager.LockTypeEnum.Exclusive).Result;
-                    p.Merge(pageContent, tran);
+                    pageContent.ForEach(r => p.Insert(r, tran));
                 },
                 (i) => Assert.AreEqual(pageContent, i));
         }
@@ -161,25 +163,19 @@ namespace LogManagerTests
 
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
-                GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
-
-                RowsetHolder holder = new RowsetHolder(types1);
-                holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-
+                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] columnType);
+                MixedPage page = await pageManager.AllocateMixedPage(columnType, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
                 {
                     using var rs = await tran1.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
-                    page.Merge(holder, tran1);
+                    rows.ForEach(r => page.Insert(r, tran1));
                 }
+
                 await tran1.Commit();
 
                 await using ITransaction tran2 = manager.CreateTransaction(pageManager);
-                GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
-                RowsetHolder updateRow = new RowsetHolder(types2);
-                updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
                 {
                     using var rs = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
-                    page.Merge(updateRow, tran2);
+                    rows.ForEach(r => page.Insert(r, tran2));
                 }
 
                 await tran2.Rollback();
@@ -189,9 +185,9 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
-                RowsetHolder pageContent = page.Fetch(tran3);
+                RowsetHolderFixed pageContent = page.Fetch(tran3);
 
-                Assert.AreEqual(holder, pageContent);
+                Assert.AreEqual(rows, pageContent.Iterate(columnType));
             }
         }
 
@@ -206,25 +202,21 @@ namespace LogManagerTests
 
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
-                GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-                MixedPage page = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
+                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] columnTypes);
+                MixedPage page = await pageManager.AllocateMixedPage(columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
-                RowsetHolder holder = new RowsetHolder(types1);
-                holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
                 {
                     using var rs = await tran1.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
-                    page.Merge(holder, tran1);
+                    rows.ForEach(r => page.Insert(r, tran1));
                 }
+
                 await tran1.Commit();
 
                 await using ITransaction tran2 = manager.CreateTransaction(pageManager);
-                GenerateDataUtils.GenerateSampleData(out ColumnType[] types2, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2, 1);
-                RowsetHolder updateRow = new RowsetHolder(types2);
-                updateRow.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
 
                 {
                     using var rs = await tran2.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
-                    page.Merge(updateRow, tran2);
+                    rows.ForEach(r => page.Insert(r, tran2));
                 }
 
                 await tran2.Commit();
@@ -234,7 +226,7 @@ namespace LogManagerTests
 
                 await using ITransaction tran3 = manager.CreateTransaction(pageManager);
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
-                holder = page.Fetch(tran3);
+                var rowsPriorToRollback = page.Fetch(tran3);
 
                 stream.Seek(0, SeekOrigin.Begin);
                 pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
@@ -246,9 +238,9 @@ namespace LogManagerTests
                     await manager.Recovery(br, pageManager, recTran);
                 }
 
-                var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran(), types1);
-                RowsetHolder pageContent = page.Fetch(tran3);
-                Assert.AreEqual(holder, pageContent);
+                var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran(), columnTypes);
+                RowsetHolderFixed pageContent = page.Fetch(tran3);
+                Assert.AreEqual(rowsPriorToRollback, pageContent);
             }
         }
 

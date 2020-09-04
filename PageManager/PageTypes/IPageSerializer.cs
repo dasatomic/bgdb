@@ -6,9 +6,8 @@ namespace PageManager
 {
     public interface IPageSerializer<T, ST> : IPage
     {
-        public bool CanFit(T items, ITransaction transaction);
-        public uint GetSizeNeeded(T items);
-        public void Merge(T items, ITransaction transaction);
+        public bool CanFit(ST items, ITransaction transaction);
+        public int Insert(ST items, ITransaction transaction);
         public void Update(ST item, ushort position, ITransaction transaction);
         public T Fetch(ITransaction tran);
     }
@@ -45,9 +44,7 @@ namespace PageManager
         // Abstract fields.
         public abstract uint MaxRowCount();
 
-        public abstract void Merge(T items, ITransaction transaction);
-        public abstract uint GetSizeNeeded(T items);
-        public abstract bool CanFit(T items, ITransaction transaction);
+        public abstract bool CanFit(ST items, ITransaction transaction);
         public abstract PageType PageType();
         public abstract void Persist(BinaryWriter destination);
         public abstract T Fetch(ITransaction tran);
@@ -63,5 +60,6 @@ namespace PageManager
         }
 
         public abstract void Update(ST item, ushort position, ITransaction transaction);
+        public abstract int Insert(ST item, ITransaction transaction);
     }
 }

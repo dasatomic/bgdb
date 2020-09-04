@@ -112,6 +112,32 @@ namespace QueryProcessing
             return rh;
         }
 
+        public async Task<RowHolderFixed> ToRowHolderFixed(HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
+        {
+            RowHolderFixed rhf = new RowHolderFixed(columnTypes);
+            int iPos = 0, dPos = 0, sPos = 0;
+            int colNum = 0;
+            PagePointerOffsetPair[] offsetCols = await PushStringsToStringHeap(stringAlloc, tran).ConfigureAwait(false);
+
+            foreach (ColumnType ct in this.columnTypes)
+            {
+                if (ct == ColumnType.Double)
+                {
+                    rhf.SetField<double>(colNum, this.doubleCols[dPos++]);
+                } else if (ct == ColumnType.Int)
+                {
+                    rhf.SetField<int>(colNum, this.intCols[iPos++]);
+                } else if (ct == ColumnType.StringPointer)
+                {
+                    rhf.SetField<PagePointerOffsetPair>(colNum, offsetCols[sPos++]);
+                }
+
+                colNum++;
+            }
+
+            return rhf;
+        }
+
         private async Task<PagePointerOffsetPair[]> PushStringsToStringHeap(HeapWithOffsets<char[]> stringAloc, ITransaction tran)
         {
             PagePointerOffsetPair[] locs = new PagePointerOffsetPair[stringCols.Length];

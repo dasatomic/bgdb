@@ -59,14 +59,13 @@ namespace MetadataManager
 
         public async Task<bool> Exists(TableCreateDefinition def, ITransaction tran)
         {
-            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
             {
-                foreach (PagePointerOffsetPair stringPointer in rh.GetStringPointerColumn(1))
+                PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(1);
+
+                if (def.TableName == new string(await stringHeap.Fetch(stringPointer, tran)))
                 {
-                    if (def.TableName == new string(await stringHeap.Fetch(stringPointer, tran)))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -88,16 +87,18 @@ namespace MetadataManager
             int id = 1;
             if (!(await pageListCollection.IsEmpty(tran)))
             {
-                int maxId = await pageListCollection.Max<int>(rh => rh.GetIntColumn(0).Max(), startMin: 0, tran);
+                int maxId = await pageListCollection.Max<int>(rh => rh.GetField<int>(0), startMin: 0, tran);
                 id = maxId + 1;
             }
 
             MixedPage rootPage = await this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
-            RowsetHolder rh = new RowsetHolder(columnDefinitions);
+            RowHolderFixed rh = new RowHolderFixed(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.TableName.ToCharArray(), tran);
 
-            rh.SetColumns(new int[1][] { new[] { id } }, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[1][] { new[] { (long)rootPage.PageId() }});
+            rh.SetField<int>(0, id);
+            rh.SetField<PagePointerOffsetPair>(1, namePointer);
+            rh.SetField<long>(2, (long)rootPage.PageId());
             await pageListCollection.Add(rh, tran);
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
@@ -118,35 +119,32 @@ namespace MetadataManager
 
         public async IAsyncEnumerable<MetadataTable> Iterate(ITransaction tran)
         {
-            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
             {
-                for (int i = 0; i < rh.GetRowCount(); i++)
-                {
-                    var mdObj = 
-                        new MetadataTable()
-                        {
-                            TableId = rh.GetIntColumn(MetadataTable.TableIdColumnPos)[i],
-                            RootPage = (ulong)rh.GetPagePointerColumn(MetadataTable.RootPageColumnPos)[i],
-                        };
-
-                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataTable.TableNameColumnPos)[i];
-                    char[] tableName= await this.stringHeap.Fetch(stringPointer, tran);
-
-                    mdObj.TableName = new string(tableName);
-
-                    List<MetadataColumn> columns = new List<MetadataColumn>();
-                    await foreach (var column in this.columnManager.Iterate(tran))
+                var mdObj = 
+                    new MetadataTable()
                     {
-                        if (column.TableId == mdObj.TableId)
-                        {
-                            columns.Add(column);
-                        }
+                        TableId = rh.GetField<int>(MetadataTable.TableIdColumnPos),
+                        RootPage = (ulong)rh.GetField<long>(MetadataTable.RootPageColumnPos),
+                    };
+
+                PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataTable.TableNameColumnPos);
+                char[] tableName= await this.stringHeap.Fetch(stringPointer, tran);
+
+                mdObj.TableName = new string(tableName);
+
+                List<MetadataColumn> columns = new List<MetadataColumn>();
+                await foreach (var column in this.columnManager.Iterate(tran))
+                {
+                    if (column.TableId == mdObj.TableId)
+                    {
+                        columns.Add(column);
                     }
-
-                    mdObj.Columns = columns.ToArray();
-
-                    yield return mdObj;
                 }
+
+                mdObj.Columns = columns.ToArray();
+
+                yield return mdObj;
             }
         }
 

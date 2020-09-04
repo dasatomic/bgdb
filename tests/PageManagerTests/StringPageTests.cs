@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Test.Common;
@@ -45,14 +46,15 @@ namespace PageManagerTests
         [Test]
         public void VerifySerializeDeserialize()
         {
-            char[][] startArray = new char[][]
+            var startArray = new List<char[]> 
             { 
                 "123".ToCharArray(),
                 "4321".ToCharArray(),
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray, new DummyTran());
+
+            startArray.ForEach(i => strPage.Insert(i, new DummyTran()));
             char[][] content = strPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray, content);
         }
@@ -60,13 +62,13 @@ namespace PageManagerTests
         [Test]
         public void VerifyDoubleSerializeDeserialize()
         {
-            char[][] startArray = new char[][]
+            var startArray = new List<char[]>
             { 
                 "123".ToCharArray(),
                 "4321".ToCharArray(),
             };
 
-            char[][] secondArray = new char[][]
+            var secondArray = new List<char[]>
             { 
                 "321".ToCharArray(),
                 "1234".ToCharArray(),
@@ -74,11 +76,11 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            strPage.Merge(startArray, new DummyTran());
+            startArray.ForEach(i => strPage.Insert(i, new DummyTran()));
             char[][] content = strPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray, content);
 
-            strPage.Merge(secondArray, new DummyTran());
+            secondArray.ForEach(i => strPage.Insert(i, new DummyTran()));
             content = strPage.Fetch(TestGlobals.DummyTran).ToArray();
             Assert.AreEqual(startArray.Concat(secondArray), content);
         }
@@ -89,13 +91,10 @@ namespace PageManagerTests
             Assert.Throws<NotEnoughSpaceException>(() => {
                 StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-                char[][] array = new char[DefaultSize / 4][];
-                for (int i = 0; i < array.Length; i++)
+                for (int i = 0; i < DefaultSize / 4; i++)
                 {
-                    array[i] = "0123".ToCharArray();
+                    strPage.Insert("0123".ToCharArray(), new DummyTran());
                 }
-
-                strPage.Merge(array, new DummyTran());
             });
         }
 
@@ -105,36 +104,35 @@ namespace PageManagerTests
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             const int arrLength = 4;
 
-            char[][] array = new char[strPage.MaxRowCount() / (arrLength + sizeof(short))][];
-            for (int i = 0; i < array.Length; i++)
+            int maxCount = (int)(strPage.MaxRowCount() / (arrLength + sizeof(short)));
+            for (int i = 0; i < maxCount; i++)
             {
-                array[i] = "0123".ToCharArray();
+                strPage.Insert("0123".ToCharArray(), new DummyTran());
             }
 
-            strPage.Merge(array, new DummyTran());
             char[][] content = strPage.Fetch(TestGlobals.DummyTran).ToArray();
 
-            Assert.AreEqual(array, content);
+            Assert.AreEqual(Enumerable.Repeat("0123", maxCount), content);
         }
 
         [Test]
         public void VerifyMerge()
         {
-            char[][] startArray = new char[][]
+            var startArray = new List<char[]> 
             { 
                 "123".ToCharArray(),
                 "4321".ToCharArray(),
             };
 
-            char[][] secondArray = new char[][]
+            var secondArray = new List<char[]>
             { 
                 "456".ToCharArray(),
                 "1234".ToCharArray(),
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray, new DummyTran());
-            strPage.Merge(secondArray, new DummyTran());
+            startArray.ForEach(i => strPage.Insert(i, new DummyTran()));
+            secondArray.ForEach(i => strPage.Insert(i, new DummyTran()));
             char[][] result = strPage.Fetch(TestGlobals.DummyTran).ToArray();
 
             Assert.AreEqual(startArray.Concat(secondArray), result);
@@ -143,7 +141,7 @@ namespace PageManagerTests
         [Test]
         public void MergeWithOffset()
         {
-            char[][] startArray = new char[][]
+            var startArray = new List<char[]>
             { 
                 "123".ToCharArray(),
                 "4321".ToCharArray(),
@@ -151,13 +149,13 @@ namespace PageManagerTests
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
             Assert.AreEqual(0, strPage.RowCount());
-            uint offsetOne = strPage.MergeWithOffsetFetch(startArray[0], TestGlobals.DummyTran);
+            int offsetOne = strPage.Insert(startArray[0], TestGlobals.DummyTran);
             Assert.AreEqual(0, offsetOne);
-            Assert.AreEqual(startArray[0], strPage.FetchWithOffset(offsetOne, TestGlobals.DummyTran));
+            Assert.AreEqual(startArray[0], strPage.FetchWithOffset((uint)offsetOne, TestGlobals.DummyTran));
             Assert.AreEqual(1, strPage.RowCount());
-            uint offsetTwo = strPage.MergeWithOffsetFetch(startArray[1], TestGlobals.DummyTran);
+            int offsetTwo = strPage.Insert(startArray[1], TestGlobals.DummyTran);
             Assert.AreEqual(startArray[0].Length + sizeof(short), offsetTwo);
-            Assert.AreEqual(startArray[1], strPage.FetchWithOffset(offsetTwo, TestGlobals.DummyTran));
+            Assert.AreEqual(startArray[1], strPage.FetchWithOffset((uint)offsetTwo, TestGlobals.DummyTran));
             Assert.AreEqual(2, strPage.RowCount());
         }
 
@@ -172,7 +170,7 @@ namespace PageManagerTests
 
             for (uint i = 0; i < maxElemCount; i++)
             {
-                strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran);
+                strPage.Insert(elemToInsert, TestGlobals.DummyTran);
                 Assert.AreEqual(i + 1, strPage.RowCount());
             }
         }
@@ -188,11 +186,11 @@ namespace PageManagerTests
 
             for (uint i = 0; i < maxElemCount; i++)
             {
-                strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran);
+                strPage.Insert(elemToInsert, TestGlobals.DummyTran);
                 Assert.AreEqual(i + 1, strPage.RowCount());
             }
 
-            Assert.Throws<NotEnoughSpaceException>(() => strPage.MergeWithOffsetFetch(elemToInsert, TestGlobals.DummyTran));
+            Assert.Throws<NotEnoughSpaceException>(() => strPage.Insert(elemToInsert, TestGlobals.DummyTran));
         }
 
         [Test]
@@ -205,7 +203,8 @@ namespace PageManagerTests
             };
 
             StringOnlyPage strPage = new StringOnlyPage(DefaultSize, DefaultPageId, DefaultPrevPage, DefaultNextPage, new DummyTran());
-            strPage.Merge(startArray, new DummyTran());
+            strPage.Insert(startArray[0], new DummyTran());
+            strPage.Insert(startArray[1], new DummyTran());
 
             byte[] content = new byte[DefaultSize];
 

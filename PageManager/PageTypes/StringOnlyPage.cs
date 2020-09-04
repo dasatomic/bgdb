@@ -17,9 +17,7 @@ namespace PageManager
 
     public interface IPageWithOffsets<T>
     {
-        public uint MergeWithOffsetFetch(T item, ITransaction tran);
         public T FetchWithOffset(uint offset, ITransaction tran);
-        public bool CanFit(T item);
     }
 
     public class StringOnlyPage : PageSerializerBase<char[], IEnumerable<char[]>, char[]>, IPageWithOffsets<char[]>
@@ -77,61 +75,16 @@ namespace PageManager
 
         public override PageType PageType() => global::PageManager.PageType.StringPage;
 
-        public override uint GetSizeNeeded(IEnumerable<char[]> items)
-        {
-            uint totalSize = 0;
-            foreach (char[] item in items)
-            {
-                totalSize += (uint)item.Length + sizeof(ushort);
-            }
-
-            return totalSize;
-        }
-
         public override uint MaxRowCount()
         {
             return this.pageSize - IPage.FirstElementPosition;
         }
 
-        public override bool CanFit(IEnumerable<char[]> items, ITransaction transaction)
+        public override bool CanFit(char[] item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            uint size = this.rowCount + this.GetSizeNeeded(items);
+            uint size = (uint)(this.rowCount + item.Length + sizeof(ushort));
             return this.pageSize - IPage.FirstElementPosition >= size;
-        }
-
-        public override void Merge(IEnumerable<char[]> itemsToInsert, ITransaction transaction)
-        {
-            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
-            uint size = this.rowCount + this.GetSizeNeeded(itemsToInsert);
-            if (this.pageSize - IPage.FirstElementPosition < size)
-            {
-                throw new NotEnoughSpaceException();
-            }
-
-            foreach (char[] item in itemsToInsert)
-            {
-                uint startPos = this.rowCount;
-                (char lowSize, char highSize) = this.Int16ToCharPair((short)item.Length);
-                this.items[this.rowCount] = lowSize;
-                this.items[this.rowCount + 1] = highSize;
-
-                Array.Copy(item, 0, this.items, this.rowCount + sizeof(short), item.Length);
-
-                byte[] bs = new byte[items.Length + 2];
-                using (MemoryStream ms = new MemoryStream(bs))
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write((ushort)item.Length);
-                    bw.Write(item);
-                    ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos), bs, transaction.TranscationId(), this.PageType());
-                    transaction.AddRecord(rc);
-                }
-
-                this.rowCount += sizeof(short) + (uint)item.Length;
-            }
-
-            this.isDirty = true;
         }
 
         public override uint RowCount()
@@ -147,7 +100,7 @@ namespace PageManager
             return (uint)totalItems;
         }
 
-        public uint MergeWithOffsetFetch(char[] itemToInsert, ITransaction transaction)
+        public override int Insert(char[] itemToInsert, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
             uint size = this.rowCount + (uint)itemToInsert.Length + sizeof(short);
@@ -179,7 +132,7 @@ namespace PageManager
 
             this.isDirty = true;
 
-            return positionInBuffer;
+            return (int)positionInBuffer;
         }
 
         public char[] FetchWithOffset(uint offset, ITransaction transaction)

@@ -75,42 +75,34 @@ namespace PageManager
             return (this.pageSize - IPage.FirstElementPosition - this.FooterLenght()) / (uint)Marshal.SizeOf(default(T));
         }
 
-        public override bool CanFit(IEnumerable<T> items, ITransaction transaction)
+        public override bool CanFit(T item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T)) * items.Count();
-        }
-
-        public override uint GetSizeNeeded(IEnumerable<T> items)
-        {
-            return (uint)items.Count() * (uint)Marshal.SizeOf(default(T));
+            return this.pageSize - IPage.FirstElementPosition - this.FooterLenght() - this.items.Length * (uint)Marshal.SizeOf(default(T))  >= (uint)Marshal.SizeOf(default(T));
         }
 
         protected abstract byte[] SerializeItem(T item);
 
-        public override void Merge(IEnumerable<T> items, ITransaction transaction)
+        public override int Insert(T item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
-            if (!CanFit(items, transaction))
+            if (!CanFit(item, transaction))
             {
                 throw new SerializationException();
             }
 
+            // TODO: This needs to go away.
             int startPos = this.items.Length;
-            this.items = this.items.Concat(items).ToArray();
+            this.items = this.items.Concat(new T[] { item }).ToArray();
             this.rowCount = (uint)this.items.Length;
 
-            int i = 0;
-            foreach (T item in items)
-            {
-                byte[] bs = SerializeItem(item);
-                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos + i), bs, transaction.TranscationId(), this.pageType);
-                transaction.AddRecord(rc);
-                i++;
-            }
+            byte[] bs = SerializeItem(item);
+            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(startPos), bs, transaction.TranscationId(), this.pageType);
+            transaction.AddRecord(rc);
 
             this.isDirty = true;
+            return startPos;
         }
 
         public override void Update(T item, ushort position, ITransaction transaction)

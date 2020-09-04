@@ -10,13 +10,14 @@ namespace DataStructures
     {
         Task<ulong> Count(ITransaction tran);
         Task Add(T item, ITransaction tran);
-        Task<List<T>> Where(Func<T, bool> filter, ITransaction tran);
+        IAsyncEnumerable<T> Where(Func<T, bool> filter, ITransaction tran);
         Task<U> Max<U>(Func<T, U> projector, U startMin, ITransaction tran) where U : IComparable;
         Task<bool> IsEmpty(ITransaction tran);
         IAsyncEnumerable<T> Iterate(ITransaction tran);
+        public ColumnType[] GetColumnTypes();
     }
 
-    public class PageListCollection : UnorderedListCollection<RowsetHolder>
+    public class PageListCollection : UnorderedListCollection<RowHolderFixed>
     {
         private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;
@@ -64,7 +65,7 @@ namespace DataStructures
             return rowCount;
         }
 
-        public async Task Add(RowsetHolder item, ITransaction tran)
+        public async Task Add(RowHolderFixed item, ITransaction tran)
         {
             MixedPage currPage = null;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
@@ -80,7 +81,7 @@ namespace DataStructures
                     // Need to check can fit one more time.
                     if (currPage.CanFit(item, tran))
                     {
-                        currPage.Merge(item, tran);
+                        currPage.Insert(item, tran);
                         return;
                     }
                 }
@@ -101,31 +102,31 @@ namespace DataStructures
                     currPage = await this.pageAllocator.AllocateMixedPage(this.columnTypes, currPage.PageId(), PageManagerConstants.NullPageId, tran).ConfigureAwait(false);
                     using Releaser currPageLck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                     this.lastPageId = currPage.PageId();
-                    currPage.Merge(item, tran);
+                    currPage.Insert(item, tran);
                 }
             }
         }
 
-        public async Task<List<RowsetHolder>> Where(Func<RowsetHolder, bool> filter, ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Where(Func<RowHolderFixed, bool> filter, ITransaction tran)
         {
             MixedPage currPage;
-            List<RowsetHolder> result = new List<RowsetHolder>();
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
-                RowsetHolder holder = currPage.Fetch(tran);
+                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                if (filter(holder))
+                foreach (RowHolderFixed rhf in holder.Iterate(columnTypes))
                 {
-                    result.Add(holder);
+                    if (filter(rhf))
+                    {
+                        yield return rhf;
+                    }
                 }
             }
-
-            return result;
         }
 
-        public async Task<U> Max<U>(Func<RowsetHolder, U> projector, U startMin, ITransaction tran) where U : IComparable
+        public async Task<U> Max<U>(Func<RowHolderFixed, U> projector, U startMin, ITransaction tran) where U : IComparable
         {
             MixedPage currPage;
             U max = startMin;
@@ -134,29 +135,34 @@ namespace DataStructures
             {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
-                RowsetHolder holder = currPage.Fetch(tran);
+                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                U curr = projector(holder);
-
-                if (curr.CompareTo(max) == 1)
+                foreach (RowHolderFixed rhf in holder.Iterate(this.columnTypes))
                 {
-                    max = curr;
+                    U curr = projector(rhf);
+                    if (curr.CompareTo(max) == 1)
+                    {
+                        max = curr;
+                    }
                 }
             }
 
             return max;
         }
 
-        public async IAsyncEnumerable<RowsetHolder> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
         {
             MixedPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
-                RowsetHolder holder = currPage.Fetch(tran);
+                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                yield return holder;
+                foreach (RowHolderFixed rhf in holder.Iterate(this.columnTypes))
+                {
+                    yield return rhf;
+                }
             }
         }
 
@@ -164,5 +170,7 @@ namespace DataStructures
         {
             return await this.Count(tran).ConfigureAwait(false) == 0;
         }
+
+        public ColumnType[] GetColumnTypes() => this.columnTypes;
     }
 }

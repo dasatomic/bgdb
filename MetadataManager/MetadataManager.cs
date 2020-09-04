@@ -59,7 +59,6 @@ namespace MetadataManager
         private void MetadataInitialSetup()
         {
             using ITransaction tran = this.logManager.CreateTransaction(this.pageAllocator, false, "MetadataSetup");
-            RowsetHolder rh = new RowsetHolder(this.masterPageColumnDefinition);
 
             MixedPage mdColumnsFirstPage = this.pageAllocator.AllocateMixedPage(MetadataColumnsManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
             this.columnsManager = new MetadataColumnsManager(this.pageAllocator, mdColumnsFirstPage, this.stringHeap);
@@ -67,19 +66,14 @@ namespace MetadataManager
             MixedPage mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
             this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap, this.columnsManager);
 
-            rh.SetColumns(
-                new int[1][] { new int[] 
-                { 
-                    (int)MetadataObjectEnum.MdTableId,
-                    (int)MetadataObjectEnum.MdColumnId,
-                }},
-                new double[0][], new PagePointerOffsetPair[0][],
-                new long[1][] { new long[] 
-                { 
-                    (long)mdTableFirstPage.PageId(),
-                    (long)mdColumnsFirstPage.PageId() 
-                }});
-            masterMetadataCollection.Add(rh, tran).Wait();
+            RowHolderFixed rhf = new RowHolderFixed(this.masterPageColumnDefinition);
+            rhf.SetField<int>(0, (int)MetadataObjectEnum.MdTableId);
+            rhf.SetField<long>(1, (long)mdTableFirstPage.PageId());
+
+            masterMetadataCollection.Add(rhf, tran).Wait();
+            rhf.SetField<int>(0, (int)MetadataObjectEnum.MdColumnId);
+            rhf.SetField<long>(1, (long)mdColumnsFirstPage.PageId());
+            masterMetadataCollection.Add(rhf, tran).Wait();
 
             tran.Commit().Wait();
         }

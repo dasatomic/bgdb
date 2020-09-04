@@ -86,5 +86,5 @@ namespace PageManager
         }
 
         protected override byte[] SerializeItem(int item) => BitConverter.GetBytes(item);
-    }
+   }
 }

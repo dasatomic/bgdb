@@ -22,16 +22,15 @@ namespace PageManagerTests
             ILockManager lm = new LockManager.LockManager();
             using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
 
             await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
             var p = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.IsTrue(bp.GetAllDirtyPages().Any());
-            RowsetHolder holder = new RowsetHolder(types);
-            holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-            p.Merge(holder, tran);
+
+            rows.ForEach(r => p.Insert(r, tran));
             Assert.IsTrue(bp.GetAllDirtyPages().Any());
 
             await pageManager.Checkpoint();
@@ -45,7 +44,7 @@ namespace PageManagerTests
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
             MixedPage p1, p2, p3;
 
             using (var pageManager = new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger))
@@ -54,11 +53,9 @@ namespace PageManagerTests
                 p2 = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
                 p3 = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
 
-                RowsetHolder holder = new RowsetHolder(types);
-                holder.SetColumns(intColumns, doubleColumns, pagePointerOffsetColumns, pagePointerColumns);
-                p1.Merge(holder, tran);
-                p2.Merge(holder, tran);
-                p3.Merge(holder, tran);
+                rows.ForEach(r => p1.Insert(r, tran));
+                rows.ForEach(r => p2.Insert(r, tran));
+                rows.ForEach(r => p3.Insert(r, tran));
 
                 await pageManager.Checkpoint();
             }

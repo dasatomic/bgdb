@@ -4,6 +4,7 @@ using PageManager;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
@@ -23,20 +24,34 @@ namespace QueryProcessing
 
         public async IAsyncEnumerable<Row> Iterate(ITransaction tran)
         {
-            // TODO: Need transaction here.
-            await foreach (var rowsetHolder in this.source.Iterate(tran))
+            await foreach (RowHolderFixed rowHolder in this.source.Iterate(tran))
             {
-                foreach (RowHolder rowHolder in rowsetHolder)
+                // TODO: How to efficiently fetch strings?
+                List<int> iCols = new List<int>();
+                List<double> dCols = new List<double>();
+                List<string> sCols = new List<string>();
+
+                int i = 0;
+                foreach (ColumnType ct in source.GetColumnTypes())
                 {
-                    string[] strVals = new string[rowHolder.strPRow.Length];
-                    for (int i = 0; i < strVals.Length; i++)
+                    if (ct == ColumnType.StringPointer)
                     {
-                        strVals[i] = new string(await strHeap.Fetch(rowHolder.strPRow[i], this.tran));
+                        sCols.Add(new string(await strHeap.Fetch(rowHolder.GetField<PagePointerOffsetPair>(i), tran)));
+                    }
+                    else if (ct == ColumnType.Int)
+                    {
+                        iCols.Add(rowHolder.GetField<int>(i));
+                    }
+                    else if (ct == ColumnType.Double)
+                    {
+                        dCols.Add(rowHolder.GetField<double>(i));
                     }
 
-                    Row row = new Row(rowHolder.iRow, rowHolder.dRow, strVals, rowsetHolder.GetColumnTypes());
-                    yield return row;
+                    i++;
                 }
+
+                Row row = new Row(iCols.ToArray(), dCols.ToArray(), sCols.ToArray(), source.GetColumnTypes());
+                yield return row;
             }
         }
 

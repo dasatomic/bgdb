@@ -33,7 +33,7 @@ namespace DataStructures
         public async Task<PagePointerOffsetPair> Add(char[] item, ITransaction tran)
         {
             StringOnlyPage currPage = null;
-            uint offset;
+            int offset;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
             {
                 using Releaser lckReleaser = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
@@ -47,7 +47,7 @@ namespace DataStructures
                     // Need to check can fit one more time.
                     if (currPage.CanFit(item))
                     {
-                        offset = currPage.MergeWithOffsetFetch(item, tran);
+                        offset = currPage.Insert(item, tran);
                         return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
                     }
                 }
@@ -65,7 +65,7 @@ namespace DataStructures
                 {
                     currPage = await this.allocator.AllocatePageStr(currPage.PageId(), PageManagerConstants.NullPageId, tran).ConfigureAwait(false);
                     using Releaser lckReleaser = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
-                    offset = currPage.MergeWithOffsetFetch(item, tran);
+                    offset = currPage.Insert(item, tran);
                     this.lastPageId = currPage.PageId();
                     return new PagePointerOffsetPair((long)currPage.PageId(), (int)offset);
                 }

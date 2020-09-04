@@ -17,38 +17,24 @@ namespace PageManagerTests
         private const int DefaultNextPage = 43;
 
         [Test]
-        public void Merge()
+        public void Insert()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] _, out int[][] intColumns2, out double[][] doubleColumns2, out long[][] pagePointerColumns2, out PagePointerOffsetPair[][] pagePointerOffsetColumns2);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage, new DummyTran());
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            RowsetHolder holder1 = new RowsetHolder(types1);
-            holder1.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-            RowsetHolder holder2 = new RowsetHolder(types1);
-            holder2.SetColumns(intColumns2, doubleColumns2, pagePointerOffsetColumns2, pagePointerColumns2);
+            rows.ForEach(r => page.Insert(r, new DummyTran()));
 
-            page.Merge(holder1, new DummyTran());
-            page.Merge(holder2, new DummyTran());
-
-            RowsetHolder result = page.Fetch(TestGlobals.DummyTran);
-
-            Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].Concat(intColumns2[0]).ToArray());
-            Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].Concat(intColumns2[1]).ToArray());
-            Assert.AreEqual(result.GetDoubleColumn(2), doubleColumns1[0].Concat(doubleColumns2[0]).ToArray());
-            Assert.AreEqual(result.GetIntColumn(3), intColumns1[2].Concat(intColumns2[2]).ToArray());
+            var result = page.Fetch(TestGlobals.DummyTran);
+            Assert.AreEqual(rows.ToArray(), result.Iterate(types).ToArray());
         }
 
         [Test]
         public void VerifyFromStream()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types1, DefaultPrevPage, DefaultNextPage, new DummyTran());
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
-            RowsetHolder holder = new RowsetHolder(types1);
-            holder.SetColumns(intColumns1, doubleColumns1, pagePointerOffsetColumns1, pagePointerColumns1);
-
-            page.Merge(holder, new DummyTran());
+            rows.ForEach(r => page.Insert(r, new DummyTran()));
 
             byte[] content = new byte[DefaultSize];
 
@@ -59,7 +45,7 @@ namespace PageManagerTests
             }
 
             var source = new BinaryReader(new MemoryStream(content));
-            MixedPage pageDeserialized = new MixedPage(source, types1);
+            MixedPage pageDeserialized = new MixedPage(source, types);
 
             Assert.AreEqual(page.PageId(), pageDeserialized.PageId());
             Assert.AreEqual(page.PageType(), pageDeserialized.PageType());
@@ -67,11 +53,9 @@ namespace PageManagerTests
             Assert.AreEqual(page.NextPageId(), pageDeserialized.NextPageId());
             Assert.AreEqual(page.PrevPageId(), pageDeserialized.PrevPageId());
 
-            RowsetHolder result = pageDeserialized.Fetch(TestGlobals.DummyTran);
-            Assert.AreEqual(result.GetIntColumn(0), intColumns1[0].ToArray());
-            Assert.AreEqual(result.GetIntColumn(1), intColumns1[1].ToArray());
-            Assert.AreEqual(result.GetDoubleColumn(2), doubleColumns1[0].ToArray());
-            Assert.AreEqual(result.GetIntColumn(3), intColumns1[2].ToArray());
+            var result = pageDeserialized.Fetch(TestGlobals.DummyTran);
+
+            Assert.AreEqual(rows.ToArray(), result.Iterate(types).ToArray());
         }
     }
 }

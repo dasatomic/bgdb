@@ -1,10 +1,43 @@
 ﻿using PageManager;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Test.Common
 {
     public static class GenerateDataUtils
     {
+        public static List<RowHolderFixed> GenerateRowsWithSampleData(out ColumnType[] columnTypes, int rowNumber = 10)
+        {
+            List<RowHolderFixed> rhfs = new List<RowHolderFixed>();
+
+            columnTypes = new ColumnType[]
+            {
+                ColumnType.Int,
+                ColumnType.Int,
+                ColumnType.Double,
+                ColumnType.Int,
+                ColumnType.StringPointer,
+                ColumnType.PagePointer,
+            };
+
+            for (int i = 0; i < 10; i++)
+            {
+                RowHolderFixed rowhf = new RowHolderFixed(columnTypes);
+                rowhf.SetField<int>(0, i);
+                rowhf.SetField<int>(1, i + 1);
+                rowhf.SetField<double>(2, (double)i);
+                rowhf.SetField<int>(3, i + 2);
+                rowhf.SetField(4, new PagePointerOffsetPair(i, i));
+                rowhf.SetField<ulong>(5, (ulong)i + 3);
+
+                rhfs.Add(rowhf);
+            }
+
+            return rhfs;
+        }
+
         public static void GenerateSampleData(
             out ColumnType[] types,
             out int[][] intColumns,

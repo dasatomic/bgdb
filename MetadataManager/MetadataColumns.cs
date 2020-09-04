@@ -57,25 +57,21 @@ namespace MetadataManager
 
         public async IAsyncEnumerable<MetadataColumn> Iterate(ITransaction tran)
         {
-            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
             {
-                for (int i = 0; i < rh.GetRowCount(); i++)
-                {
-                    var mdObj = 
-                        new MetadataColumn()
-                        {
-                            ColumnId = rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos)[i],
-                            TableId = rh.GetIntColumn(MetadataColumn.TableIdColumnPos)[i],
-                            ColumnType = (ColumnType)rh.GetIntColumn(MetadataColumn.ColumnTypeColumnPos)[i],
-                        };
+                var mdObj = 
+                    new MetadataColumn()
+                    {
+                        ColumnId = rh.GetField<int>(MetadataColumn.ColumnIdColumnPos),
+                        TableId = rh.GetField<int>(MetadataColumn.TableIdColumnPos),
+                        ColumnType = (ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos),
+                    };
 
-                    PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
-                    char[] columnName = await this.stringHeap.Fetch(stringPointer, tran);
+                PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos);
+                char[] columnName = await this.stringHeap.Fetch(stringPointer, tran);
+                mdObj.ColumnName = new string(columnName);
 
-                    mdObj.ColumnName = new string(columnName);
-
-                    yield return mdObj;
-                }
+                yield return mdObj;
             }
         }
 
@@ -89,18 +85,18 @@ namespace MetadataManager
             int id = 0;
             if (! (await pageListCollection.IsEmpty(tran)))
             {
-                int maxId = await pageListCollection.Max<int>(rh => rh.GetIntColumn(MetadataColumn.ColumnIdColumnPos).Max(), startMin: 0, tran);
+                int maxId = await pageListCollection.Max<int>(rh => rh.GetField<int>(MetadataColumn.ColumnIdColumnPos), startMin: 0, tran);
                 id = maxId + 1;
             }
 
-            RowsetHolder rh = new RowsetHolder(columnDefinitions);
+            RowHolderFixed rh = new RowHolderFixed(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.ColumnName.ToCharArray(), tran);
 
-            int[][] intCols = new int[3][];
-            intCols[0] = new[] { id };
-            intCols[1] = new[] { def.TableId };
-            intCols[2] = new[] { (int)def.ColumnType };
-            rh.SetColumns(intCols, new double[0][], new PagePointerOffsetPair[1][] { new[] { namePointer } }, new long[0][]);
+            rh.SetField<int>(0, id);
+            rh.SetField<int>(1, def.TableId);
+            rh.SetField<PagePointerOffsetPair>(2, namePointer);
+            rh.SetField<int>(3, (int)def.ColumnType);
+
             await pageListCollection.Add(rh, tran);
 
             return id;
@@ -108,20 +104,17 @@ namespace MetadataManager
 
         public async Task<bool> Exists(ColumnCreateDefinition def, ITransaction tran)
         {
-            await foreach (RowsetHolder rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
             {
-                int[] tableIds = rh.GetIntColumn(MetadataColumn.TableIdColumnPos);
+                int tableId = rh.GetField<int>(MetadataColumn.TableIdColumnPos);
 
-                for (int i = 0; i < tableIds.Length; i++)
+                if (tableId == def.TableId)
                 {
-                    if (tableIds[i] == def.TableId)
-                    {
-                        PagePointerOffsetPair stringPointer = rh.GetStringPointerColumn(MetadataColumn.ColumnNameColumnPos)[i];
+                    PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos);
 
-                        if (def.ColumnName == new string(await stringHeap.Fetch(stringPointer, tran)))
-                        {
-                            return true;
-                        }
+                    if (def.ColumnName == new string(await stringHeap.Fetch(stringPointer, tran)))
+                    {
+                        return true;
                     }
                 }
             }
