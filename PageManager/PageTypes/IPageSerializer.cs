@@ -10,6 +10,7 @@ namespace PageManager
         public int Insert(ST items, ITransaction transaction);
         public void Update(ST item, ushort position, ITransaction transaction);
         public T Fetch(ITransaction tran);
+        public void At(ushort position, ITransaction tran, ref ST item);
     }
 
     public abstract class PageSerializerBase<S /* Storage */, T /* Interface Type */, ST> : IPageSerializer<T, ST>
@@ -61,5 +62,6 @@ namespace PageManager
 
         public abstract void Update(ST item, ushort position, ITransaction transaction);
         public abstract int Insert(ST item, ITransaction transaction);
+        public abstract void At(ushort position, ITransaction tran, ref ST item);
     }
 }

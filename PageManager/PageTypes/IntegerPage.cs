@@ -86,5 +86,10 @@ namespace PageManager
         }
 
         protected override byte[] SerializeItem(int item) => BitConverter.GetBytes(item);
-   }
+
+        public override void At(ushort position, ITransaction tran, ref int item)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

@@ -29,6 +29,11 @@ namespace PageManager.UtilStructures
             return (storage[row / 8] & (byte)(1 << (row % 8))) != 0;
         }
 
+        public static unsafe void Set(int row, Span<byte> storage)
+        {
+            storage[row / 8] |= (byte)(1 << (row % 8));
+        }
+
         public static ushort CountSet(Span<byte> storage)
         {
             ushort cnt = 0;

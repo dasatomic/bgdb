@@ -196,7 +196,23 @@ namespace PageManager
 
         public override void Update(RowHolderFixed item, ushort position, ITransaction transaction)
         {
-            throw new NotImplementedException();
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+
+            RowHolderFixed oldVal = new RowHolderFixed(this.columnTypes);
+            this.items.GetRow(position, ref oldVal);
+
+            this.items.SetRow(position, item);
+
+            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+            transaction.AddRecord(rc);
+
+            this.isDirty = true;
+        }
+
+        public override void At(ushort position, ITransaction tran, ref RowHolderFixed item)
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+            this.items.GetRow(position, ref item);
         }
     }
 }

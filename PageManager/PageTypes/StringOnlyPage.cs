@@ -287,5 +287,10 @@ namespace PageManager
         {
             throw new NotImplementedException();
         }
+
+        public override void At(ushort position, ITransaction tran, ref char[] item)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

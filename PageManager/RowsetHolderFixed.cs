@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace PageManager
 {
@@ -196,6 +197,20 @@ namespace PageManager
             {
                 return false;
             }
+        }
+
+        public override int GetHashCode()
+        {
+            int i = this.storage.Length;
+            int hc = i + 1;
+
+            while (--i >= 0)
+            {
+                hc *= 257;
+                hc ^= this.storage.Span[i];
+            }
+
+            return hc;
         }
 
         // Private fields.
