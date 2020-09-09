@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 
 [assembly: InternalsVisibleTo("LockManagerTests")]
 namespace LockManager
@@ -210,6 +209,14 @@ namespace LockManager
                         yield return new LockMonitorRecord(record.Key, entry.Key, entry.Value);
                     }
                 }
+            }
+        }
+
+        public void ReleaseOwner(ulong ownerId)
+        {
+            lock (lck)
+            {
+                this.lockMonitorRecords.Remove(ownerId);
             }
         }
     }

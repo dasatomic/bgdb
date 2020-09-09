@@ -111,6 +111,8 @@ namespace LogManager
             {
                 throw new TranHoldingLockDuringDispose();
             }
+
+            this.pageManager.GetLockManager().ReleaseOwner(this.transactionId);
         }
 
         public async ValueTask DisposeAsync()
@@ -124,6 +126,13 @@ namespace LogManager
             {
                 throw new TranHoldingLockDuringDispose();
             }
+
+            if (this.myLocks.Any())
+            {
+                throw new TranHoldingLockDuringDispose();
+            }
+
+            this.pageManager.GetLockManager().ReleaseOwner(this.transactionId);
         }
 
         private async Task<Releaser> AcquireLockInternal(ulong pageId, LockTypeEnum lockType, bool forceCallerOwnership)

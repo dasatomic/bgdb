@@ -10,5 +10,12 @@ namespace LockManager
         int LockIdForPage(ulong pageId);
         public LockStats GetLockStats();
         public IEnumerable<LockMonitorRecord> GetActiveLocks();
+
+        /// <summary>
+        /// Once transaction (owner) is completed it should tell lock manager to
+        /// clean up any extra tracking for that transaction.
+        /// </summary>
+        /// <param name="ownerId"></param>
+        public void ReleaseOwner(ulong ownerId);
     }
 }

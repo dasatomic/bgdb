@@ -45,5 +45,10 @@ namespace LockManager
         public LockStats GetLockStats() => this.lockMonitor.GetStats();
 
         public IEnumerable<LockMonitorRecord> GetActiveLocks() => this.lockMonitor.GetActiveLocks();
+
+        public void ReleaseOwner(ulong ownerId)
+        {
+            this.lockMonitor.ReleaseOwner(ownerId);
+        }
     }
 }

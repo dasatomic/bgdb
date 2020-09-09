@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Running;
 using DataStructures;
 using LogManager;
@@ -67,6 +68,7 @@ namespace UnitBenchmark
     }
 
     [RPlotExporter]
+    [EtwProfiler(performExtraBenchmarksRun: true)]
     public class InsertTableSingleThreadedBenchmark
     {
         [Params(100, 1000, 2000, 3000, 4000, 5000)]

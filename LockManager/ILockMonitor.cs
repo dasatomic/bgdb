@@ -23,5 +23,11 @@ namespace LockManager
         public void RecordStats(LockStatsRecord statsRecord);
         public LockStats GetStats();
         public IEnumerable<LockMonitorRecord> GetActiveLocks();
+
+        /// <summary>
+        /// Called once this owner is no longer active and no longer needs to be tracked.
+        /// </summary>
+        /// <param name="ownerId"></param>
+        public void ReleaseOwner(ulong ownerId);
     }
 }

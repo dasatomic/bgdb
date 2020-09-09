@@ -82,6 +82,8 @@ namespace LogManager
             {
                 throw new TranHoldingLockDuringDispose();
             }
+
+            this.lockManager.ReleaseOwner(this.transactionId);
         }
 
         public ValueTask DisposeAsync()
