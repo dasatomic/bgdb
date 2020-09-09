@@ -2,6 +2,7 @@
 using LockManager.LockImplementation;
 using LogManager;
 using PageManager.Exceptions;
+using PageManager.PageTypes;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace PageManager
         private readonly IBufferPool bufferPool;
 
         private const int AllocationMapPageId = 1;
-        private readonly List<IntegerOnlyPage> AllocatationMapPages;
+        private readonly List<BitTrackingPage> AllocatationMapPages;
         private readonly ILockManager lockManager;
         private InstrumentationInterface logger = null;
 
@@ -40,15 +41,17 @@ namespace PageManager
 
             this.bufferPool = bufferPool;
 
-            this.AllocatationMapPages = new List<IntegerOnlyPage>();
+            this.AllocatationMapPages = new List<BitTrackingPage>();
 
             if (!this.persistedStream.IsInitialized())
             {
                 logger.LogInfo("Initializing the persisted stream.");
                 using (ITransaction tran = new NotLoggedTransaction())
                 {
-                    IntegerOnlyPage allocationMapFirstPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
-                    this.AllocatationMapPages.Add(allocationMapFirstPage);
+                    MixedPage allocationMapFirstPage = new MixedPage(pageSize, (ulong)AllocationMapPageId,  new ColumnType[] { ColumnType.Int }, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    BitTrackingPage.NullifyMixedPage(allocationMapFirstPage, tran);
+
+                    this.AllocatationMapPages.Add(new BitTrackingPage(allocationMapFirstPage));
                     this.persistedStream.MarkInitialized();
                 }
             }
@@ -57,23 +60,16 @@ namespace PageManager
                 // TODO: Read boot page.
                 logger.LogInfo("Using already initialized stream.");
                 ulong position = AllocationMapPageId * this.pageSize;
-                IntegerOnlyPage allocationMapFirstPage = (IntegerOnlyPage)this.persistedStream.SeekAndRead(position, PageType.IntPage, null).Result;
-                this.AllocatationMapPages.Add(allocationMapFirstPage);
+                MixedPage allocationMapFirstPage = (MixedPage)this.persistedStream.SeekAndRead(position, PageType.MixedPage, new ColumnType[] { ColumnType.Int }).Result;
+                this.AllocatationMapPages.Add(new BitTrackingPage(allocationMapFirstPage));
 
-                ulong elemPosInPage = 0;
                 using (ITransaction tran = new NotLoggedTransaction())
                 {
-                    foreach (int elem in allocationMapFirstPage.Fetch(tran))
+                    // TODO: Here we only iterate the first page.
+                    // These pages need to be linked...
+                    foreach (int pagePos in this.AllocatationMapPages.First().FindAllSet(tran))
                     {
-                        for (int i = 0; i < 32; i++)
-                        {
-                            if ((elem & (0x1 << i)) != 0)
-                            {
-                                this.pageIds.Add(elemPosInPage * 32UL + (ulong)i);
-                            }
-                        }
-
-                        elemPosInPage++;
+                        this.pageIds.Add((ulong)pagePos) ;
                     }
                 }
             }
@@ -188,38 +184,30 @@ namespace PageManager
         private void AddToAllocationMap(IPage page)
         {
             // TODO: This needs to be revisited.
-            IntegerOnlyPage AMPage = this.AllocatationMapPages.Last();
-            uint maxFit = AMPage.MaxRowCount() * sizeof(int) * 8;
-            uint allocationMapPage = (uint)(page.PageId() / maxFit);
+            // It is not ok to use Not logged transaction here.
+            // it might be ok to use nested/inner transaction.
+            // it is fine to leave the page even if user transaction is rolledbacked.
+            BitTrackingPage AMPage = this.AllocatationMapPages.Last();
+            int maxFit = AMPage.MaxItemCount();
+            uint allocationMapPage = (uint)(page.PageId() / (uint)maxFit);
 
             if (allocationMapPage == this.AllocatationMapPages.Count)
             {
                 using (ITransaction gamAllocTran = new NotLoggedTransaction())
                 {
-                    IntegerOnlyPage newAmPage = new IntegerOnlyPage(pageSize, (ulong)AllocationMapPageId + maxFit, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, gamAllocTran);
-                    this.AllocatationMapPages.Add(newAmPage);
+                    MixedPage newAmPage = new MixedPage(pageSize, (ulong)AllocationMapPageId + (ulong)(maxFit * this.AllocatationMapPages.Count),  new ColumnType[] { ColumnType.Int }, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, gamAllocTran);
+                    BitTrackingPage.NullifyMixedPage(newAmPage, gamAllocTran);
+
+                    this.AllocatationMapPages.Add(new BitTrackingPage(newAmPage));
                 }
             }
 
             using (ITransaction gamUpdateTran = new NotLoggedTransaction())
             {
-                IntegerOnlyPage gamPage = this.AllocatationMapPages.ElementAt((int)allocationMapPage);
-                int positionInPage = (int)(page.PageId() % maxFit);
+                BitTrackingPage gamPage = this.AllocatationMapPages.ElementAt((int)allocationMapPage);
+                int positionInPage = (int)(page.PageId() % (uint)maxFit);
 
-                if (gamPage.RowCount() * sizeof(int) * 8 > positionInPage)
-                {
-                    int[] elems = gamPage.Fetch(gamUpdateTran).ToArray();
-
-                    int elemPos = positionInPage / (8 * sizeof(int));
-                    int offset = positionInPage % (8 * sizeof(int));
-                    elems[elemPos] |= 0x1 << offset;
-
-                    gamPage.Update(elems[elemPos], (ushort)elemPos, gamUpdateTran);
-                }
-                else
-                {
-                    gamPage.Insert(1 << positionInPage, gamUpdateTran);
-                }
+                gamPage.Set(positionInPage, gamUpdateTran);
             }
         }
 
@@ -321,13 +309,13 @@ namespace PageManager
                 await FlushPage(page).ConfigureAwait(false);
             }
 
-            foreach (IPage page in this.AllocatationMapPages)
+            foreach (BitTrackingPage page in this.AllocatationMapPages)
             {
-                await FlushPage(page).ConfigureAwait(false);
+                await FlushPage(page.GetStoragePage()).ConfigureAwait(false);
             }
         }
 
-        public List<IntegerOnlyPage> GetAllocationMapFirstPage() => this.AllocatationMapPages;
+        public List<BitTrackingPage> GetAllocationMapFirstPage() => this.AllocatationMapPages;
 
         public void Dispose()
         {

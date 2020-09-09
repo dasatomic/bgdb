@@ -1,4 +1,5 @@
 ﻿using LockManager;
+using PageManager.PageTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace PageManager
         public Task<IPage> AllocatePage(PageType pageType, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran);
         public ulong PageCount();
         public Task Checkpoint();
-        public List<IntegerOnlyPage> GetAllocationMapFirstPage();
+        public List<BitTrackingPage> GetAllocationMapFirstPage();
         public ILockManager GetLockManager();
     }
 }

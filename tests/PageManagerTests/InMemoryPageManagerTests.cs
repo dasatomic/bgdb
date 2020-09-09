@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using PageManager;
@@ -107,11 +106,8 @@ namespace PageManagerTests
 
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.IsTrue(allocationMaps.Count == 1);
-            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran).ToArray();
-            Assert.AreEqual(1, items.Length);
-
-            int expectedMask = 1 << (int)page1.PageId() | 1 << (int)page2.PageId() | 1 << (int)page3.PageId();
-            Assert.AreEqual(expectedMask, items[0]);
+            int[] items = allocationMaps.First().FindAllSet(new DummyTran()).ToArray();
+            Assert.AreEqual(new int[] { (int)page1.PageId(), (int)page2.PageId(), (int)page3.PageId() }, items);
         }
 
         [Test]
@@ -129,12 +125,8 @@ namespace PageManagerTests
             var allocationMaps = pageManager.GetAllocationMapFirstPage();
             Assert.AreEqual(1, allocationMaps.Count);
 
-            int[] items = allocationMaps.First().Fetch(TestGlobals.DummyTran).ToArray();
-            Assert.AreEqual(11, items.Length);
-            foreach (ulong pageId in pageIds)
-            {
-                Assert.IsTrue((items[pageId / 32] & (1 << ((int)pageId % 32))) != 0);
-            }
+            int[] items = allocationMaps.First().FindAllSet(new DummyTran()).ToArray();
+            Assert.AreEqual(pageIds.ToArray(), items);
         }
     }
 }

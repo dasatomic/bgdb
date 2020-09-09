@@ -1,14 +1,14 @@
 ﻿using PageManager.UtilStructures;
 using System;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PageManager.PageTypes
 {
     /// <summary>
-    /// Internal class to Page Manager.
     /// Used for efficient bit packing.
     // This is just a wrapper around MixedPage with a single int column.
     /// </summary>
-    class BitTrackingPage
+    public class BitTrackingPage
     {
         private readonly MixedPage storage;
         private static readonly ColumnType[] columnTypes = new ColumnType[] { ColumnType.Int };
@@ -52,6 +52,29 @@ namespace PageManager.PageTypes
             storage.Update(rhf, (ushort)positionInIntArray, transaction);
         }
 
+        public System.Collections.Generic.IEnumerable<int> FindAllSet(ITransaction tran)
+        {
+            for (int i = 0; i < this.MaxItemCount(); i++)
+            {
+                if (this.At(i, tran))
+                {
+                    yield return i;
+                }
+            }
+        }
+
         public int MaxItemCount() => (int)(this.storage.MaxRowCount() - 1) * sizeof(int) * 8;
+
+        public static void NullifyMixedPage(MixedPage page, ITransaction tran)
+        {
+            for (int i = 0; i < page.MaxRowCount(); i++)
+            {
+                RowHolderFixed rhf = new RowHolderFixed(new ColumnType[] { ColumnType.Int });
+                rhf.SetField<int>(0, 0);
+                page.Insert(rhf, tran);
+            }
+        }
+
+        public MixedPage GetStoragePage() => this.storage;
     }
 }
