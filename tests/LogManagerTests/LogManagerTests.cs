@@ -33,7 +33,7 @@ namespace LogManagerTests
                         diffNewValue: new byte[] { 3, 2, 1 },
                         transactionId: tran1.TranscationId(),
                         new ColumnType[1] { ColumnType.Int },
-                        PageType.IntPage);
+                        PageType.StringPage);
 
                 tran1.AddRecord(record1);
                 await tran1.Commit();

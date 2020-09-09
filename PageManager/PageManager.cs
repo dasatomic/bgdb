@@ -105,7 +105,6 @@ namespace PageManager
 
             page = pageType switch
             {
-                PageType.IntPage => new IntegerOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.StringPage => new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
                 PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran),
                 _ => throw new ArgumentException("Unknown page type")
@@ -296,7 +295,6 @@ namespace PageManager
 
         public bool BootPageInitialized()
         {
-            // return pages.Any(p => p.PageId() == IBootPageAllocator.BootPageId);
             return this.bufferPool.GetPage(IBootPageAllocator.BootPageId) != null;
         }
 

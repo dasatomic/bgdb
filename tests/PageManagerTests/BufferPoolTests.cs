@@ -22,9 +22,9 @@ namespace PageManagerTests
 
             var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
-            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
-            await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
+            await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
 
             Assert.AreEqual(3, bp.PagesInPool());
         }
@@ -40,7 +40,7 @@ namespace PageManagerTests
 
             for (int i = 0; i < 11; i++)
             {
-                await pageManager.AllocatePage(PageType.IntPage, DefaultPrevPage, DefaultNextPage, tran);
+                await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
             }
 
             Assert.AreEqual(6, bp.PagesInPool());

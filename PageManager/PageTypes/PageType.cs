@@ -2,7 +2,6 @@
 {
     public enum PageType
     {
-        IntPage,
         StringPage,
         MixedPage,
     }
