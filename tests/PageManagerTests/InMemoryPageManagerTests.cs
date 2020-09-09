@@ -50,12 +50,8 @@ namespace PageManagerTests
 
 
             rows.ForEach(r => page.Insert(r, tran));
-
             page = await pageManager.GetMixedPage(page.PageId(), tran, types);
-
-            var holder2 = page.Fetch(TestGlobals.DummyTran);
-
-            Assert.AreEqual(rows.ToArray(), holder2.Iterate(types).ToArray());
+            Assert.AreEqual(rows.ToArray(), page.Fetch(TestGlobals.DummyTran).ToArray());
         }
 
         [Test]

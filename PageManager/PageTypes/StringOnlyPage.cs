@@ -20,7 +20,7 @@ namespace PageManager
         public T FetchWithOffset(uint offset, ITransaction tran);
     }
 
-    public class StringOnlyPage : PageSerializerBase<char[], IEnumerable<char[]>, char[]>, IPageWithOffsets<char[]>
+    public class StringOnlyPage : PageSerializerBase<char[], char[]>, IPageWithOffsets<char[]>
     {
         public StringOnlyPage(uint pageSize, ulong pageId, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
@@ -248,7 +248,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals([AllowNull] PageSerializerBase<char[], IEnumerable<char[]>, char[]> other, ITransaction tran)
+        public override bool Equals([AllowNull] PageSerializerBase<char[], char[]> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {

@@ -114,9 +114,8 @@ namespace DataStructures
             {
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
-                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                foreach (RowHolderFixed rhf in holder.Iterate(columnTypes))
+                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
                 {
                     if (filter(rhf))
                     {
@@ -135,9 +134,8 @@ namespace DataStructures
             {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
-                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                foreach (RowHolderFixed rhf in holder.Iterate(this.columnTypes))
+                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
                 {
                     U curr = projector(rhf);
                     if (curr.CompareTo(max) == 1)
@@ -157,9 +155,8 @@ namespace DataStructures
             {
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
-                RowsetHolderFixed holder = currPage.Fetch(tran);
 
-                foreach (RowHolderFixed rhf in holder.Iterate(this.columnTypes))
+                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
                 {
                     yield return rhf;
                 }

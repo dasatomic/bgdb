@@ -1,7 +1,10 @@
 ﻿using LogManager;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
@@ -13,7 +16,7 @@ namespace PageManager
         Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
     }
 
-    public class MixedPage : PageSerializerBase<RowsetHolderFixed, RowsetHolderFixed, RowHolderFixed>
+    public class MixedPage : PageSerializerBase<RowsetHolderFixed, RowHolderFixed>
     {
         private readonly ColumnType[] columnTypes;
         private Memory<byte> inMemoryStorage;
@@ -74,10 +77,10 @@ namespace PageManager
 
         public override PageType PageType() => global::PageManager.PageType.MixedPage;
 
-        public override RowsetHolderFixed Fetch(ITransaction tran)
+        public override IEnumerable<RowHolderFixed> Fetch(ITransaction tran)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.items;
+            return this.items.Iterate(this.columnTypes);
         }
 
         public override int Insert(RowHolderFixed item, ITransaction transaction)
@@ -164,7 +167,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals(PageSerializerBase<RowsetHolderFixed, RowsetHolderFixed, RowHolderFixed> other, ITransaction tran)
+        public override bool Equals(PageSerializerBase<RowsetHolderFixed, RowHolderFixed> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -186,7 +189,7 @@ namespace PageManager
                 return false;
             }
 
-            if (!this.Fetch(tran).Equals(other.Fetch(tran)))
+            if (!Enumerable.SequenceEqual(this.Fetch(tran), other.Fetch(tran)))
             {
                 return false;
             }

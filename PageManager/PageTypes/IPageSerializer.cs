@@ -1,19 +1,19 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace PageManager
 {
-    public interface IPageSerializer<T, ST> : IPage
+    public interface IPageSerializer<ST> : IPage
     {
         public bool CanFit(ST items, ITransaction transaction);
         public int Insert(ST items, ITransaction transaction);
         public void Update(ST item, ushort position, ITransaction transaction);
-        public T Fetch(ITransaction tran);
+        public IEnumerable<ST> Fetch(ITransaction tran);
         public void At(ushort position, ITransaction tran, ref ST item);
     }
 
-    public abstract class PageSerializerBase<S /* Storage */, T /* Interface Type */, ST> : IPageSerializer<T, ST>
+    public abstract class PageSerializerBase<S /* Storage */, ST> : IPageSerializer<ST>
     {
         protected uint pageSize;
         protected ulong pageId;
@@ -27,7 +27,6 @@ namespace PageManager
         public ulong PageId() => this.pageId;
         public ulong PrevPageId() => this.prevPageId;
         public uint SizeInBytes() => this.pageSize;
-        protected uint GetRowCount(T items) => this.rowCount;
         public void SetNextPageId(ulong nextPageId)
         {
             this.nextPageId = nextPageId;
@@ -48,10 +47,10 @@ namespace PageManager
         public abstract bool CanFit(ST items, ITransaction transaction);
         public abstract PageType PageType();
         public abstract void Persist(BinaryWriter destination);
-        public abstract T Fetch(ITransaction tran);
+        public abstract IEnumerable<ST> Fetch(ITransaction tran);
         public abstract void RedoLog(ILogRecord record, ITransaction tran);
         public abstract void UndoLog(ILogRecord record, ITransaction tran);
-        public abstract bool Equals([AllowNull] PageSerializerBase<S, T, ST> other, ITransaction tran);
+        public abstract bool Equals([AllowNull] PageSerializerBase<S, ST> other, ITransaction tran);
 
         public bool IsDirty() => this.isDirty;
 

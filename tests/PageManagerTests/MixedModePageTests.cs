@@ -24,8 +24,7 @@ namespace PageManagerTests
 
             rows.ForEach(r => page.Insert(r, new DummyTran()));
 
-            var result = page.Fetch(TestGlobals.DummyTran);
-            Assert.AreEqual(rows.ToArray(), result.Iterate(types).ToArray());
+            Assert.AreEqual(rows.ToArray(), page.Fetch(TestGlobals.DummyTran).ToArray());
         }
 
         [Test]
@@ -54,8 +53,7 @@ namespace PageManagerTests
             Assert.AreEqual(page.PrevPageId(), pageDeserialized.PrevPageId());
 
             var result = pageDeserialized.Fetch(TestGlobals.DummyTran);
-
-            Assert.AreEqual(rows.ToArray(), result.Iterate(types).ToArray());
+            Assert.AreEqual(rows.ToArray(), result.ToArray());
         }
     }
 }

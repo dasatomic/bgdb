@@ -64,7 +64,7 @@ namespace LogManagerTests
         }
 
         private async Task RollbackTest1<T>(
-            Func<IPageManager, ITransaction, IPageSerializer<IEnumerable<T>, T>> pageCreate)
+            Func<IPageManager, ITransaction, IPageSerializer<T>> pageCreate)
         {
             using (Stream stream = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(stream))
@@ -86,8 +86,8 @@ namespace LogManagerTests
         }
 
         private async Task RollbackTest2<T>(
-            Func<IPageManager, ITransaction, IPageSerializer<IEnumerable<T>, T>> pageCreate,
-            Action<IPageSerializer<IEnumerable<T>, T>, ITransaction> pageModify,
+            Func<IPageManager, ITransaction, IPageSerializer<T>> pageCreate,
+            Action<IPageSerializer<T>, ITransaction> pageModify,
             Action<T[]> verify)
         {
             using (Stream stream = new MemoryStream())
@@ -185,9 +185,8 @@ namespace LogManagerTests
                 Assert.AreEqual(TransactionState.RollBacked, tran2.GetTransactionState());
 
                 using var lck = await tran3.AcquireLock(page.PageId(), LockTypeEnum.Shared);
-                RowsetHolderFixed pageContent = page.Fetch(tran3);
-
-                Assert.AreEqual(rows, pageContent.Iterate(columnType));
+                var pageContent = page.Fetch(tran3);
+                Assert.AreEqual(rows, pageContent);
             }
         }
 
@@ -239,7 +238,7 @@ namespace LogManagerTests
                 }
 
                 var np1 = pageManager.GetMixedPage(page.PageId(), new DummyTran(), columnTypes);
-                RowsetHolderFixed pageContent = page.Fetch(tran3);
+                var pageContent = page.Fetch(tran3);
                 Assert.AreEqual(rowsPriorToRollback, pageContent);
             }
         }
