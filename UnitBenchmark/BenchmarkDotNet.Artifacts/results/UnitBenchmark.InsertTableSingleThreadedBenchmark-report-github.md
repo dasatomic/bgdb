@@ -10,11 +10,10 @@ Job=ShortRun  IterationCount=3  LaunchCount=1
 WarmupCount=3  
 
 ```
-|          Method | RowsInTableNumber |        Mean |        Error |    StdDev |
-|---------------- |------------------ |------------:|-------------:|----------:|
-| **InsertIntoTable** |               **100** |    **11.55 ms** |     **7.745 ms** |  **0.425 ms** |
-| **InsertIntoTable** |              **1000** |   **166.68 ms** |   **232.582 ms** | **12.749 ms** |
-| **InsertIntoTable** |              **2000** |   **537.73 ms** |   **658.621 ms** | **36.101 ms** |
-| **InsertIntoTable** |              **3000** | **1,183.69 ms** |   **348.140 ms** | **19.083 ms** |
-| **InsertIntoTable** |              **4000** | **2,252.40 ms** |   **759.855 ms** | **41.650 ms** |
-| **InsertIntoTable** |              **5000** | **3,892.36 ms** | **1,297.338 ms** | **71.111 ms** |
+|          Method | RowsInTableNumber |       Mean |       Error |   StdDev |
+|---------------- |------------------ |-----------:|------------:|---------:|
+| **InsertIntoTable** |              **1000** |   **112.3 ms** |   **262.57 ms** | **14.39 ms** |
+| **InsertIntoTable** |              **2000** |   **215.5 ms** |   **161.54 ms** |  **8.85 ms** |
+| **InsertIntoTable** |              **4000** |   **513.9 ms** |    **66.25 ms** |  **3.63 ms** |
+| **InsertIntoTable** |              **8000** | **1,435.6 ms** |   **292.05 ms** | **16.01 ms** |
+| **InsertIntoTable** |             **16000** | **4,701.2 ms** | **1,312.20 ms** | **71.93 ms** |

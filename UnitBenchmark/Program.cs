@@ -71,7 +71,7 @@ namespace UnitBenchmark
     [EtwProfiler(performExtraBenchmarksRun: true)]
     public class InsertTableSingleThreadedBenchmark
     {
-        [Params(100, 1000, 2000, 3000, 4000, 5000)]
+        [Params(1000, 2000, 4000, 8000, 16000)]
         public int RowsInTableNumber;
 
         [Benchmark]
