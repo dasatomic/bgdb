@@ -1,5 +1,4 @@
 ﻿using DataStructures;
-using MetadataManager;
 using PageManager;
 using System;
 using System.Collections.Generic;
@@ -82,34 +81,6 @@ namespace QueryProcessing
             return Enumerable.SequenceEqual(this.intCols, other.intCols) &&
                 Enumerable.SequenceEqual(this.doubleCols, other.doubleCols) &&
                 Enumerable.SequenceEqual(this.stringCols, other.stringCols);
-        }
-
-        public async Task<RowsetHolder> ToRowsetHolder(ColumnType[] columnTypes, HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
-        {
-            RowsetHolder rh = new RowsetHolder(columnTypes);
-
-            int[][] intColsPrep = new int[intCols.Length][];
-            for (int i = 0; i < intCols.Length; i++)
-            {
-                intColsPrep[i] = new int[1] { intCols[0] };
-            }
-
-            double[][] doubleColsPrep = new double[doubleCols.Length][];
-            for (int i = 0; i < doubleCols.Length; i++)
-            {
-                doubleColsPrep[i] = new double[1] { doubleCols[0] };
-            }
-
-            PagePointerOffsetPair[] offsetCols = await PushStringsToStringHeap(stringAlloc, tran).ConfigureAwait(false);
-            PagePointerOffsetPair[][] offsetPreps = new PagePointerOffsetPair[offsetCols.Length][];
-            for (int i = 0; i < offsetCols.Length; i++)
-            {
-                offsetPreps[i] = new PagePointerOffsetPair[1] { offsetCols[0] };
-            }
-
-            rh.SetColumns(intColsPrep, doubleColsPrep, offsetPreps, new long[0][]);
-
-            return rh;
         }
 
         public async Task<RowHolderFixed> ToRowHolderFixed(HeapWithOffsets<char[]> stringAlloc, ITransaction tran)
