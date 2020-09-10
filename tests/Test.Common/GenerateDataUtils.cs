@@ -1,6 +1,5 @@
 ﻿using PageManager;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,6 +7,28 @@ namespace Test.Common
 {
     public static class GenerateDataUtils
     {
+        public static List<ColumnInfo> GenerateRandomColumns(int colNum)
+        {
+            List<ColumnInfo> result = new List<ColumnInfo>();
+            Random rnd = new Random();
+
+            for (int i = 0; i < colNum; i++)
+            {
+                ColumnType ct = (ColumnType)rnd.Next(0, (int)ColumnType.MaxColumnType);
+                if (ct == ColumnType.String)
+                {
+                    int strLength = rnd.Next(1, 20);
+                    result.Add(new ColumnInfo(ct, strLength));
+                }
+                else
+                {
+                    result.Add(new ColumnInfo(ct));
+                }
+            }
+
+            return result;
+        }
+
         public static List<RowHolderFixed> GenerateRowsWithSampleData(out ColumnType[] columnTypes, int rowNumber = 10)
         {
             List<RowHolderFixed> rhfs = new List<RowHolderFixed>();

@@ -3,6 +3,7 @@ using PageManager;
 using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Test.Common;
 
 namespace PageManagerTests
 {
@@ -203,6 +204,39 @@ namespace PageManagerTests
             Assert.AreEqual("TESTTEST00".ToCharArray(), rhf.GetStringField(0));
             Assert.AreEqual("TEST0".ToCharArray(), rhf.GetStringField(1));
             Assert.AreEqual(17, rhf.GetField<int>(2));
+        }
+
+        [Test]
+        public void RowHolderProject()
+        {
+            var columnTypes = new ColumnInfo[] { 
+                new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
+            var rhf = new RowHolderFixed(columnTypes);
+
+            rhf.SetField(0, "TESTTEST00".ToCharArray());
+            rhf.SetField(1, "TEST0".ToCharArray());
+            rhf.SetField(2, 17);
+
+            var rhfnew = rhf.Project(new[] { 1, 2 });
+
+            Assert.AreEqual("TEST0".ToCharArray(), rhfnew.GetStringField(0));
+            Assert.AreEqual(17, rhfnew.GetField<int>(1));
+        }
+
+        [Test]
+        [Repeat(100)]
+        public void RandomRowHolderProject()
+        {
+            ColumnInfo[] cis = GenerateDataUtils.GenerateRandomColumns(10).ToArray();
+            var rhf = new RowHolderFixed(cis);
+
+            Random r = new Random();
+            int[] arr = Enumerable.Range(0, 9).ToArray();
+            Randomizer.Randomize(arr);
+
+            arr = arr.Take(r.Next(1, 10)).ToArray();
+
+            rhf.Project(arr);
         }
     }
 }

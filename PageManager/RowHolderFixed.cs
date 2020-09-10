@@ -49,6 +49,12 @@ namespace PageManager
             this.Storage = storage;
         }
 
+        private RowHolderFixed(short[] columnPositions, byte[] data)
+        {
+            this.ColumnPosition = columnPositions;
+            this.Storage = data;
+        }
+
         public void Fill(Span<byte> arr)
         {
             arr.CopyTo(this.Storage);
@@ -114,6 +120,56 @@ namespace PageManager
             {
                 return false;
             }
+        }
+
+        public RowHolderFixed Project(int[] cols)
+        {
+            // only copy relevant chunks of data.
+            short[] newColPositions = new short[cols.Length];
+            short totalSize = 0;
+            newColPositions[0] = 0;
+            for (int i = 0; i < cols.Length; i++)
+            {
+                short diff;
+                if (cols[i] == this.ColumnPosition.Length - 1)
+                {
+                    diff = (short)(this.Storage.Length - this.ColumnPosition[cols[i]]);
+                }
+                else
+                {
+                    diff = (short)(this.ColumnPosition[cols[i] + 1] - this.ColumnPosition[cols[i]]);
+                }
+
+                totalSize += diff;
+
+                if (i != cols.Length - 1)
+                {
+                    newColPositions[i + 1] = (short)(newColPositions[i] + diff);
+                }
+            }
+
+            byte[] newStorage = new byte[totalSize];
+            for (int i = 0; i < cols.Length; i++)
+            {
+                short sourceIndex = this.ColumnPosition[cols[i]];
+                short sourceLenght;
+
+                if (cols[i] == this.ColumnPosition.Length - 1)
+                {
+                    sourceLenght = (short)(this.Storage.Length - this.ColumnPosition[cols[i]]);
+                }
+                else
+                {
+                    sourceLenght = (short)(this.ColumnPosition[cols[i] + 1] - this.ColumnPosition[cols[i]]);
+                }
+
+                for (int j = 0; j < sourceLenght; j++)
+                {
+                    newStorage[newColPositions[i] + j] = this.Storage[sourceIndex + j];
+                }
+            }
+
+            return new RowHolderFixed(newColPositions, newStorage);
         }
 
         public override int GetHashCode()

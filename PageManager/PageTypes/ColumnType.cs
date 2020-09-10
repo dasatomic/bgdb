@@ -6,12 +6,18 @@ namespace PageManager
     {
         Int = 0,
         Double = 1,
+        // String of variable length are stored
+        // in separate pages.
         StringPointer = 2,
         PagePointer = 3,
-        MaxColumnType = 4,
         // String for now is only ASCII, single byte encoding.
         // String is meant for columns of fixed length.
-        String = 5,
+        String = 4,
+
+        /// <summary>
+        /// Maximal value. Update as new once are added.
+        /// </summary>
+        MaxColumnType = 5,
     }
 
     public struct ColumnInfo
