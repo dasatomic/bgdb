@@ -25,8 +25,6 @@ namespace QueryProcessing
 
             ColumnType[] columnTypes = mdTable.Columns.Select(x => x.ColumnType).ToArray();
 
-            // TODO: Because I always construct new page list collection last
-            // insert is always zero!
             this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, mdTable.RootPage);
             this.stringHeap = stringHeap;
             this.input = input;

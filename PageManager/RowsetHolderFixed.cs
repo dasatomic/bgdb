@@ -1,10 +1,8 @@
 ﻿using PageManager.UtilStructures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 
 namespace PageManager
 {
@@ -37,7 +35,7 @@ namespace PageManager
 
         private ushort rowCount;
 
-        public RowsetHolderFixed(ColumnType[] columnTypes, Memory<byte> storage, bool init)
+        public RowsetHolderFixed(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
         {
             System.Diagnostics.Debug.Assert(BitConverter.IsLittleEndian, "Rowset holder fixed assumes that we are running on little endian");
 
@@ -50,7 +48,7 @@ namespace PageManager
 
             // TODO: In this implementation each value in tuple can't be bigger than 256 bytes.
             // Since this is only for fixed data this should be fine.
-            this.reservedColumnTupleOffsetsCount = (ushort)columnTypes.Length;
+            this.reservedColumnTupleOffsetsCount = (ushort)(columnTypes.Length * sizeof(ushort));
 
             if (init)
             {
@@ -64,7 +62,7 @@ namespace PageManager
                 this.storage.Span[pos] = 0;
                 for (int i = 0; i < columnTypes.Length - 1; i++)
                 {
-                    this.storage.Span[pos + 1] = (byte)(this.storage.Span[pos] + (byte)ColumnTypeSize.GetSize(columnTypes[i]));
+                    this.storage.Span[pos + 1] = (byte)(this.storage.Span[pos] + columnTypes[i].GetSize());
                     pos++;
                 }
             }
@@ -81,7 +79,7 @@ namespace PageManager
 
             maxRowCount = (ushort)((storage.Length - dataStartPosition) / rowSize);
 
-            // Find current number of items.
+            // TODO: Find current number of items.
         }
 
         public T GetRowGeneric<T>(int row, int col) where T : unmanaged
@@ -147,7 +145,7 @@ namespace PageManager
         }
 
         // TODO: This is not performant and it is not natural to pass column type here.
-        public IEnumerable<RowHolderFixed> Iterate(ColumnType[] columnTypes)
+        public IEnumerable<RowHolderFixed> Iterate(ColumnInfo[] columnTypes)
         {
             for (int i = 0; i < this.maxRowCount; i++)
             {
@@ -226,15 +224,15 @@ namespace PageManager
             }
         }
 
-        private static ushort GetRowSize(ColumnType[] columnTypes)
+        private static ushort GetRowSize(ColumnInfo[] columnInfo)
         {
-            ushort size = 0;
-            foreach (ColumnType ct in columnTypes)
+            ushort sum = 0;
+            foreach (ColumnInfo ci in columnInfo)
             {
-                size += ColumnTypeSize.GetSize(ct);
+                sum += ci.GetSize();
             }
 
-            return size;
+            return sum;
         }
 
         private int GetTuplePosition(int row, int col)

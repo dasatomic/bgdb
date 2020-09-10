@@ -1,6 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using PageManager;
 using System;
+using System.Linq;
 
 namespace UnitBenchmark
 {
@@ -13,8 +14,9 @@ namespace UnitBenchmark
         public void RowsetHolderFixedTest()
         {
             var columnTypes = new ColumnType[] { ColumnType.Int, ColumnType.Int, ColumnType.Double, ColumnType.StringPointer };
+            var columnInfo = columnTypes.Select(ct => new ColumnInfo(ct)).ToArray();
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolderFixed rh = new RowHolderFixed(columnInfo);
             rh.SetField<int>(0, 1);
             rh.SetField<int>(1, 2);
             rh.SetField<double>(2, 3.1);
@@ -24,7 +26,7 @@ namespace UnitBenchmark
 
             for (int i = 0; i < IterNum; i++)
             {
-                RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, memory, true);
+                RowsetHolderFixed rs = new RowsetHolderFixed(columnInfo, memory, true);
 
                 for (int j = 0; j < 10; j++)
                 {

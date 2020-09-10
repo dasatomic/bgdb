@@ -1,6 +1,5 @@
 ﻿using LogManager;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +17,7 @@ namespace PageManager
 
     public class MixedPage : PageSerializerBase<RowsetHolderFixed, RowHolderFixed>
     {
-        private readonly ColumnType[] columnTypes;
+        private readonly ColumnInfo[] columnTypes;
         private Memory<byte> inMemoryStorage;
 
         public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
@@ -31,7 +30,7 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
 
-            this.columnTypes = columnTypes;
+            this.columnTypes = columnTypes.Select(ct => new ColumnInfo(ct)).ToArray();
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
             this.inMemoryStorage = new Memory<byte>(new byte[(int)(this.pageSize - IPage.FirstElementPosition)]);
@@ -45,7 +44,7 @@ namespace PageManager
 
         public MixedPage(BinaryReader stream, ColumnType[] columnTypes)
         {
-            this.columnTypes = columnTypes;
+            this.columnTypes = columnTypes.Select(ct => new ColumnInfo(ct)).ToArray();
 
             this.pageId = stream.ReadUInt64();
             this.pageSize = stream.ReadUInt32();
@@ -96,7 +95,7 @@ namespace PageManager
 
             this.rowCount++;
 
-            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes.Select(ct => ct.ColumnType).ToArray(), this.PageType());
             transaction.AddRecord(rc);
 
             this.isDirty = true;
@@ -206,7 +205,7 @@ namespace PageManager
 
             this.items.SetRow(position, item);
 
-            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes.Select(ct => ct.ColumnType).ToArray(), this.PageType());
             transaction.AddRecord(rc);
 
             this.isDirty = true;
