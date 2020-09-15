@@ -68,7 +68,7 @@ namespace UnitBenchmark
     }
 
     [RPlotExporter]
-    [EtwProfiler(performExtraBenchmarksRun: true)]
+    // [EtwProfiler(performExtraBenchmarksRun: true)]
     public class InsertTableSingleThreadedBenchmark
     {
         [Params(1000, 2000, 4000, 8000, 16000)]
