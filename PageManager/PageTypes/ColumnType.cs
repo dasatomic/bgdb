@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PageManager
 {
@@ -27,12 +29,22 @@ namespace PageManager
 
         public ColumnInfo(ColumnType ct, int repCount)
         {
+            if (ct != ColumnType.String && repCount != 0)
+            {
+                throw new ArgumentException();
+            }
+
             this.ColumnType = ct;
             this.RepCount = repCount;
         }
 
         public ColumnInfo(ColumnType ct)
         {
+            if (ct == ColumnType.String)
+            {
+                throw new ArgumentException();
+            }
+
             this.ColumnType = ct;
             this.RepCount = 0;
         }
@@ -46,6 +58,46 @@ namespace PageManager
                 ColumnType.StringPointer => (ushort)PagePointerOffsetPair.Size,
                 ColumnType.PagePointer => sizeof(long),
                 ColumnType.String => (ushort)(sizeof(char) * this.RepCount + sizeof(ushort)),
+                _ => throw new ArgumentException()
+            };
+        }
+
+        public static ColumnInfo Deserialize(BinaryReader source)
+        {
+            ColumnType ct = (ColumnType)source.ReadSByte();
+            if (IsVarLength(ct))
+            {
+                ushort len = source.ReadUInt16();
+                return new ColumnInfo(ct, len);
+            }
+            else
+            {
+                return new ColumnInfo(ct);
+            }
+        }
+
+        public void Serialize(BinaryWriter bw)
+        {
+            if (IsVarLength(this.ColumnType))
+            {
+                bw.Write((ushort)this.RepCount);
+                bw.Write((sbyte)this.ColumnType);
+            }
+            else
+            {
+                bw.Write((sbyte)this.ColumnType);
+            }
+        }
+
+        public static bool IsVarLength(ColumnType ct)
+        {
+            return ct switch
+            {
+                ColumnType.String => true,
+                ColumnType.Double => false,
+                ColumnType.PagePointer => false,
+                ColumnType.Int => false,
+                ColumnType.StringPointer => false,
                 _ => throw new ArgumentException()
             };
         }

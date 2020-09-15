@@ -11,12 +11,12 @@ namespace MetadataManager
     {
         private IPageManager pageAllocator;
 
-        private readonly ColumnType[] masterPageColumnDefinition = new ColumnType[]
+        private readonly ColumnInfo[] masterPageColumnDefinition = new ColumnInfo[]
         {
             // MD object id.
-            ColumnType.Int,
+            new ColumnInfo(ColumnType.Int),
             // Pointer to first page.
-            ColumnType.PagePointer,
+            new ColumnInfo(ColumnType.PagePointer),
         };
 
         private PageListCollection masterMetadataCollection;

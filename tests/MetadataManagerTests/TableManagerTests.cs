@@ -30,7 +30,7 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
             }, tran);
 
             await tran.Commit();
@@ -46,7 +46,7 @@ namespace MetadataManagerTests
             Assert.AreEqual("A", table.TableName);
 
             Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(t => t.ColumnName));
-            Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType));
+            Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType.ColumnType));
 
             var cm = mm.GetColumnManager();
 
@@ -77,7 +77,7 @@ namespace MetadataManagerTests
                 {
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
-                    ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
                 }, tran);
                 await tran.Commit();
             }
@@ -89,7 +89,7 @@ namespace MetadataManagerTests
                 Assert.AreEqual("T" + i, table.TableName);
 
                 Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(c => c.ColumnName));
-                Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType));
+                Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType.ColumnType));
             }
         }
 
@@ -108,7 +108,7 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
             }, tran);
             await tran.Commit();
 
@@ -119,7 +119,7 @@ namespace MetadataManagerTests
                 {
                     TableName = "A",
                     ColumnNames = new[] { "a" },
-                    ColumnTypes = new[] { ColumnType.Int }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int) }
                 }, tran);
             });
         }

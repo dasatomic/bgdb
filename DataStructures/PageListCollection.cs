@@ -14,17 +14,17 @@ namespace DataStructures
         Task<U> Max<U>(Func<T, U> projector, U startMin, ITransaction tran) where U : IComparable;
         Task<bool> IsEmpty(ITransaction tran);
         IAsyncEnumerable<T> Iterate(ITransaction tran);
-        public ColumnType[] GetColumnTypes();
+        public ColumnInfo[] GetColumnTypes();
     }
 
     public class PageListCollection : UnorderedListCollection<RowHolderFixed>
     {
         private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;
-        private ColumnType[] columnTypes;
+        private ColumnInfo[] columnTypes;
         private ulong lastPageId;
 
-        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, ITransaction tran)
+        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran)
         {
             if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0)
             {
@@ -37,7 +37,7 @@ namespace DataStructures
             this.lastPageId = this.collectionRootPageId;
         }
 
-        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnType[] columnTypes, ulong initialPageId)
+        public PageListCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ulong initialPageId)
         {
             if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0)
             {
@@ -168,6 +168,6 @@ namespace DataStructures
             return await this.Count(tran).ConfigureAwait(false) == 0;
         }
 
-        public ColumnType[] GetColumnTypes() => this.columnTypes;
+        public ColumnInfo[] GetColumnTypes() => this.columnTypes;
     }
 }

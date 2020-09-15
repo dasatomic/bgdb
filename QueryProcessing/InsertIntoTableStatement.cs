@@ -1,8 +1,6 @@
 ﻿using PageManager;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -15,7 +13,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async IAsyncEnumerable<Row> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsInsert)
             {
@@ -23,10 +21,10 @@ namespace QueryProcessing
             }
 
             Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
-            IPhysicalOperator<Row> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran).ConfigureAwait(false);
+            IPhysicalOperator<RowHolderFixed> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran).ConfigureAwait(false);
             await rootOp.Invoke().ConfigureAwait(false);
 
-            yield return null;
+            yield break;
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsInsert;

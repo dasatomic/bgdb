@@ -29,18 +29,18 @@ namespace Test.Common
             return result;
         }
 
-        public static List<RowHolderFixed> GenerateRowsWithSampleData(out ColumnType[] columnTypes, int rowNumber = 10)
+        public static List<RowHolderFixed> GenerateRowsWithSampleData(out ColumnInfo[] columnTypes, int rowNumber = 10)
         {
             List<RowHolderFixed> rhfs = new List<RowHolderFixed>();
 
-            columnTypes = new ColumnType[]
+            columnTypes = new ColumnInfo[]
             {
-                ColumnType.Int,
-                ColumnType.Int,
-                ColumnType.Double,
-                ColumnType.Int,
-                ColumnType.StringPointer,
-                ColumnType.PagePointer,
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Double),
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.StringPointer),
+                new ColumnInfo(ColumnType.PagePointer),
             };
 
             for (int i = 0; i < 10; i++)
@@ -60,27 +60,27 @@ namespace Test.Common
         }
 
         public static void GenerateSampleData(
-            out ColumnType[] types,
+            out ColumnInfo[] types,
             out int[][] intColumns,
             out double[][] doubleColumns,
             out long[][] pagePointerColumns,
             out PagePointerOffsetPair[][] pagePointerOffsetColumns,
             int rowCount = 5)
         {
-            types = new ColumnType[]
+            types = new ColumnInfo[]
             {
-                ColumnType.Int,
-                ColumnType.Int,
-                ColumnType.Double,
-                ColumnType.Int,
-                ColumnType.StringPointer,
-                ColumnType.PagePointer,
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Double),
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.StringPointer),
+                new ColumnInfo(ColumnType.PagePointer),
             };
 
-            int intColumnCount = types.Count(t => t == ColumnType.Int);
-            int doubleColumnCount = types.Count(t => t == ColumnType.Double);
-            int pagePointerOffsetCount = types.Count(t => t == ColumnType.StringPointer);
-            int pagePointerCount = types.Count(t => t == ColumnType.PagePointer);
+            int intColumnCount = types.Count(t => t.ColumnType == ColumnType.Int);
+            int doubleColumnCount = types.Count(t => t.ColumnType == ColumnType.Double);
+            int pagePointerOffsetCount = types.Count(t => t.ColumnType == ColumnType.StringPointer);
+            int pagePointerCount = types.Count(t => t.ColumnType == ColumnType.PagePointer);
 
             intColumns = new int[intColumnCount][];
             for (int i = 0; i < intColumns.Length; i++)

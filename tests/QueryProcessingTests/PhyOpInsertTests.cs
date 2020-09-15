@@ -23,7 +23,7 @@ namespace QueryProcessingTests
 
             var tm = mm.GetTableManager();
 
-            var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
+            var columnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) };
             await using ITransaction tran = logManager.CreateTransaction(allocator);
             int id = await tm.CreateObject(new TableCreateDefinition()
             {
@@ -37,8 +37,11 @@ namespace QueryProcessingTests
             await using ITransaction tranCreate = logManager.CreateTransaction(allocator);
             var table = await tm.GetById(id, tranCreate);
 
-            Row[] source = new Row[] { new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes) };
-            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
+            var rhf = new RowHolderFixed(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.String, 10) });
+            rhf.SetField<int>(0, 1);
+            rhf.SetField(1, 1.ToString().ToCharArray());
+            rhf.SetField<double>(2, 1 + 1.1);
+            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(rhf);
 
             await using ITransaction tranInsert = logManager.CreateTransaction(allocator);
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tranInsert);

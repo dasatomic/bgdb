@@ -28,7 +28,7 @@ namespace PageManagerTests
 
             const int workerCount = 50;
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
 
             async Task generatePagesAction()
             {
@@ -70,7 +70,7 @@ namespace PageManagerTests
 
             const int workerCount = 50;
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
 
             async Task generatePagesAction()
             {

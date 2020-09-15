@@ -11,8 +11,8 @@ namespace PageManager
 {
     public interface IAllocateMixedPage
     {
-        Task<MixedPage> AllocateMixedPage(ColumnType[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
-        Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnType[] columnTypes);
+        Task<MixedPage> AllocateMixedPage(ColumnInfo[] columnTypes, ulong prevPage, ulong nextPage, ITransaction tran);
+        Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnInfo[] columnTypes);
     }
 
     public class MixedPage : PageSerializerBase<RowsetHolderFixed, RowHolderFixed>
@@ -20,7 +20,7 @@ namespace PageManager
         private readonly ColumnInfo[] columnTypes;
         private Memory<byte> inMemoryStorage;
 
-        public MixedPage(uint pageSize, ulong pageId, ColumnType[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
+        public MixedPage(uint pageSize, ulong pageId, ColumnInfo[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
         {
             if (columnTypes == null || columnTypes.Length == 0)
             {
@@ -30,7 +30,7 @@ namespace PageManager
             this.pageSize = pageSize;
             this.pageId = pageId;
 
-            this.columnTypes = columnTypes.Select(ct => new ColumnInfo(ct)).ToArray();
+            this.columnTypes = columnTypes;
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
             this.inMemoryStorage = new Memory<byte>(new byte[(int)(this.pageSize - IPage.FirstElementPosition)]);
@@ -42,9 +42,9 @@ namespace PageManager
             this.isDirty = true;
         }
 
-        public MixedPage(BinaryReader stream, ColumnType[] columnTypes)
+        public MixedPage(BinaryReader stream, ColumnInfo[] columnInfos)
         {
-            this.columnTypes = columnTypes.Select(ct => new ColumnInfo(ct)).ToArray();
+            this.columnTypes = columnInfos;
 
             this.pageId = stream.ReadUInt64();
             this.pageSize = stream.ReadUInt32();
@@ -95,7 +95,7 @@ namespace PageManager
 
             this.rowCount++;
 
-            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes.Select(ct => ct.ColumnType).ToArray(), this.PageType());
+            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
             transaction.AddRecord(rc);
 
             this.isDirty = true;
@@ -205,7 +205,7 @@ namespace PageManager
 
             this.items.SetRow(position, item);
 
-            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes.Select(ct => ct.ColumnType).ToArray(), this.PageType());
+            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
             transaction.AddRecord(rc);
 
             this.isDirty = true;

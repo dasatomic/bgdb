@@ -33,7 +33,7 @@ namespace PageManagerTests
         public async Task GetPageOfInvalidType()
         {
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            GenerateDataUtils.GenerateSampleData(out ColumnInfo[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
             MixedPage page = await pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
@@ -43,7 +43,7 @@ namespace PageManagerTests
         [Test]
         public async Task PagesOfMixedType()
         {
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
 
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
@@ -57,7 +57,7 @@ namespace PageManagerTests
         [Test]
         public async Task PageLinking()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            GenerateDataUtils.GenerateSampleData(out ColumnInfo[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page11 = await pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
@@ -73,7 +73,7 @@ namespace PageManagerTests
         [Test]
         public async Task MultiPageLinking()
         {
-            GenerateDataUtils.GenerateSampleData(out ColumnType[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
+            GenerateDataUtils.GenerateSampleData(out ColumnInfo[] types, out int[][] intColumns, out double[][] doubleColumns, out long[][] pagePointerColumns, out PagePointerOffsetPair[][] pagePointerOffsetColumns);
 
             IPageManager pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             MixedPage page11 = await pageManager.AllocateMixedPage(types, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);

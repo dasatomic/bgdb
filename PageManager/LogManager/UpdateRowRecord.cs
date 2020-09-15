@@ -12,10 +12,12 @@ namespace LogManager
         public readonly byte[] DiffOldValue;
         public readonly byte[] DiffNewValue;
         public readonly ulong TranscationId;
-        public readonly ColumnType[] columnTypes;
+
+        // TODO: Update Row shouldn't care about Column types?
+        public readonly ColumnInfo[] columnInfos;
         public readonly PageType pageType;
 
-        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId, ColumnType[] columnTypes, PageType pageType)
+        public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId, ColumnInfo[] columnInfos, PageType pageType)
         {
             if (diffOldValue.Length != diffNewValue.Length)
             {
@@ -27,12 +29,12 @@ namespace LogManager
             this.DiffOldValue = diffOldValue;
             this.DiffNewValue = diffNewValue;
             this.TranscationId = transactionId;
-            this.columnTypes = columnTypes;
+            this.columnInfos = columnInfos;
             this.pageType = pageType;
         }
 
         public UpdateRowRecord(ulong pageId, ushort rowPosition, byte[] diffOldValue, byte[] diffNewValue, ulong transactionId, PageType pageType)
-            : this(pageId, rowPosition, diffOldValue, diffNewValue, transactionId, new ColumnType[0], pageType)
+            : this(pageId, rowPosition, diffOldValue, diffNewValue, transactionId, new ColumnInfo[0], pageType)
         { }
 
         public UpdateRowRecord(BinaryReader source)
@@ -44,10 +46,10 @@ namespace LogManager
             this.DiffOldValue = source.ReadBytes(bc);
             this.DiffNewValue = source.ReadBytes(bc);
             int cts = source.ReadUInt16();
-            this.columnTypes = new ColumnType[cts];
+            this.columnInfos = new ColumnInfo[cts];
             for (int i = 0; i < cts; i++)
             {
-                this.columnTypes[i] = (ColumnType)source.ReadByte();
+                this.columnInfos[i] = ColumnInfo.Deserialize(source);
             }
 
             this.pageType = (PageType)source.ReadByte();
@@ -62,10 +64,10 @@ namespace LogManager
             destination.Write((ushort)this.DiffOldValue.Length);
             destination.Write(this.DiffOldValue);
             destination.Write(this.DiffNewValue);
-            destination.Write((ushort)this.columnTypes.Length);
-            foreach (ColumnType ct in this.columnTypes)
+            destination.Write((ushort)this.columnInfos.Length);
+            foreach (ColumnInfo ci in this.columnInfos)
             {
-                destination.Write((byte)ct);
+                ci.Serialize(destination);
             }
             destination.Write((byte)this.pageType);
         }
@@ -76,13 +78,13 @@ namespace LogManager
 
         public async Task Redo(IPageManager pageManager, ITransaction tran)
         {
-            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
+            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnInfos);
             page.RedoLog(this, tran);
         }
 
         public async Task Undo(IPageManager pageManager, ITransaction tran)
         {
-            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnTypes);
+            IPage page = await pageManager.GetPage(this.PageId, tran, this.pageType, this.columnInfos);
             page.UndoLog(this, tran);
         }
 

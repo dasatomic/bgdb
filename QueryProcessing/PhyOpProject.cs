@@ -1,24 +1,23 @@
 ﻿using PageManager;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpProject : IPhysicalOperator<Row>
+    public class PhyOpProject : IPhysicalOperator<RowHolderFixed>
     {
-        private IPhysicalOperator<Row> source;
+        private IPhysicalOperator<RowHolderFixed> source;
         private int[] columnChooser;
 
-        public PhyOpProject(IPhysicalOperator<Row> source, int[] columnChooser)
+        public PhyOpProject(IPhysicalOperator<RowHolderFixed> source, int[] columnChooser)
         {
             this.source = source;
             this.columnChooser = columnChooser;
         }
 
-        public async IAsyncEnumerable<Row> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
         {
-            await foreach (Row row in this.source.Iterate(tran))
+            await foreach (RowHolderFixed row in this.source.Iterate(tran))
             {
                 yield return row.Project(this.columnChooser);
             }

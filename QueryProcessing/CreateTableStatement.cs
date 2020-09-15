@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
@@ -17,7 +18,7 @@ namespace QueryProcessing
             this.metadataManager = metadataManager;
         }
 
-        public async IAsyncEnumerable<Row> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsCreate)
             {
@@ -35,15 +36,15 @@ namespace QueryProcessing
             tableCreateDefinition.ColumnNames = columns.Select(c => c.Item2).ToArray();
             tableCreateDefinition.ColumnTypes = columns.Select(c =>
             {
-                if (c.Item1.IsDoubleCType) return ColumnType.Double;
-                else if (c.Item1.IsIntCType) return ColumnType.Int;
-                else if (c.Item1.IsStringCType) return ColumnType.StringPointer;
+                if (c.Item1.IsDoubleCType) return new ColumnInfo(ColumnType.Double);
+                else if (c.Item1.IsIntCType) return new ColumnInfo(ColumnType.Int);
+                else if (c.Item1.IsStringCType) return new ColumnInfo(ColumnType.StringPointer);
                 else throw new ArgumentException();
             }).ToArray();
 
             await tableManager.CreateObject(tableCreateDefinition, tran).ConfigureAwait(false);
 
-            yield return null;
+            yield break;
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsCreate;

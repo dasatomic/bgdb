@@ -3,7 +3,6 @@ using Microsoft.FSharp.Core;
 using PageManager;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -23,7 +22,7 @@ namespace QueryProcessing
             return SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
         }
 
-        public async IAsyncEnumerable<Row> Execute(string queryText, ITransaction tran)
+        public async IAsyncEnumerable<RowHolderFixed> Execute(string queryText, ITransaction tran)
         {
             Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
 
@@ -31,7 +30,7 @@ namespace QueryProcessing
             {
                 if (handler.ShouldExecute(statement))
                 {
-                    await foreach (Row row in handler.Execute(statement, tran))
+                    await foreach (RowHolderFixed row in handler.Execute(statement, tran))
                     {
                         yield return row;
                     }

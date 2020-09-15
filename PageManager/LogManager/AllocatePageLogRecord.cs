@@ -1,7 +1,5 @@
 ﻿using PageManager;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace LogManager
@@ -14,11 +12,11 @@ namespace LogManager
         public readonly uint PageSize;
         public readonly ulong NextPageId;
         public readonly ulong PrevPageId;
-        public readonly ColumnType[] ColumnTypes;
+        public readonly ColumnInfo[] ColumnTypes;
 
         public LogRecordType GetRecordType() => LogRecordType.AllocatePage;
 
-        public AllocatePageLogRecord(ulong pageId, ulong transactionid, PageType pageType, uint pageSize, ulong nextPageId, ulong prevPageId, ColumnType[] columnTypes) =>
+        public AllocatePageLogRecord(ulong pageId, ulong transactionid, PageType pageType, uint pageSize, ulong nextPageId, ulong prevPageId, ColumnInfo[] columnTypes) =>
             (PageId, TranId, PageType, PageSize, NextPageId, PrevPageId, ColumnTypes) = (pageId, transactionid, pageType, pageSize, nextPageId, prevPageId, columnTypes);
 
         public AllocatePageLogRecord(BinaryReader br)
@@ -33,11 +31,11 @@ namespace LogManager
 
             if (columnTypesLen != 0)
             {
-                this.ColumnTypes = new ColumnType[columnTypesLen];
+                this.ColumnTypes = new ColumnInfo[columnTypesLen];
 
                 for (int i = 0; i < columnTypesLen; i++)
                 {
-                    this.ColumnTypes[i] = (ColumnType)br.ReadUInt16();
+                    this.ColumnTypes[i] = ColumnInfo.Deserialize(br);
                 }
             }
         }
@@ -74,9 +72,9 @@ namespace LogManager
             else
             {
                 destination.Write((ushort)this.ColumnTypes.Length);
-                foreach (ColumnType ct in this.ColumnTypes)
+                foreach (ColumnInfo ct in this.ColumnTypes)
                 {
-                    destination.Write((ushort)ct);
+                    ct.Serialize(destination);
                 }
             }
         }

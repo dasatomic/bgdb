@@ -25,7 +25,7 @@ namespace QueryProcessing
             this.stringHeap = stringHeap;
         }
 
-        public async Task<IPhysicalOperator<Row>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
+        public async Task<IPhysicalOperator<RowHolderFixed>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
             string tableName = sqlStatement.Table;
             string[] columns = sqlStatement.Columns.ToArray();
@@ -33,7 +33,7 @@ namespace QueryProcessing
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
-            ColumnType[] columnTypes = table.Columns.Select(x => x.ColumnType).ToArray();
+            ColumnInfo[] columnTypes = table.Columns.Select(mc => mc.ColumnType).ToArray();
 
             PageListCollection pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
@@ -56,20 +56,34 @@ namespace QueryProcessing
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
-            List<int> intCols = new List<int>();
-            List<double> doubleCols = new List<double>();
-            List<string> stringCols = new List<string>();
-
+            ColumnInfo[] columnInfos = new ColumnInfo[insertStatement.Values.Length];
+            int i = 0;
             foreach (var value in insertStatement.Values)
             {
-                if (value.IsFloat) doubleCols.Add(((Sql.value.Float)value).Item);
-                else if (value.IsInt) intCols.Add(((Sql.value.Int)value).Item);
-                else if (value.IsString) stringCols.Add(((Sql.value.String)value).Item);
+
+                if (value.IsFloat) columnInfos[i] = new ColumnInfo(ColumnType.Double);
+                else if (value.IsInt) columnInfos[i] = new ColumnInfo(ColumnType.Int);
+                else if (value.IsString) columnInfos[i] = new ColumnInfo(ColumnType.String, ((Sql.value.String)value).Item.Length);
                 else { throw new ArgumentException(); }
+                i++;
             }
 
-            Row[] source = new Row[] { new Row(intCols.ToArray(), doubleCols.ToArray(), stringCols.ToArray() , table.Columns.Select(c => c.ColumnType).ToArray()) };
-            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
+            // TODO: Add check between ColumnInfos in insert statement and Metadata Table.
+
+            RowHolderFixed rowHolder = new RowHolderFixed(columnInfos);
+
+            int colNum = 0;
+            foreach (var value in insertStatement.Values)
+            {
+                if (value.IsFloat) rowHolder.SetField<double>(colNum, ((Sql.value.Float)value).Item);
+                else if (value.IsInt) rowHolder.SetField<int>(colNum, ((Sql.value.Int)value).Item);
+                else if (value.IsString) rowHolder.SetField(colNum, ((Sql.value.String)value).Item.ToCharArray());
+                else { throw new ArgumentException(); }
+
+                colNum++;
+            }
+
+            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(rowHolder);
 
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
             return op;

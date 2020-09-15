@@ -108,15 +108,15 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
-                Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
-                Assert.AreEqual(1, result[0].IntCols[0]);
-                Assert.AreEqual(1.1, result[0].DoubleCols[0]);
-                Assert.AreEqual("mystring", result[0].StringCols[0]);
+                Assert.AreEqual(1, result[0].GetField<int>(0));
+                Assert.AreEqual(1.1, result[0].GetField<double>(1));
+                Assert.AreEqual("mystring", result[0].GetStringField(2));
 
-                Assert.AreEqual(2, result[1].IntCols[0]);
-                Assert.AreEqual(2.2, result[1].DoubleCols[0]);
-                Assert.AreEqual("mystring2", result[1].StringCols[0]);
+                Assert.AreEqual(2, result[1].GetField<int>(0));
+                Assert.AreEqual(2.2, result[1].GetField<double>(1));
+                Assert.AreEqual("mystring2", result[1].GetStringField(2));
 
                 await tran.Commit();
             }
@@ -159,15 +159,15 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
-                Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
-                Assert.AreEqual(1, result[0].IntCols[0]);
-                Assert.AreEqual(1.1, result[0].DoubleCols[0]);
-                Assert.AreEqual("mystring", result[0].StringCols[0]);
+                Assert.AreEqual(1, result[0].GetField<int>(0));
+                Assert.AreEqual(1.1, result[0].GetField<double>(1));
+                Assert.AreEqual("mystring", result[0].GetStringField(2));
 
-                Assert.AreEqual(2, result[1].IntCols[0]);
-                Assert.AreEqual(2.2, result[1].DoubleCols[0]);
-                Assert.AreEqual("mystring2", result[1].StringCols[0]);
+                Assert.AreEqual(2, result[1].GetField<int>(0));
+                Assert.AreEqual(2.2, result[1].GetField<double>(1));
+                Assert.AreEqual("mystring2", result[1].GetStringField(2));
 
                 await tran.Commit();
             }
@@ -255,7 +255,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "SELECT"))
             {
                 string query = @"SELECT a, b, c FROM LargeTable";
-                Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolderFixed[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(rowInsert, result.Length);
             }

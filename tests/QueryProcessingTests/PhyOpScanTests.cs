@@ -27,12 +27,12 @@ namespace QueryProcessingTests
             var tm = mm.GetTableManager();
 
             ITransaction tran = logManager.CreateTransaction(allocator);
-            var columnTypes = new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double };
+            var columnInfos = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) };
             int id = await tm.CreateObject(new TableCreateDefinition()
             {
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = columnTypes, 
+                ColumnTypes = columnInfos, 
             }, tran);
 
             await tran.Commit();
@@ -41,15 +41,17 @@ namespace QueryProcessingTests
             var table = await tm.GetById(id, tran);
             await tran.Commit();
 
-            Row[] source = new Row[] { 
-                new Row(new[] { 1 }, new[] { 1.1 }, new[] { "mystring" }, columnTypes),
-                new Row(new[] { 2 }, new[] { 1.1 }, new[] { "notmystring" }, columnTypes),
-                new Row(new[] { 3 }, new[] { 2.1 }, new[] { "pavle" }, columnTypes),
-                new Row(new[] { 4 }, new[] { 1.1 }, new[] { "ivona" }, columnTypes),
-                new Row(new[] { 1 }, new[] { 1.1 }, new[] { "zoja" }, columnTypes),
-            };
-            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
+            List<RowHolderFixed> source = new List<RowHolderFixed>();
+            for (int i = 0; i < 5; i++)
+            {
+                var rhf = new RowHolderFixed(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) });
+                rhf.SetField<int>(0, i);
+                rhf.SetField(1, i.ToString().ToCharArray());
+                rhf.SetField<double>(2, i + 1.1);
+                source.Add(rhf);
+            }
 
+            PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
             tran = logManager.CreateTransaction(allocator);
             PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
@@ -57,10 +59,10 @@ namespace QueryProcessingTests
             await tran.Commit();
 
             tran = logManager.CreateTransaction(allocator);
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
+            PageListCollection pcl = new PageListCollection(allocator, columnInfos, table.RootPage);
             PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
 
-            List<Row> result = new List<Row>();
+            List<RowHolderFixed> result = new List<RowHolderFixed>();
 
             await foreach (var row in scan.Iterate(tran))
             {

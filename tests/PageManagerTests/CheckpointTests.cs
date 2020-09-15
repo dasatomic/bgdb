@@ -22,7 +22,7 @@ namespace PageManagerTests
             ILockManager lm = new LockManager.LockManager();
             using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
 
             await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
@@ -44,7 +44,7 @@ namespace PageManagerTests
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
             IBufferPool bp = new BufferPool();
             ILockManager lm = new LockManager.LockManager();
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             MixedPage p1, p2, p3;
 
             using (var pageManager = new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger))

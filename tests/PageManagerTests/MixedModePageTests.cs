@@ -19,7 +19,7 @@ namespace PageManagerTests
         [Test]
         public void Insert()
         {
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             rows.ForEach(r => page.Insert(r, new DummyTran()));
@@ -30,7 +30,7 @@ namespace PageManagerTests
         [Test]
         public void VerifyFromStream()
         {
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
 
             rows.ForEach(r => page.Insert(r, new DummyTran()));

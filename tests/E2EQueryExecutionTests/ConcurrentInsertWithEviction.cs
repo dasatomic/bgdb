@@ -97,11 +97,11 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTableWithEviction";
-                Row[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync().ConfigureAwait(false);
+                RowHolderFixed[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync().ConfigureAwait(false);
 
                 Assert.AreEqual(result.Length, Interlocked.CompareExchange(ref totalInsert, 0, 0));
 
-                int sum = result.Sum(r => r.IntCols[0]);
+                int sum = result.Sum(r => r.GetField<int>(0));
 
                 Assert.AreEqual(totalSum, Interlocked.CompareExchange(ref sum, 0, 0));
                 await tran.Commit().ConfigureAwait(false);

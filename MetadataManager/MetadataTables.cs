@@ -21,7 +21,7 @@ namespace MetadataManager
     {
         public string TableName;
         public string[] ColumnNames;
-        public ColumnType[] ColumnTypes;
+        public ColumnInfo[] ColumnTypes;
     }
 
     public class MetadataTablesManager : IMetadataObjectManager<MetadataTable, TableCreateDefinition>
@@ -33,14 +33,14 @@ namespace MetadataManager
         private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager;
         private IAllocateMixedPage pageAllocator;
 
-        private static ColumnType[] columnDefinitions = new ColumnType[]
+        private static ColumnInfo[] columnDefinitions = new ColumnInfo[]
         {
-            ColumnType.Int,
-            ColumnType.StringPointer,
-            ColumnType.PagePointer,
+            new ColumnInfo(ColumnType.Int),
+            new ColumnInfo(ColumnType.String, 20),
+            new ColumnInfo(ColumnType.PagePointer),
         };
 
-        public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
+        public static ColumnInfo[] GetSchemaDefinition() => columnDefinitions;
 
         public MetadataTablesManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap, IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager)
         {

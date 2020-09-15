@@ -1,23 +1,26 @@
 ﻿using PageManager;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpStaticRowProvider : IPhysicalOperator<Row>
+    public class PhyOpStaticRowProvider : IPhysicalOperator<RowHolderFixed>
     {
-        private IEnumerable<Row> source;
+        private IEnumerable<RowHolderFixed> source;
 
-        public PhyOpStaticRowProvider(IEnumerable<Row> rows)
+        public PhyOpStaticRowProvider(IEnumerable<RowHolderFixed> rows)
         {
             this.source = rows;
         }
 
-        public async IAsyncEnumerable<Row> Iterate(ITransaction _)
+        public PhyOpStaticRowProvider(RowHolderFixed row)
         {
-            foreach (Row row in source)
+            this.source = new RowHolderFixed[] { row };
+        }
+
+        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction _)
+        {
+            foreach (RowHolderFixed row in source)
             {
                 yield return await Task.FromResult(row);
             }

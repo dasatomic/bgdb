@@ -32,7 +32,7 @@ namespace LogManagerTests
                         diffOldValue: new byte[] { 1, 2, 3 },
                         diffNewValue: new byte[] { 3, 2, 1 },
                         transactionId: tran1.TranscationId(),
-                        new ColumnType[1] { ColumnType.Int },
+                        new ColumnInfo[1] { new ColumnInfo(ColumnType.Int) },
                         PageType.StringPage);
 
                 tran1.AddRecord(record1);
@@ -163,7 +163,7 @@ namespace LogManagerTests
 
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
-                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] columnType);
+                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] columnType);
                 MixedPage page = await pageManager.AllocateMixedPage(columnType, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
                 {
                     using var rs = await tran1.AcquireLock(page.PageId(), LockTypeEnum.Exclusive);
@@ -201,7 +201,7 @@ namespace LogManagerTests
 
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
-                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] columnTypes);
+                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] columnTypes);
                 MixedPage page = await pageManager.AllocateMixedPage(columnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);
 
                 {
@@ -254,7 +254,7 @@ namespace LogManagerTests
 
                 await using ITransaction tran1 = manager.CreateTransaction(pageManager);
 
-                GenerateDataUtils.GenerateSampleData(out ColumnType[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
+                GenerateDataUtils.GenerateSampleData(out ColumnInfo[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
                 const int pageCount = 2;
 
                 var p1 = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran1);

@@ -11,7 +11,7 @@ namespace PageManagerTests
         [Test]
         public void BitTrackingPageSet()
         {
-            MixedPage page = new MixedPage(4096, 1, new ColumnType[] { ColumnType.Int }, 0, 0, new DummyTran());
+            MixedPage page = new MixedPage(4096, 1, new [] { new ColumnInfo(ColumnType.Int) }, 0, 0, new DummyTran());
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
@@ -31,7 +31,7 @@ namespace PageManagerTests
         [Test]
         public void BitTrackingPageSetUnsetRandom([Random(0, 4096, 1000)] int rowToSet)
         {
-            MixedPage page = new MixedPage(4096, 1, new ColumnType[] { ColumnType.Int }, 0, 0, new DummyTran());
+            MixedPage page = new MixedPage(4096, 1, new [] { new ColumnInfo(ColumnType.Int) }, 0, 0, new DummyTran());
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
@@ -50,7 +50,7 @@ namespace PageManagerTests
         [Test]
         public void MaxSet()
         {
-            MixedPage page = new MixedPage(4096, 1, new ColumnType[] { ColumnType.Int }, 0, 0, new DummyTran());
+            MixedPage page = new MixedPage(4096, 1, new [] { new ColumnInfo(ColumnType.Int) }, 0, 0, new DummyTran());
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {

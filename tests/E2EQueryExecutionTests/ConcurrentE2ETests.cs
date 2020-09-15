@@ -104,13 +104,13 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
-                Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(workerCount * rowCount, totalInsert);
 
                 Assert.AreEqual(workerCount * rowCount, result.Length);
 
-                int sum = result.Sum(r => r.IntCols[0]);
+                int sum = result.Sum(r => r.GetField<int>(0));
                 Assert.AreEqual(totalSum, sum);
                 await tran.Commit();
             }
@@ -169,7 +169,7 @@ namespace E2EQueryExecutionTests
                     try
                     {
                         string selectQuery = @"SELECT a, b, c FROM ConcurrentTable";
-                        Row[] result = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
+                        RowHolderFixed[] result = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
                     }
                     catch (DeadlockException)
                     {
@@ -194,13 +194,13 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
-                Row[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(writerCount* rowCount, totalInsert);
 
                 Assert.AreEqual(writerCount * rowCount, result.Length);
 
-                int sum = result.Sum(r => r.IntCols[0]);
+                int sum = result.Sum(r => r.GetField<int>(0));
                 Assert.AreEqual(totalSum, sum);
                 await tran.Commit();
             }

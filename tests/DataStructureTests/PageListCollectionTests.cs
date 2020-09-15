@@ -16,7 +16,7 @@ namespace DataStructureTests
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             using ITransaction tran = new DummyTran();
-            ColumnType[] types = new[] { ColumnType.Int, ColumnType.Int };
+            ColumnInfo[] types = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int) };
 
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, new DummyTran());
 
@@ -34,7 +34,7 @@ namespace DataStructureTests
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             using ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
@@ -57,7 +57,7 @@ namespace DataStructureTests
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             using ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
@@ -82,7 +82,7 @@ namespace DataStructureTests
         public async Task FilterTestNotFound()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             using ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
@@ -105,7 +105,7 @@ namespace DataStructureTests
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
 
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             using ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 
@@ -130,7 +130,7 @@ namespace DataStructureTests
         public async Task IterationTests()
         {
             IAllocateMixedPage mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
-            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnType[] types);
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             ITransaction tran = new DummyTran();
             PageListCollection collection = new PageListCollection(mixedPageAlloc, types, tran);
 

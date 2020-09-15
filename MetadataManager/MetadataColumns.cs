@@ -17,14 +17,15 @@ namespace MetadataManager
         public const int ColumnNameColumnPos = 2;
         public string ColumnName;
         public const int ColumnTypeColumnPos = 3;
-        public ColumnType ColumnType;
+        public const int ColumnTypeLength = 4;
+        public ColumnInfo ColumnType;
     }
 
     public struct ColumnCreateDefinition
     {
         public int TableId;
         public string ColumnName;
-        public ColumnType ColumnType;
+        public ColumnInfo ColumnType;
     }
 
     public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition>
@@ -34,15 +35,18 @@ namespace MetadataManager
         private PageListCollection pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
-        private static ColumnType[] columnDefinitions = new ColumnType[]
+        private const int MAX_NAME_LENGTH = 20;
+
+        private static ColumnInfo[] columnDefinitions = new ColumnInfo[]
         {
-            ColumnType.Int, // Column id
-            ColumnType.Int, // Table id
-            ColumnType.StringPointer, // pointer to name
-            ColumnType.Int, // column type
+            new ColumnInfo(ColumnType.Int), // Column id
+            new ColumnInfo(ColumnType.Int), // Table id
+            new ColumnInfo(ColumnType.String, MAX_NAME_LENGTH), // pointer to name
+            new ColumnInfo(ColumnType.Int), // column type
+            new ColumnInfo(ColumnType.Int), // column type length
         };
 
-        public static ColumnType[] GetSchemaDefinition() => columnDefinitions;
+        public static ColumnInfo[] GetSchemaDefinition() => columnDefinitions;
 
         public MetadataColumnsManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap)
         {
@@ -59,12 +63,12 @@ namespace MetadataManager
         {
             await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
             {
-                var mdObj = 
+                var mdObj =
                     new MetadataColumn()
                     {
                         ColumnId = rh.GetField<int>(MetadataColumn.ColumnIdColumnPos),
                         TableId = rh.GetField<int>(MetadataColumn.TableIdColumnPos),
-                        ColumnType = (ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos),
+                        ColumnType = new ColumnInfo((ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos), rh.GetField<int>(MetadataColumn.ColumnTypeLength))
                     };
 
                 PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos);
@@ -95,7 +99,7 @@ namespace MetadataManager
             rh.SetField<int>(0, id);
             rh.SetField<int>(1, def.TableId);
             rh.SetField<PagePointerOffsetPair>(2, namePointer);
-            rh.SetField<int>(3, (int)def.ColumnType);
+            rh.SetField<int>(3, (int)def.ColumnType.ColumnType);
 
             await pageListCollection.Add(rh, tran);
 
