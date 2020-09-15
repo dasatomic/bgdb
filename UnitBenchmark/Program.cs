@@ -8,6 +8,7 @@ using MetadataManager;
 using PageManager;
 using QueryProcessing;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -94,6 +95,49 @@ namespace UnitBenchmark
                     await tran.Commit();
                 }
             }
+        }
+    }
+
+    [RPlotExporter]
+    public class InsertTableConcurrentBenchmark
+    {
+        [Params(8000, 16000)]
+        public int RowsInTableNumber;
+
+        [Params(2, 4, 8, 16)]
+        public int WorkerCount;
+
+        [Benchmark]
+        public async Task InsertIntoTableConcurrent()
+        {
+            (ILogManager logManager, IPageManager pageManager, QueryEntryGate queryEntryGate) = await BenchmarkUtils.GetLogAndQueryEntryGate();
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            async Task insertAction()
+            {
+                    for (int i = 1; i <= RowsInTableNumber / WorkerCount; i++)
+                    {
+                        using (ITransaction tran = logManager.CreateTransaction(pageManager, "GET_ROWS"))
+                        {
+                            string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                            await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                            await tran.Commit();
+                        }
+                }
+            }
+
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < WorkerCount; i++)
+            {
+                tasks.Add(Task.Run(insertAction));
+            }
+
+            await Task.WhenAll(tasks);
         }
     }
 
