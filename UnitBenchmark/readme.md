@@ -6,4 +6,5 @@ To run benchmark:
 dotnet run -c Release -- --job short --filter *InsertTableSingleThreadedBenchmark*
 
 * Perf results
-![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.InsertTableSingleThreadedBenchmark-barplot.png?raw=true "Insert into table Table")
+![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.InsertTableSingleThreadedBenchmark-barplot.png?raw=true "Insert into table Table, single threaded.")
+![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.RowsetHolderPerf-barplot.png?raw=true "Insert into RowSetHolder.")
