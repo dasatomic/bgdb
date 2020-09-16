@@ -2,6 +2,7 @@
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MetadataManager
@@ -144,6 +145,8 @@ namespace MetadataManager
                 }
 
                 mdObj.Columns = columns.ToArray();
+
+                mdObj.Collection = new PageListCollection(this.pageAllocator, mdObj.Columns.Select(ci => ci.ColumnType).ToArray(), mdObj.RootPage);
 
                 yield return mdObj;
             }

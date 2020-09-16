@@ -28,11 +28,7 @@ namespace QueryProcessing
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
-
-            ColumnInfo[] columnTypes = table.Columns.Select(mc => mc.ColumnType).ToArray();
-
-            IPageCollection<RowHolderFixed> pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
-            PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
+            PhyOpScan scanOp = new PhyOpScan(table.Collection, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();
             foreach (string columnName in columns)
@@ -69,7 +65,7 @@ namespace QueryProcessing
 
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(rowHolder);
 
-            PhyOpTableInsert op = new PhyOpTableInsert(table, allocator, stringHeap, opStatic, tran);
+            PhyOpTableInsert op = new PhyOpTableInsert(table.Collection, opStatic, tran);
             return op;
         }
     }

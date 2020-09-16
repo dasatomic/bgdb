@@ -10,17 +10,12 @@ namespace QueryProcessing
     public class PhyOpTableInsert : IPhysicalOperator<RowHolderFixed>
     {
         private IPageCollection<RowHolderFixed> pageCollection;
-        private IAllocateMixedPage pageAllocator;
         private IPhysicalOperator<RowHolderFixed> input;
         private ITransaction tran;
 
-        public PhyOpTableInsert(MetadataTable mdTable, IAllocateMixedPage pageAllocator, HeapWithOffsets<char[]> stringHeap, IPhysicalOperator<RowHolderFixed> input, ITransaction tran)
+        public PhyOpTableInsert(IPageCollection<RowHolderFixed> pageCollection, IPhysicalOperator<RowHolderFixed> input, ITransaction tran)
         {
-            this.pageAllocator = pageAllocator;
-
-            ColumnInfo[] columnTypes = mdTable.Columns.Select(x => x.ColumnType).ToArray();
-
-            this.pageCollection = new PageListCollection(this.pageAllocator, columnTypes, mdTable.RootPage);
+            this.pageCollection = pageCollection;
             this.input = input;
             this.tran = tran;
         }
