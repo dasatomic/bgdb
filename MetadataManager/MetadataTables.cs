@@ -15,6 +15,9 @@ namespace MetadataManager
         public const int RootPageColumnPos = 2;
         public ulong RootPage;
         public MetadataColumn[] Columns;
+
+        // Virtual fields.
+        public IPageCollection<RowHolderFixed> Collection;
     }
 
     public struct TableCreateDefinition
@@ -28,7 +31,7 @@ namespace MetadataManager
     {
         public const string MetadataTableName = "sys.tables";
 
-        private PageListCollection pageListCollection;
+        private IPageCollection<RowHolderFixed> pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
         private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager;
         private IAllocateMixedPage pageAllocator;

@@ -8,14 +8,12 @@ namespace QueryProcessing
 {
     public class PhyOpScan : IPhysicalOperator<RowHolderFixed>
     {
-        private readonly PageListCollection source;
-        private readonly HeapWithOffsets<char[]> strHeap = null;
+        private readonly IPageCollection<RowHolderFixed> source;
         private readonly ITransaction tran;
 
-        public PhyOpScan(PageListCollection collection, HeapWithOffsets<char[]> strHeap, ITransaction tran)
+        public PhyOpScan(IPageCollection<RowHolderFixed> collection, HeapWithOffsets<char[]> strHeap, ITransaction tran)
         {
             this.source = collection;
-            this.strHeap = strHeap;
             this.tran = tran;
         }
 

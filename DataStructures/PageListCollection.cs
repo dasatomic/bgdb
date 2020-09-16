@@ -6,7 +6,7 @@ using PageManager;
 
 namespace DataStructures
 {
-    public interface UnorderedListCollection<T>
+    public interface IPageCollection<T>
     {
         Task<ulong> Count(ITransaction tran);
         Task Add(T item, ITransaction tran);
@@ -17,7 +17,7 @@ namespace DataStructures
         public ColumnInfo[] GetColumnTypes();
     }
 
-    public class PageListCollection : UnorderedListCollection<RowHolderFixed>
+    public class PageListCollection : IPageCollection<RowHolderFixed>
     {
         private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;

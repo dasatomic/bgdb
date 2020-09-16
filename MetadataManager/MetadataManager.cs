@@ -19,7 +19,7 @@ namespace MetadataManager
             new ColumnInfo(ColumnType.PagePointer),
         };
 
-        private PageListCollection masterMetadataCollection;
+        private IPageCollection<RowHolderFixed> masterMetadataCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
         private MetadataColumnsManager columnsManager;

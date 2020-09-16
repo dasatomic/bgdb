@@ -31,7 +31,7 @@ namespace QueryProcessing
 
             ColumnInfo[] columnTypes = table.Columns.Select(mc => mc.ColumnType).ToArray();
 
-            PageListCollection pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
+            IPageCollection<RowHolderFixed> pcl = new PageListCollection(allocator, columnTypes, table.RootPage);
             PhyOpScan scanOp = new PhyOpScan(pcl, this.stringHeap, tran);
 
             List<int> columnMapping = new List<int>();

@@ -32,7 +32,7 @@ namespace MetadataManager
     {
         public const string MetadataTableName = "sys.columns";
 
-        private PageListCollection pageListCollection;
+        private IPageCollection<RowHolderFixed> pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
         private const int MAX_NAME_LENGTH = 20;

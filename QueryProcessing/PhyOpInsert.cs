@@ -9,7 +9,7 @@ namespace QueryProcessing
 {
     public class PhyOpTableInsert : IPhysicalOperator<RowHolderFixed>
     {
-        private PageListCollection pageCollection;
+        private IPageCollection<RowHolderFixed> pageCollection;
         private IAllocateMixedPage pageAllocator;
         private IPhysicalOperator<RowHolderFixed> input;
         private ITransaction tran;
