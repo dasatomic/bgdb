@@ -1,10 +1,8 @@
 ﻿using LockManager;
 using LockManager.LockImplementation;
 using LogManager;
-using PageManager.Exceptions;
 using PageManager.PageTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -67,7 +65,7 @@ namespace PageManager
                 {
                     // TODO: Here we only iterate the first page.
                     // These pages need to be linked...
-                    foreach (int pagePos in this.AllocatationMapPages.First().FindAllSet(tran))
+                    foreach (int _ in this.AllocatationMapPages.First().FindAllSet(tran))
                     {
                         this.pageCount++;
                     }
