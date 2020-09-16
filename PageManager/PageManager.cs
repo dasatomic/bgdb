@@ -14,7 +14,6 @@ namespace PageManager
 {
     public class PageManager : IPageManager
     {
-        private ConcurrentBag<ulong> pageIds = new ConcurrentBag<ulong>();
         private uint pageSize;
         private long lastUsedPageId = 2;
         private readonly IPageEvictionPolicy pageEvictionPolicy;
@@ -25,6 +24,7 @@ namespace PageManager
         private readonly List<BitTrackingPage> AllocatationMapPages;
         private readonly ILockManager lockManager;
         private InstrumentationInterface logger = null;
+        private int pageCount;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
             : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager(), new NoOpLogging())
@@ -69,7 +69,7 @@ namespace PageManager
                     // These pages need to be linked...
                     foreach (int pagePos in this.AllocatationMapPages.First().FindAllSet(tran))
                     {
-                        this.pageIds.Add((ulong)pagePos) ;
+                        this.pageCount++;
                     }
                 }
             }
@@ -96,11 +96,6 @@ namespace PageManager
             logger.LogDebug($"Allocating new page {pageId}");
             IPage page;
 
-            if (this.pageIds.Contains(pageId))
-            {
-                throw new PageCorruptedException();
-            }
-
             using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive).ConfigureAwait(false);
 
             page = pageType switch
@@ -110,7 +105,7 @@ namespace PageManager
                 _ => throw new ArgumentException("Unknown page type")
             };
 
-            this.pageIds.Add(pageId);
+            Interlocked.Increment(ref this.pageCount);
 
             if (prevPageId != PageManagerConstants.NullPageId)
             {
@@ -215,11 +210,6 @@ namespace PageManager
             logger.LogDebug($"Fetching page {pageId}");
             tran.VerifyLock(pageId, LockTypeEnum.Shared);
 
-            if (!this.pageIds.Contains(pageId))
-            {
-                throw new PageNotFoundException();
-            }
-
             IPage page = this.bufferPool.GetPage(pageId);
 
             if (page == null)
@@ -298,7 +288,7 @@ namespace PageManager
             return this.bufferPool.GetPage(IBootPageAllocator.BootPageId) != null;
         }
 
-        public ulong PageCount() => (ulong)this.pageIds.Count;
+        public ulong PageCount() => (ulong)this.pageCount;
 
         public async Task Checkpoint()
         {
