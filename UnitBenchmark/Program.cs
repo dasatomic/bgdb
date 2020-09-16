@@ -60,7 +60,7 @@ namespace UnitBenchmark
             {
                 await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
                 {
-                    string createTableQuery = $"CREATE TABLE Table{i} (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                    string createTableQuery = $"CREATE TABLE Table{i} (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                     await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                     await tran.Commit();
                 }
@@ -81,7 +81,7 @@ namespace UnitBenchmark
             (ILogManager logManager, IPageManager pageManager, QueryEntryGate queryEntryGate) = await BenchmarkUtils.GetLogAndQueryEntryGate();
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -113,7 +113,7 @@ namespace UnitBenchmark
             (ILogManager logManager, IPageManager pageManager, QueryEntryGate queryEntryGate) = await BenchmarkUtils.GetLogAndQueryEntryGate();
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }

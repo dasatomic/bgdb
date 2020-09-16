@@ -68,9 +68,9 @@ columnTypeList:
     | columnTypeList COMMA columnType { $3 :: $1 }
 
 columnType:
-    | TYPE_INT ID { IntCType, $2 }
-    | TYPE_DOUBLE ID { DoubleCType, $2 }
-    | TYPE_STRING ID { StringCType, $2 }
+    | TYPE_INT ID { IntCType, 0, $2 }
+    | TYPE_DOUBLE ID { DoubleCType, 0, $2 }
+    | TYPE_STRING OBRCK INT CBRCK ID { StringCType, $3, $5 }
 
 
 // Select statement

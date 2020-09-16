@@ -44,7 +44,8 @@ namespace PageManager
             this.rowCount = 0;
 
             // bit for every row.
-            this.reservedPresenceBitmaskCount = (ushort)(storage.Length / (rowSize * 8));
+            // align on upper boundary.
+            this.reservedPresenceBitmaskCount = (ushort)UtilStructures.IntCeil.CeilDiv(storage.Length, (rowSize * 8));
 
             // TODO: In this implementation each value in tuple can't be bigger than 256 bytes.
             // Since this is only for fixed data this should be fine.

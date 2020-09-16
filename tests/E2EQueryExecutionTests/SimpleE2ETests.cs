@@ -48,7 +48,7 @@ namespace E2EQueryExecutionTests
         [Test]
         public async Task CreateTableE2E()
         {
-            string query = @"CREATE TABLE MyTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+            string query = @"CREATE TABLE MyTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
                 await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
@@ -59,7 +59,7 @@ namespace E2EQueryExecutionTests
         [Test]
         public async Task CreateTableE2ERollback()
         {
-            string query = @"CREATE TABLE MyTableRollback (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+            string query = @"CREATE TABLE MyTableRollback (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
                 await this.queryEntryGate.Execute(query, tran).ToListAsync();
@@ -72,7 +72,7 @@ namespace E2EQueryExecutionTests
                 Assert.IsFalse(await tableManager.Iterate(tran).AnyAsync());
             }
 
-            query = @"CREATE TABLE MyTableCommit (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+            query = @"CREATE TABLE MyTableCommit (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
                 await this.queryEntryGate.Execute(query, tran).ToListAsync();
@@ -90,7 +90,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -127,7 +127,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -237,7 +237,7 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE LargeTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE LargeTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(20) c)";
                 await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }

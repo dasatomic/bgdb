@@ -68,7 +68,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
-                string createTableQuery = "CREATE TABLE ConcurrentTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE ConcurrentTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -124,7 +124,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
-                string createTableQuery = "CREATE TABLE ConcurrentTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE ConcurrentTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }

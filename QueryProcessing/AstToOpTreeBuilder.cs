@@ -56,21 +56,9 @@ namespace QueryProcessing
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
-            ColumnInfo[] columnInfos = new ColumnInfo[insertStatement.Values.Length];
-            int i = 0;
-            foreach (var value in insertStatement.Values)
-            {
+            ColumnInfo[] columnInfosFromTable = table.Columns.Select(mt => mt.ColumnType).ToArray();
 
-                if (value.IsFloat) columnInfos[i] = new ColumnInfo(ColumnType.Double);
-                else if (value.IsInt) columnInfos[i] = new ColumnInfo(ColumnType.Int);
-                else if (value.IsString) columnInfos[i] = new ColumnInfo(ColumnType.String, ((Sql.value.String)value).Item.Length);
-                else { throw new ArgumentException(); }
-                i++;
-            }
-
-            // TODO: Add check between ColumnInfos in insert statement and Metadata Table.
-
-            RowHolderFixed rowHolder = new RowHolderFixed(columnInfos);
+            RowHolderFixed rowHolder = new RowHolderFixed(columnInfosFromTable);
 
             int colNum = 0;
             foreach (var value in insertStatement.Values)

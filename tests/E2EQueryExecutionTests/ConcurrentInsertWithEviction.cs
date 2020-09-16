@@ -48,7 +48,7 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = logManager.CreateTransaction(pageManager))
             {
-                string createTableQuery = "CREATE TABLE ConcurrentTableWithEviction (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING c)";
+                string createTableQuery = "CREATE TABLE ConcurrentTableWithEviction (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync().ConfigureAwait(false);
                 await tran.Commit().ConfigureAwait(false);
             }

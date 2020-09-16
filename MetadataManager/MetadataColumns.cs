@@ -100,6 +100,7 @@ namespace MetadataManager
             rh.SetField<int>(1, def.TableId);
             rh.SetField<PagePointerOffsetPair>(2, namePointer);
             rh.SetField<int>(3, (int)def.ColumnType.ColumnType);
+            rh.SetField<int>(4, def.ColumnType.RepCount);
 
             await pageListCollection.Add(rh, tran);
 

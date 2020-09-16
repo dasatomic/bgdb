@@ -77,7 +77,7 @@ namespace ParserLexerTests
         [Test]
         public void CreateTableTest()
         {
-            string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING C)";
+            string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING(10) C)";
 
             var lexbuf = LexBuffer<char>.FromString(query);
             Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
@@ -93,7 +93,8 @@ namespace ParserLexerTests
             Assert.IsTrue(createStatement.ColumnList[0].Item1.IsIntCType);
             Assert.IsTrue(createStatement.ColumnList[1].Item1.IsIntCType);
             Assert.IsTrue(createStatement.ColumnList[2].Item1.IsStringCType);
-            Assert.AreEqual(new string[] { "A", "B", "C" }, createStatement.ColumnList.Select(cl => cl.Item2).ToArray());
+            Assert.AreEqual(10, createStatement.ColumnList[2].Item2);
+            Assert.AreEqual(new string[] { "A", "B", "C" }, createStatement.ColumnList.Select(cl => cl.Item3).ToArray());
         }
 
         [Test]

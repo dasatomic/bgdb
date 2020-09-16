@@ -60,7 +60,7 @@ namespace PageManagerTests
             }
 
             BitTrackingPage bPage = new BitTrackingPage(page);
-            const int maxRowCount = 31424;
+            const int maxRowCount = 31392;
 
             Assert.AreEqual(maxRowCount, bPage.MaxItemCount());
             Assert.IsFalse(bPage.At(maxRowCount - 1, new DummyTran()));

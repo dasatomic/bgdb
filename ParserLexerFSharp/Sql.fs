@@ -29,7 +29,8 @@ type sqlStatement =
     }
 
 type columntype = IntCType | StringCType | DoubleCType
-type columndef = columntype * string
+// columntype + rep count + name.
+type columndef = columntype * int * string
 
 type createTableStatement =
     {

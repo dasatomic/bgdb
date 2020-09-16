@@ -71,6 +71,8 @@ namespace PageManager
             this.inMemoryStorage = new Memory<byte>(pageContent);
             this.items = new RowsetHolderFixed(this.columnTypes, this.inMemoryStorage, init: false);
 
+            Debug.Assert(this.items.GetRowCount() == this.rowCount);
+
             this.isDirty = false;
         }
 
