@@ -1,4 +1,5 @@
 bin/
 obj/
 BenchmarkDotNet.Artifacts/results/*.log
+BenchmarkDotNet.Artifacts/*.etl
 BenchmarkDotNet.Artifacts/*.log

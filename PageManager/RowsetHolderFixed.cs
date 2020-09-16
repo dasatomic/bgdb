@@ -79,8 +79,6 @@ namespace PageManager
             this.dataStartPosition = (ushort)(((dataStartUnAligned + 4 - 1) / 4) * 4);
 
             maxRowCount = (ushort)((storage.Length - dataStartPosition) / rowSize);
-
-            // TODO: Find current number of items.
         }
 
         public T GetRowGeneric<T>(int row, int col) where T : unmanaged

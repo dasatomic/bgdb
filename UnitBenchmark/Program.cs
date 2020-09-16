@@ -20,7 +20,7 @@ namespace UnitBenchmark
     {
         public static async Task<(ILogManager, IPageManager, QueryEntryGate)> GetLogAndQueryEntryGate()
         {
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(100, 5), TestGlobals.DefaultPersistedStream);
+            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(1000, 5), TestGlobals.DefaultPersistedStream);
             var logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 
@@ -69,7 +69,7 @@ namespace UnitBenchmark
     }
 
     [RPlotExporter]
-    // [EtwProfiler(performExtraBenchmarksRun: true)]
+    [EtwProfiler(performExtraBenchmarksRun: false)]
     public class InsertTableSingleThreadedBenchmark
     {
         [Params(1000, 2000, 4000, 8000, 16000)]
