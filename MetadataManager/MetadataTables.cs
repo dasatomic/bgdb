@@ -44,6 +44,9 @@ namespace MetadataManager
             new ColumnInfo(ColumnType.PagePointer),
         };
 
+        private object cacheLock = new object();
+        private Dictionary<string, MetadataTable> nameTableCache = new Dictionary<string, MetadataTable>();
+
         public static ColumnInfo[] GetSchemaDefinition() => columnDefinitions;
 
         public MetadataTablesManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap, IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager)
@@ -115,7 +118,6 @@ namespace MetadataManager
                 await columnManager.CreateObject(ccd, tran);
             }
 
-
             return id;
         }
 
@@ -167,8 +169,22 @@ namespace MetadataManager
 
         public async Task<MetadataTable> GetByName(string name, ITransaction tran)
         {
+            lock (this.cacheLock)
+            {
+                MetadataTable md;
+                if (this.nameTableCache.TryGetValue(name, out md))
+                {
+                    return md;
+                }
+            }
+
             await foreach (var table in this.Iterate(tran))
             {
+                lock (this.cacheLock)
+                {
+                    this.nameTableCache[table.TableName] = table;
+                }
+
                 if (table.TableName == name)
                 {
                     return table;
