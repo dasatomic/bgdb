@@ -72,7 +72,7 @@ namespace UnitBenchmark
     [EtwProfiler(performExtraBenchmarksRun: false)]
     public class InsertTableSingleThreadedBenchmark
     {
-        [Params(1000, 2000, 4000, 8000, 16000)]
+        [Params(10000, 20000, 40000, 100000)]
         public int RowsInTableNumber;
 
         [Benchmark]
@@ -101,7 +101,7 @@ namespace UnitBenchmark
     [RPlotExporter]
     public class InsertTableConcurrentBenchmark
     {
-        [Params(8000, 16000)]
+        [Params(8000, 16000, 32000)]
         public int RowsInTableNumber;
 
         [Params(2, 4, 8, 16)]
