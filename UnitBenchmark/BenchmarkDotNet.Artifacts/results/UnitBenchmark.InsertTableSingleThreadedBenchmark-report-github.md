@@ -12,7 +12,7 @@ WarmupCount=3
 ```
 |          Method | RowsInTableNumber |       Mean |       Error |   StdDev |
 |---------------- |------------------ |-----------:|------------:|---------:|
-| **InsertIntoTable** |             **10000** |   **428.9 ms** |    **75.70 ms** |  **4.15 ms** |
-| **InsertIntoTable** |             **20000** |   **840.5 ms** |   **184.56 ms** | **10.12 ms** |
-| **InsertIntoTable** |             **40000** | **1,778.4 ms** |   **535.67 ms** | **29.36 ms** |
-| **InsertIntoTable** |            **100000** | **4,230.1 ms** | **1,025.72 ms** | **56.22 ms** |
+| **InsertIntoTable** |             **10000** |   **421.9 ms** |   **185.43 ms** | **10.16 ms** |
+| **InsertIntoTable** |             **20000** |   **817.4 ms** |   **108.04 ms** |  **5.92 ms** |
+| **InsertIntoTable** |             **40000** | **1,609.3 ms** |    **98.71 ms** |  **5.41 ms** |
+| **InsertIntoTable** |            **100000** | **4,441.5 ms** | **1,137.09 ms** | **62.33 ms** |
