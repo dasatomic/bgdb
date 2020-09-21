@@ -4,6 +4,7 @@ using LogManager;
 using MetadataManager;
 using NUnit.Framework;
 using PageManager;
+using PageManager.Exceptions;
 using QueryProcessing;
 using QueryProcessing.Exceptions;
 using System.Collections.Generic;
@@ -334,6 +335,51 @@ namespace E2EQueryExecutionTests
                     await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 }
             });
+        }
+
+        [Test]
+        public async Task InsertWithReadOnlyTran()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            Assert.ThrowsAsync<ReadOnlyTranCantAcquireExLockException>(async () =>
+            {
+                await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "INSERT"))
+                {
+                    string insertQuery = "INSERT INTO Table VALUES (42)";
+                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                }
+            });
+        }
+
+        [Test]
+        public async Task SelectWithReadonlyTran()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager,  "INSERT"))
+            {
+                string insertQuery = "INSERT INTO Table VALUES (42)";
+                await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
+            {
+                string selectQuery = "SELECT b FROM Table";
+                var res = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
+                Assert.AreEqual(42, res[0].GetField<int>(0));
+            }
         }
     }
 }

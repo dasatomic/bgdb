@@ -33,7 +33,7 @@ namespace LogManager
 
             if (lockType != LockTypeEnum.Shared)
             {
-                throw new ArgumentException("Can't request EX lock in readonly tran.");
+                throw new ReadOnlyTranCantAcquireExLockException();
             }
 
             lock (lck)
