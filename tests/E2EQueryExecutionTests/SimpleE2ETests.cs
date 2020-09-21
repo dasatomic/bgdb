@@ -97,10 +97,10 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
 
-                insertQuery = "INSERT INTO Table VALUES (2, 2.2, mystring2)";
+                insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -134,24 +134,24 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
 
-                insertQuery = "INSERT INTO Table VALUES (2, 2.2, mystring2)";
+                insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Rollback();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (2, 2.2, mystring2)";
+                string insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -180,7 +180,7 @@ namespace E2EQueryExecutionTests
             {
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
                 {
-                    string insertQuery = "INSERT INTO NOTEXISTINGTABLE VALUES (2, 2.2, mystring2)";
+                    string insertQuery = "INSERT INTO NOTEXISTINGTABLE VALUES (2, 2.2, 'mystring2')";
                     await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                     await tran.Commit();
                 }
@@ -246,7 +246,7 @@ namespace E2EQueryExecutionTests
             {
                 await using (ITransaction tran = logManager.CreateTransaction(pageManager, "INSERT"))
                 {
-                    string insertQuery = $"INSERT INTO LargeTable VALUES ({i}, {i}.1, mystring{i})";
+                    string insertQuery = $"INSERT INTO LargeTable VALUES ({i}, {i}.1, 'mystring{i}')";
                     await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                     await tran.Commit();
                 }

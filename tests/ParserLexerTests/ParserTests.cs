@@ -61,14 +61,14 @@ namespace ParserLexerTests
             Sql.where.Cond leftCond = (Sql.where.Cond)andStatement.Item1;
             Sql.where.Cond rightCond = (Sql.where.Cond)andStatement.Item2;
 
-            Assert.IsTrue(leftCond.Item.Item1.IsString);
-            Assert.IsTrue(((Sql.value.String)leftCond.Item.Item1).Item == "x");
+            Assert.IsTrue(leftCond.Item.Item1.IsId);
+            Assert.IsTrue(((Sql.value.Id)leftCond.Item.Item1).Item == "x");
             Assert.IsTrue(leftCond.Item.Item2.IsEq);
             Assert.IsTrue(leftCond.Item.Item3.IsInt);
             Assert.IsTrue(((Sql.value.Int)leftCond.Item.Item3).Item == 50);
 
-            Assert.IsTrue(rightCond.Item.Item1.IsString);
-            Assert.IsTrue(((Sql.value.String)rightCond.Item.Item1).Item == "y");
+            Assert.IsTrue(rightCond.Item.Item1.IsId);
+            Assert.IsTrue(((Sql.value.Id)rightCond.Item.Item1).Item == "y");
             Assert.IsTrue(rightCond.Item.Item2.IsEq);
             Assert.IsTrue(rightCond.Item.Item3.IsInt);
             Assert.IsTrue(((Sql.value.Int)rightCond.Item.Item3).Item == 20);
@@ -100,7 +100,7 @@ namespace ParserLexerTests
         [Test]
         public void InsertStatementTests()
         {
-            string query = "INSERT INTO mytable VALUES (17,b,1.1)";
+            string query = "INSERT INTO mytable VALUES (17,'11','TST')";
 
             var lexbuf = LexBuffer<char>.FromString(query);
             Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
@@ -115,11 +115,11 @@ namespace ParserLexerTests
             Assert.AreEqual("mytable", insertStatement.Table);
             Assert.IsTrue(insertStatement.Values[0].IsInt);
             Assert.IsTrue(insertStatement.Values[1].IsString);
-            Assert.IsTrue(insertStatement.Values[2].IsFloat);
+            Assert.IsTrue(insertStatement.Values[2].IsString);
 
             Assert.AreEqual(((Sql.value.Int)insertStatement.Values[0]).Item, 17);
-            Assert.AreEqual(((Sql.value.String)insertStatement.Values[1]).Item, "b");
-            Assert.AreEqual(((Sql.value.Float)insertStatement.Values[2]).Item, 1.1);
+            Assert.AreEqual(((Sql.value.String)insertStatement.Values[1]).Item, "11");
+            Assert.AreEqual(((Sql.value.String)insertStatement.Values[2]).Item, "TST");
         }
     }
 }

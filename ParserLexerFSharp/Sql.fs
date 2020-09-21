@@ -1,9 +1,10 @@
 ﻿module Sql
 
 type value =
-    | Int of int
-    | Float of float
-    | String of string
+    | Int       of int
+    | Float     of float
+    | String    of string
+    | Id        of string
 
 type dir = Asc | Desc
 type op = Eq | Gt | Ge | Lt | Le

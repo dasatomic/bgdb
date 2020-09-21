@@ -84,7 +84,7 @@ namespace E2EQueryExecutionTests
                     {
                         using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
                         {
-                            string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
+                            string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, 'mystring')";
                             await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                             await tran.Commit();
                             Interlocked.Add(ref totalSum, i);
@@ -147,7 +147,7 @@ namespace E2EQueryExecutionTests
                         {
                             try
                             {
-                                string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, mystring)";
+                                string insertQuery = $"INSERT INTO ConcurrentTable VALUES ({i}, {i + 0.001}, 'mystring')";
                                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                                 await tran.Commit();
                                 Interlocked.Add(ref totalSum, i);

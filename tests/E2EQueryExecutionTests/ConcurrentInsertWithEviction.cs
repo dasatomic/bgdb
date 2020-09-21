@@ -66,7 +66,7 @@ namespace E2EQueryExecutionTests
                     {
                         try
                         {
-                            string insertQuery = $"INSERT INTO ConcurrentTableWithEviction VALUES ({i}, {i + 0.001}, mystring)";
+                            string insertQuery = $"INSERT INTO ConcurrentTableWithEviction VALUES ({i}, {i + 0.001}, 'mystring')";
                             await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync().ConfigureAwait(false);
                             await tran.Commit().ConfigureAwait(false);
                             Interlocked.Add(ref totalSum, i);

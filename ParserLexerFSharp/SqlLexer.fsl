@@ -49,6 +49,7 @@ let identifier  = char(char|digit|['-' '_' '.'])*
 let whitespace  = [' ' '\t']   
 let newline     = "\n\r" | '\n' | '\r'  
 let operator    = ">" | ">=" | "<" | "<=" | "="  
+let quotation = "\'"
 let openbracket = "("
 let closedbracket = ")"
 
@@ -63,5 +64,6 @@ rule tokenize = parse
                   | None -> ID(LexBuffer<_>.LexemeString lexbuf) }   
 | ','           { COMMA }   
 | eof           { EOF }
-| openbracket { OBRCK }
+| openbracket   { OBRCK }
 | closedbracket { CBRCK }
+| quotation     { QUOT }
