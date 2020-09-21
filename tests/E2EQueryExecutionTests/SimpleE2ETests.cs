@@ -200,6 +200,24 @@ namespace E2EQueryExecutionTests
                 }
             });
         }
+
+        [Test]
+        public void SelectInvalidColumn()
+        {
+            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+                {
+                    string createTableQuery = "CREATE TABLE TableInvalidColumn (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                    await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                    await tran.Commit();
+
+                    string query = @"SELECT a, b, randomcolumnname FROM TableInvalidColumn";
+                    await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                    await tran.Commit();
+                }
+            });
+        }
     }
 
     public class E2EBufferPoolLimits

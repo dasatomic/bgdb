@@ -33,7 +33,13 @@ namespace QueryProcessing
             List<int> columnMapping = new List<int>();
             foreach (string columnName in columns)
             {
-                columnMapping.Add(table.Columns.First(c => c.ColumnName == columnName).ColumnId);
+                if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
+                {
+
+                    throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
+                }
+
+                columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
             }
 
             PhyOpProject projectOp = new PhyOpProject(scanOp, columnMapping.ToArray());
