@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using DataStructures;
 using MetadataManager;
+using Microsoft.FSharp.Core;
 using PageManager;
 
 namespace QueryProcessing
@@ -17,15 +19,21 @@ namespace QueryProcessing
             this.metadataManager = metadataManager;
         }
 
+
         public async Task<IPhysicalOperator<RowHolderFixed>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
+            // TODO: query builder is currently manual. i.e. SCAN -> optional(FILTER) -> PROJECT.
+            // In future we need to build proper algebrizer, relational algebra rules and work on QO.
             string tableName = sqlStatement.Table;
             string[] columns = sqlStatement.Columns.ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
+
+            // Scan Op.
             PhyOpScan scanOp = new PhyOpScan(table.Collection, tran);
 
+            // Project Op.
             List<int> columnMapping = new List<int>();
             foreach (string columnName in columns)
             {
@@ -38,7 +46,18 @@ namespace QueryProcessing
                 columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
             }
 
-            PhyOpProject projectOp = new PhyOpProject(scanOp, columnMapping.ToArray());
+            // Where op.
+            IPhysicalOperator<RowHolderFixed> sourceForProject = scanOp;
+
+            if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Where))
+            {
+                Sql.where whereStatement = sqlStatement.Where.Value;
+                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, table.Columns));
+                sourceForProject = filterOp;
+
+            }
+
+            PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.ToArray());
 
             return projectOp;
         }
