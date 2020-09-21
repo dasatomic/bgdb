@@ -11,14 +11,10 @@ namespace QueryProcessing
     public class AstToOpTreeBuilder
     {
         private MetadataManager.MetadataManager metadataManager;
-        private IAllocateMixedPage allocator;
-        private HeapWithOffsets<char[]> stringHeap;
 
-        public AstToOpTreeBuilder(MetadataManager.MetadataManager metadataManager, HeapWithOffsets<char[]> stringHeap, IAllocateMixedPage allocator)
+        public AstToOpTreeBuilder(MetadataManager.MetadataManager metadataManager)
         {
             this.metadataManager = metadataManager;
-            this.allocator = allocator;
-            this.stringHeap = stringHeap;
         }
 
         public async Task<IPhysicalOperator<RowHolderFixed>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
@@ -28,7 +24,7 @@ namespace QueryProcessing
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
-            PhyOpScan scanOp = new PhyOpScan(table.Collection, this.stringHeap, tran);
+            PhyOpScan scanOp = new PhyOpScan(table.Collection, tran);
 
             List<int> columnMapping = new List<int>();
             foreach (string columnName in columns)

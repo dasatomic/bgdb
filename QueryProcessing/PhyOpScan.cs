@@ -11,7 +11,7 @@ namespace QueryProcessing
         private readonly IPageCollection<RowHolderFixed> source;
         private readonly ITransaction tran;
 
-        public PhyOpScan(IPageCollection<RowHolderFixed> collection, HeapWithOffsets<char[]> strHeap, ITransaction tran)
+        public PhyOpScan(IPageCollection<RowHolderFixed> collection, ITransaction tran)
         {
             this.source = collection;
             this.tran = tran;

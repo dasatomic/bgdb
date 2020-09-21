@@ -36,7 +36,7 @@ namespace E2EQueryExecutionTests
             }
 
             var metadataManager = new MetadataManager.MetadataManager(pageManager, metadataStringHeap, pageManager, logManager);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, pageManager);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager);
 
             var queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]

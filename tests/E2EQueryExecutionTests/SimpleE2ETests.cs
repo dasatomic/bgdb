@@ -34,7 +34,7 @@ namespace E2EQueryExecutionTests
             }
 
             metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, pageManager);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager);
 
             this.queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]
@@ -242,7 +242,7 @@ namespace E2EQueryExecutionTests
             }
 
             var metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, stringHeap, pageManager);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager);
 
             var queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]

@@ -60,7 +60,7 @@ namespace QueryProcessingTests
 
             tran = logManager.CreateTransaction(allocator);
             PageListCollection pcl = new PageListCollection(allocator, columnInfos, table.RootPage);
-            PhyOpScan scan = new PhyOpScan(pcl, stringHeap, tran);
+            PhyOpScan scan = new PhyOpScan(pcl, tran);
 
             List<RowHolderFixed> result = new List<RowHolderFixed>();
 
