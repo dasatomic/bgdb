@@ -90,7 +90,7 @@ namespace UnitBenchmark
             {
                 await using (ITransaction tran = logManager.CreateTransaction(pageManager, "INSERT"))
                 {
-                    string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                    string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
                     await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                     await tran.Commit();
                 }
@@ -124,7 +124,7 @@ namespace UnitBenchmark
                     {
                         using (ITransaction tran = logManager.CreateTransaction(pageManager, "GET_ROWS"))
                         {
-                            string insertQuery = "INSERT INTO Table VALUES (1, 1.1, mystring)";
+                            string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
                             await queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                             await tran.Commit();
                         }
