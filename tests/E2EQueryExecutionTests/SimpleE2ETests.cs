@@ -5,6 +5,7 @@ using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
+using QueryProcessing.Exceptions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -282,6 +283,55 @@ namespace E2EQueryExecutionTests
                     string query = @"SELECT a, b, randomcolumnname FROM TableInvalidColumn";
                     await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                     await tran.Commit();
+                }
+            });
+        }
+
+        [Test]
+        public async Task InsertCompatibleType()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_DOUBLE b)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+            {
+                // value 1 will be parsed as INT, but it should be inserted as float.
+                string insertQuery = "INSERT INTO Table VALUES (42)";
+                await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "SELECT"))
+            {
+                string insertQuery = "SELECT b FROM Table";
+                var result = await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                await tran.Commit();
+
+                Assert.AreEqual(42, result[0].GetField<double>(0));
+            }
+        }
+
+        [Test]
+        public async Task InsertInCompatibleType()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            Assert.ThrowsAsync<InvalidColumnTypeException>(async () =>
+            {
+                await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+                {
+                    // Float will be truncated. Hence we don't allow it.
+                    string insertQuery = "INSERT INTO Table VALUES (42.17)";
+                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 }
             });
         }

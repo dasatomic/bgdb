@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using DataStructures;
 using MetadataManager;
 using Microsoft.FSharp.Core;
 using PageManager;
+using QueryProcessing.Exceptions;
 
 namespace QueryProcessing
 {
@@ -76,9 +75,45 @@ namespace QueryProcessing
             int colNum = 0;
             foreach (var value in insertStatement.Values)
             {
-                if (value.IsFloat) rowHolder.SetField<double>(colNum, ((Sql.value.Float)value).Item);
-                else if (value.IsInt) rowHolder.SetField<int>(colNum, ((Sql.value.Int)value).Item);
-                else if (value.IsString) rowHolder.SetField(colNum, ((Sql.value.String)value).Item.ToCharArray());
+                if (value.IsFloat)
+                {
+                    if (columnInfosFromTable[colNum].ColumnType == ColumnType.Double)
+                    {
+                        rowHolder.SetField<double>(colNum, ((Sql.value.Float)value).Item);
+                    }
+                    else
+                    {
+                        throw new InvalidColumnTypeException();
+                    }
+                }
+                else if (value.IsInt)
+                {
+                    if (columnInfosFromTable[colNum].ColumnType == ColumnType.Int)
+                    {
+                        rowHolder.SetField<int>(colNum, ((Sql.value.Int)value).Item);
+                    }
+                    else if (columnInfosFromTable[colNum].ColumnType == ColumnType.Double)
+                    {
+                        // Int can be cast to double without data loss.
+                        rowHolder.SetField<double>(colNum, (double)((Sql.value.Int)value).Item);
+                    }
+                    else
+                    {
+                        throw new InvalidColumnTypeException();
+                    }
+                }
+                else if (value.IsString)
+                {
+                    if (columnInfosFromTable[colNum].ColumnType == ColumnType.String)
+                    {
+                        // TODO: For string heap (strings of variable length separate logic is needed.
+                        rowHolder.SetField(colNum, ((Sql.value.String)value).Item.ToCharArray());
+                    }
+                    else
+                    {
+                        throw new InvalidColumnTypeException();
+                    }
+                }
                 else { throw new ArgumentException(); }
 
                 colNum++;
