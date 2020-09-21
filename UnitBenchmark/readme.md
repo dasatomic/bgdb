@@ -9,3 +9,4 @@ dotnet run -c Release -- --job short --filter *InsertTableSingleThreadedBenchmar
 ![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.InsertTableSingleThreadedBenchmark-barplot.png?raw=true "Insert into table, singlethreaded.")
 ![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.RowsetHolderPerf-barplot.png?raw=true "Insert into RowSetHolder.")
 ![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.InsertTableConcurrentBenchmark-barplot.png?raw=true "Insert into table, multithreaded.")
+![Alt text](BenchmarkDotNet.Artifacts/results/UnitBenchmark.WhereClauseBenchmark-barplot.png?raw=true "Where statement, singlethreaded.")

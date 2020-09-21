@@ -1,13 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Running;
 using DataStructures;
 using LogManager;
-using MetadataManager;
 using PageManager;
 using QueryProcessing;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -42,29 +39,6 @@ namespace UnitBenchmark
                 });
 
             return (logManager, pageManager, queryEntryGate);
-        }
-    }
-
-    [RPlotExporter]
-    public class CreateTableBenchmark
-    {
-        [Params(100, 1000)]
-        public int TableNumber;
-
-        [Benchmark]
-        public async Task CreateTable()
-        {
-            (ILogManager logManager, IPageManager pageManager, QueryEntryGate queryEntryGate) = await BenchmarkUtils.GetLogAndQueryEntryGate();
-
-            for (int i = 0; i < this.TableNumber; i++)
-            {
-                await using (ITransaction tran = logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
-                {
-                    string createTableQuery = $"CREATE TABLE Table{i} (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
-                    await queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
-                    await tran.Commit();
-                }
-            }
         }
     }
 
