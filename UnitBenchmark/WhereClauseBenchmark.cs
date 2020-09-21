@@ -9,7 +9,7 @@ namespace UnitBenchmark
     [RPlotExporter]
     public class WhereClauseBenchmark
     {
-        [Params(10000, 20000, 40000, 80000, 100000)]
+        [Params(100000, 200000, 500000, 1000000)]
         public int RowsInTableNumber;
 
         private QueryEntryGate queryEntryGate;
