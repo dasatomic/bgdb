@@ -72,7 +72,7 @@ namespace QueryProcessing
                     Func<RowHolderFixed, bool> leftOp = EvalWhere(andStmt.Item1, metadataColumns);
                     Func<RowHolderFixed, bool> rightOp = EvalWhere(andStmt.Item2, metadataColumns);
 
-                    Func<RowHolderFixed, bool> retCombined = (rhf) => leftOp(rhf) && rightOp(rhf);
+                    return leftOp(rowHolder) && rightOp(rowHolder);
                 }
                 else if (where.IsOr)
                 {
@@ -81,7 +81,7 @@ namespace QueryProcessing
                     Func<RowHolderFixed, bool> leftOp = EvalWhere(orStmt.Item1, metadataColumns);
                     Func<RowHolderFixed, bool> rightOp = EvalWhere(orStmt.Item2, metadataColumns);
 
-                    Func<RowHolderFixed, bool> retCombined = (rhf) => leftOp(rhf) || rightOp(rhf);
+                    return leftOp(rowHolder) || rightOp(rowHolder);
                 }
                 else if (where.IsCond)
                 {
