@@ -14,7 +14,6 @@ namespace PageManager
     {
         private uint pageSize;
         private long lastUsedPageId = 2;
-        private readonly IPageEvictionPolicy pageEvictionPolicy;
         private readonly IPersistedStream persistedStream;
         private readonly IBufferPool bufferPool;
 
@@ -24,17 +23,14 @@ namespace PageManager
         private InstrumentationInterface logger = null;
         private int pageCount;
 
-        private const int DefaultBufferPoolSizeMb = 32;
-
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(evictionPolicy, (int)defaultPageSize), new LockManager.LockManager(), new NoOpLogging())
+            : this(defaultPageSize, persistedStream, new BufferPool(evictionPolicy, (int)defaultPageSize), new LockManager.LockManager(), new NoOpLogging())
         {
         }
 
-        public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager, InstrumentationInterface logger)
+        public PageManager(uint defaultPageSize, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager, InstrumentationInterface logger)
         {
             this.pageSize = defaultPageSize;
-            this.pageEvictionPolicy = evictionPolicy;
             this.persistedStream = persistedStream;
             this.lockManager = lockManager;
             this.logger = logger;
@@ -143,9 +139,11 @@ namespace PageManager
             return page;
         }
 
+        // TODO: This should be part of buffer pool class.
+        // Ideally page manager shouldn't keep track of in memory-disk mappings.
         private async Task RecordUsageAndEvict(ulong pageId, ITransaction tran)
         {
-            ulong[] pageIdsToEvict = pageEvictionPolicy.RecordUsageAndEvict(pageId).ToArray();
+            ulong[] pageIdsToEvict = this.bufferPool.GetEvictionPolicy().RecordUsageAndEvict(pageId).ToArray();
 
             foreach (ulong pageIdToEvict in pageIdsToEvict)
             {

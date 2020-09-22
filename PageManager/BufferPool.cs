@@ -18,6 +18,11 @@ namespace PageManager
         /// </summary>
         /// <returns>Returns chunk of memory, if available, plus token used to return the memory.</returns>
         public (Memory<byte> memory, ulong token) GetMemory();
+
+        // TODO: Buffer pool shouldn't leak it's eviction policy.
+        // Currently Page Manager tracks pages based on this policy
+        // but this should be scoped to buffer pool.
+        public IPageEvictionPolicy GetEvictionPolicy();
     }
 
     public class BufferPool : IBufferPool
@@ -27,6 +32,7 @@ namespace PageManager
         private readonly HashSet<ulong> takenChunks = new HashSet<ulong>();
         private readonly HashSet<ulong> freeChunks = new HashSet<ulong>();
         private int pageSize;
+        private IPageEvictionPolicy pageEvictionPolicy;
         private object lck = new object();
 
         public BufferPool(IPageEvictionPolicy evictionPolicy, int pageSize)
@@ -34,6 +40,7 @@ namespace PageManager
             // Buffer pool only tracks portion that is not sitting in the page.
             this.pageSize = pageSize - (int)IPage.FirstElementPosition;
             ulong bufferPoolSize = (evictionPolicy.InMemoryPageCountLimit() + 1) * (ulong)this.pageSize;
+            this.pageEvictionPolicy = evictionPolicy;
             
             this.bufferPoolMemory = new byte[bufferPoolSize];
             for (ulong i = 0; i < bufferPoolSize; i += (uint)this.pageSize)
@@ -87,5 +94,7 @@ namespace PageManager
         }
 
         public int PagesInPool() => this.pageCollection.Count;
+
+        public IPageEvictionPolicy GetEvictionPolicy() => this.pageEvictionPolicy;
     }
 }

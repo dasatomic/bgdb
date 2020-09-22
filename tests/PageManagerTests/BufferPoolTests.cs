@@ -20,7 +20,7 @@ namespace PageManagerTests
             IBufferPool bp = new BufferPool(pageEvictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
+            var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
             await pageManager.AllocatePage(PageType.StringPage, DefaultPrevPage, DefaultNextPage, tran);
@@ -36,7 +36,7 @@ namespace PageManagerTests
             IBufferPool bp = new BufferPool(pageEvictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
 
-            var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
+            var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             for (int i = 0; i < 11; i++)
             {

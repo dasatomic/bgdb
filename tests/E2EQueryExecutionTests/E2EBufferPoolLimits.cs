@@ -20,7 +20,7 @@ namespace E2EQueryExecutionTests
 
             ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
             var stream = new PersistedStream(1024 * 1024, "bufferpoolexceed.data", createNew: true);
-            var pageManager = new PageManager.PageManager(4096, restrictiveEviction, stream, bp, lm, TestGlobals.TestFileLogger);
+            var pageManager = new PageManager.PageManager(4096, stream, bp, lm, TestGlobals.TestFileLogger);
 
             var logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;

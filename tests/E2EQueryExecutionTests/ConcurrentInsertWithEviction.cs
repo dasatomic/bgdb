@@ -25,7 +25,6 @@ namespace E2EQueryExecutionTests
             IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(7, 2);
             var pageManager =  new PageManager.PageManager(
                 4096, 
-                evictionPolicy,
                 TestGlobals.DefaultPersistedStream,
                 new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize), lockManager, TestGlobals.TestFileLogger);
 
