@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace PageManager
 {
@@ -30,18 +29,12 @@ namespace PageManager
         private int pageSize;
         private object lck = new object();
 
-        public BufferPool(uint bufferPoolSizeMb, int pageSize)
+        public BufferPool(IPageEvictionPolicy evictionPolicy, int pageSize)
         {
-            ulong bufferPoolSize = bufferPoolSizeMb * 1024 * 1024;
-            
-            if (bufferPoolSize % (uint)pageSize != 0)
-            {
-                throw new ArgumentException();
-            }
-
             // Buffer pool only tracks portion that is not sitting in the page.
             this.pageSize = pageSize - (int)IPage.FirstElementPosition;
-
+            ulong bufferPoolSize = (evictionPolicy.InMemoryPageCountLimit() + 1) * (ulong)this.pageSize;
+            
             this.bufferPoolMemory = new byte[bufferPoolSize];
             for (ulong i = 0; i < bufferPoolSize; i += (uint)this.pageSize)
             {

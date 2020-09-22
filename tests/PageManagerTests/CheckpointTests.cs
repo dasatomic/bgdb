@@ -18,7 +18,7 @@ namespace PageManagerTests
         public async Task CheckpointFlush()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
+            IBufferPool bp = new BufferPool(TestGlobals.DefaultEviction, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             using var pageManager =  new PageManager.PageManager(DefaultSize, TestGlobals.DefaultEviction, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
@@ -42,7 +42,7 @@ namespace PageManagerTests
         public async Task AttachAfterCheckpoint()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
+            IBufferPool bp = new BufferPool(TestGlobals.DefaultEviction, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
             MixedPage p1, p2, p3;

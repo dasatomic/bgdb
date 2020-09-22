@@ -27,7 +27,7 @@ namespace PageManager
         private const int DefaultBufferPoolSizeMb = 32;
 
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(DefaultBufferPoolSizeMb, (int)defaultPageSize), new LockManager.LockManager(), new NoOpLogging())
+            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(evictionPolicy, (int)defaultPageSize), new LockManager.LockManager(), new NoOpLogging())
         {
         }
 
@@ -38,7 +38,6 @@ namespace PageManager
             this.persistedStream = persistedStream;
             this.lockManager = lockManager;
             this.logger = logger;
-
             this.bufferPool = bufferPool;
 
             this.AllocatationMapPages = new List<BitTrackingPage>();

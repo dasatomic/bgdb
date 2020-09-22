@@ -39,11 +39,12 @@ namespace E2EQueryExecutionTests
                 this.logger = new Instrumentation.Logger("ConcurrencyTestLog.txt", "concurrency", Instrumentation.LogLevel.Info);
             }
 
+            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(100, 10);
             this.pageManager =  new PageManager.PageManager(
                 TestGlobals.DefaultPageSize,
-                new FifoEvictionPolicy(100, 10),
+                evictionPolicy,
                 TestGlobals.DefaultPersistedStream,
-                new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize), this.lockManager, logger);
+                new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize), this.lockManager, logger);
             this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
             StringHeapCollection metadataStringHeap = null;

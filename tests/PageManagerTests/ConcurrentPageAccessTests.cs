@@ -21,10 +21,11 @@ namespace PageManagerTests
         public async Task ConcurrentWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
+            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(1, 1);
+            IBufferPool bp = new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            using var pm =  new PageManager.PageManager(DefaultSize, new FifoEvictionPolicy(1, 1), persistedStream, bp, lm, TestGlobals.TestFileLogger);
+            using var pm =  new PageManager.PageManager(DefaultSize, evictionPolicy, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             const int workerCount = 50;
 
@@ -61,10 +62,11 @@ namespace PageManagerTests
         public async Task ConcurrentReadAndWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
+            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(1, 1);
+            IBufferPool bp = new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
-            using var pm =  new PageManager.PageManager(DefaultSize, new FifoEvictionPolicy(1, 1), persistedStream, bp, lm, TestGlobals.TestFileLogger);
+            using var pm =  new PageManager.PageManager(DefaultSize, evictionPolicy, persistedStream, bp, lm, TestGlobals.TestFileLogger);
 
             long maxPageId = 0;
 

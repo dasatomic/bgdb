@@ -16,8 +16,8 @@ namespace PageManagerTests
         [Test]
         public async Task BufferPoolCheck()
         {
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
+            IBufferPool bp = new BufferPool(pageEvictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
 
             var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
@@ -32,8 +32,8 @@ namespace PageManagerTests
         [Test]
         public async Task BufferPoolAfterEviction()
         {
-            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
+            IBufferPool bp = new BufferPool(pageEvictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
 
             var pageManager =  new PageManager.PageManager(DefaultSize, pageEvictionPolicy, TestGlobals.DefaultPersistedStream, bp, lm, TestGlobals.TestFileLogger);
