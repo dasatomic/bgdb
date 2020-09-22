@@ -10,9 +10,9 @@ Job=ShortRun  IterationCount=3  LaunchCount=1
 WarmupCount=3  
 
 ```
-|          Method | RowsInTableNumber |       Mean |       Error |   StdDev |
-|---------------- |------------------ |-----------:|------------:|---------:|
-| **InsertIntoTable** |             **10000** |   **421.9 ms** |   **185.43 ms** | **10.16 ms** |
-| **InsertIntoTable** |             **20000** |   **817.4 ms** |   **108.04 ms** |  **5.92 ms** |
-| **InsertIntoTable** |             **40000** | **1,609.3 ms** |    **98.71 ms** |  **5.41 ms** |
-| **InsertIntoTable** |            **100000** | **4,441.5 ms** | **1,137.09 ms** | **62.33 ms** |
+|          Method | RowsInTableNumber |       Mean |      Error |   StdDev |
+|---------------- |------------------ |-----------:|-----------:|---------:|
+| **InsertIntoTable** |             **10000** |   **461.9 ms** |   **508.9 ms** | **27.89 ms** |
+| **InsertIntoTable** |             **20000** |   **817.0 ms** |   **344.0 ms** | **18.86 ms** |
+| **InsertIntoTable** |             **40000** | **1,625.6 ms** |   **623.4 ms** | **34.17 ms** |
+| **InsertIntoTable** |            **100000** | **4,124.1 ms** | **1,324.1 ms** | **72.58 ms** |

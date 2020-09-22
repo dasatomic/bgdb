@@ -10,7 +10,7 @@ Job=ShortRun  IterationCount=3  LaunchCount=1
 WarmupCount=3  
 
 ```
-|      Method | TableNumber |        Mean |       Error |    StdDev |
-|------------ |------------ |------------:|------------:|----------:|
-| **CreateTable** |         **100** |    **59.25 ms** |    **56.68 ms** |  **3.107 ms** |
-| **CreateTable** |        **1000** | **4,809.09 ms** | **1,198.25 ms** | **65.680 ms** |
+|      Method | TableNumber |        Mean |     Error |   StdDev |
+|------------ |------------ |------------:|----------:|---------:|
+| **CreateTable** |         **100** |    **82.90 ms** | **295.52 ms** | **16.20 ms** |
+| **CreateTable** |        **1000** | **4,173.23 ms** | **938.56 ms** | **51.45 ms** |

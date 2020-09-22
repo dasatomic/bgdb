@@ -12,15 +12,15 @@ WarmupCount=3
 ```
 |                    Method | RowsInTableNumber | WorkerCount |       Mean |       Error |    StdDev |
 |-------------------------- |------------------ |------------ |-----------:|------------:|----------:|
-| **InsertIntoTableConcurrent** |              **8000** |           **2** |   **381.8 ms** |   **402.97 ms** |  **22.09 ms** |
-| **InsertIntoTableConcurrent** |              **8000** |           **4** |   **403.8 ms** |   **247.32 ms** |  **13.56 ms** |
-| **InsertIntoTableConcurrent** |              **8000** |           **8** |   **472.1 ms** |   **214.10 ms** |  **11.74 ms** |
-| **InsertIntoTableConcurrent** |              **8000** |          **16** |   **559.8 ms** |   **440.32 ms** |  **24.14 ms** |
-| **InsertIntoTableConcurrent** |             **16000** |           **2** |   **838.1 ms** |   **290.71 ms** |  **15.93 ms** |
-| **InsertIntoTableConcurrent** |             **16000** |           **4** |   **815.2 ms** |   **636.29 ms** |  **34.88 ms** |
-| **InsertIntoTableConcurrent** |             **16000** |           **8** |   **856.1 ms** |    **71.41 ms** |   **3.91 ms** |
-| **InsertIntoTableConcurrent** |             **16000** |          **16** | **1,074.8 ms** |    **87.02 ms** |   **4.77 ms** |
-| **InsertIntoTableConcurrent** |             **32000** |           **2** | **1,658.5 ms** | **2,725.95 ms** | **149.42 ms** |
-| **InsertIntoTableConcurrent** |             **32000** |           **4** | **1,605.6 ms** |   **339.67 ms** |  **18.62 ms** |
-| **InsertIntoTableConcurrent** |             **32000** |           **8** | **1,768.7 ms** |   **986.37 ms** |  **54.07 ms** |
-| **InsertIntoTableConcurrent** |             **32000** |          **16** | **1,903.4 ms** | **1,900.68 ms** | **104.18 ms** |
+| **InsertIntoTableConcurrent** |              **8000** |           **2** |   **329.2 ms** |   **104.34 ms** |   **5.72 ms** |
+| **InsertIntoTableConcurrent** |              **8000** |           **4** |   **361.9 ms** |   **178.31 ms** |   **9.77 ms** |
+| **InsertIntoTableConcurrent** |              **8000** |           **8** |   **400.7 ms** |    **84.28 ms** |   **4.62 ms** |
+| **InsertIntoTableConcurrent** |              **8000** |          **16** |   **481.6 ms** |   **229.73 ms** |  **12.59 ms** |
+| **InsertIntoTableConcurrent** |             **16000** |           **2** |   **662.1 ms** |   **338.03 ms** |  **18.53 ms** |
+| **InsertIntoTableConcurrent** |             **16000** |           **4** |   **765.2 ms** |   **480.61 ms** |  **26.34 ms** |
+| **InsertIntoTableConcurrent** |             **16000** |           **8** |   **906.4 ms** | **1,079.88 ms** |  **59.19 ms** |
+| **InsertIntoTableConcurrent** |             **16000** |          **16** |   **949.2 ms** |   **784.26 ms** |  **42.99 ms** |
+| **InsertIntoTableConcurrent** |             **32000** |           **2** | **1,620.8 ms** | **1,294.96 ms** |  **70.98 ms** |
+| **InsertIntoTableConcurrent** |             **32000** |           **4** | **1,699.7 ms** | **1,228.53 ms** |  **67.34 ms** |
+| **InsertIntoTableConcurrent** |             **32000** |           **8** | **1,663.1 ms** |   **411.82 ms** |  **22.57 ms** |
+| **InsertIntoTableConcurrent** |             **32000** |          **16** | **2,006.0 ms** | **2,017.84 ms** | **110.60 ms** |
