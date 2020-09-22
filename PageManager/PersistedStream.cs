@@ -12,7 +12,7 @@ namespace PageManager
         public void Grow(ulong newSize);
         public void Shrink(ulong newSize);
         public Task SeekAndWrite(ulong position, IPage page);
-        public Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnInfo[] columnTypes);
+        public Task<IPage> SeekAndRead(ulong position, PageType pageType, IBufferPool bufferPool, ColumnInfo[] columnInfos);
         public bool IsInitialized();
         public void MarkInitialized();
     }
@@ -102,7 +102,7 @@ namespace PageManager
             }
         }
 
-        public async Task<IPage> SeekAndRead(ulong position, PageType pageType, ColumnInfo[] columnInfos)
+        public async Task<IPage> SeekAndRead(ulong position, PageType pageType, IBufferPool bufferPool, ColumnInfo[] columnInfos)
         {
             await semaphore.WaitAsync().ConfigureAwait(false);
 
@@ -110,9 +110,11 @@ namespace PageManager
             {
                 this.fileStream.Seek((long)position, SeekOrigin.Begin);
 
+                (Memory<byte> memory, ulong token) = bufferPool.GetMemory();
+
                 return pageType switch
                 {
-                    PageType.MixedPage => new MixedPage(this.binaryReader, columnInfos),
+                    PageType.MixedPage => new MixedPage(this.binaryReader, memory, token, columnInfos),
                     PageType.StringPage => new StringOnlyPage(this.binaryReader),
                     _ => throw new ArgumentException()
                 };

@@ -20,6 +20,7 @@ namespace PageManager
         public void Persist(BinaryWriter destination);
         public bool IsDirty();
         public void ResetDirty();
+        public ulong GetBufferPoolToken();
 
         internal const uint PageIdPosition = 0;
         internal const uint PageSizePosition = 8;

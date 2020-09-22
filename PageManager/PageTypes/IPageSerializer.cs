@@ -22,6 +22,7 @@ namespace PageManager
         protected uint rowCount;
         protected bool isDirty = false;
         protected S items;
+        protected ulong bufferPoolToken;
 
         public ulong NextPageId() => this.nextPageId;
         public ulong PageId() => this.pageId;
@@ -62,5 +63,7 @@ namespace PageManager
         public abstract void Update(ST item, ushort position, ITransaction transaction);
         public abstract int Insert(ST item, ITransaction transaction);
         public abstract void At(ushort position, ITransaction tran, ref ST item);
+
+        public ulong GetBufferPoolToken() => this.bufferPoolToken;
     }
 }

@@ -5,6 +5,10 @@ namespace Test.Common
 {
     public static class TestGlobals
     {
+        public const int DefaultPageSize = 4096;
+
+        public const int DefaultBufferPoolSizeMb = 16;
+
         public static IPageEvictionPolicy DefaultEviction
         {
             get

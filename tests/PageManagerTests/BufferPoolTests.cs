@@ -16,7 +16,7 @@ namespace PageManagerTests
         [Test]
         public async Task BufferPoolCheck()
         {
-            IBufferPool bp = new BufferPool();
+            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
             ILockManager lm = new LockManager.LockManager();
 
@@ -32,7 +32,7 @@ namespace PageManagerTests
         [Test]
         public async Task BufferPoolAfterEviction()
         {
-            IBufferPool bp = new BufferPool();
+            IBufferPool bp = new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize);
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
             ILockManager lm = new LockManager.LockManager();
 

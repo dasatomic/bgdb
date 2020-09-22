@@ -20,7 +20,7 @@ namespace PageManager
         private readonly ColumnInfo[] columnTypes;
         private Memory<byte> inMemoryStorage;
 
-        public MixedPage(uint pageSize, ulong pageId, ColumnInfo[] columnTypes, ulong prevPageId, ulong nextPageId, ITransaction tran)
+        public MixedPage(uint pageSize, ulong pageId, ColumnInfo[] columnTypes, ulong prevPageId, ulong nextPageId, Memory<byte> memory, ulong bufferPoolToken, ITransaction tran)
         {
             if (columnTypes == null || columnTypes.Length == 0)
             {
@@ -33,7 +33,8 @@ namespace PageManager
             this.columnTypes = columnTypes;
             this.prevPageId = prevPageId;
             this.nextPageId = nextPageId;
-            this.inMemoryStorage = new Memory<byte>(new byte[(int)(this.pageSize - IPage.FirstElementPosition)]);
+            this.inMemoryStorage = memory;
+            this.bufferPoolToken = bufferPoolToken;
             this.items = new RowsetHolderFixed(this.columnTypes, this.inMemoryStorage, init: true);
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
@@ -42,7 +43,7 @@ namespace PageManager
             this.isDirty = true;
         }
 
-        public MixedPage(BinaryReader stream, ColumnInfo[] columnInfos)
+        public MixedPage(BinaryReader stream, Memory<byte> memory, ulong token, ColumnInfo[] columnInfos)
         {
             this.columnTypes = columnInfos;
 
@@ -66,9 +67,9 @@ namespace PageManager
                 throw new SerializationException();
             }
 
-            byte[] pageContent = stream.ReadBytes((int)(this.pageSize - IPage.FirstElementPosition));
-
-            this.inMemoryStorage = new Memory<byte>(pageContent);
+            this.inMemoryStorage = memory;
+            this.bufferPoolToken = token;
+            stream.Read(this.inMemoryStorage.Span);
             this.items = new RowsetHolderFixed(this.columnTypes, this.inMemoryStorage, init: false);
 
             Debug.Assert(this.items.GetRowCount() == this.rowCount);

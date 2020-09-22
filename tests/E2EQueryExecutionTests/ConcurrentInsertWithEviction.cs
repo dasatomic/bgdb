@@ -22,7 +22,11 @@ namespace E2EQueryExecutionTests
         public async Task ConcurrentInsertWithEvictionTest()
         {
             var lockManager = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(7, 2), TestGlobals.DefaultPersistedStream, new BufferPool(), lockManager, TestGlobals.TestFileLogger);
+            var pageManager =  new PageManager.PageManager(
+                4096, 
+                new FifoEvictionPolicy(7, 2),
+                TestGlobals.DefaultPersistedStream,
+                new BufferPool(TestGlobals.DefaultBufferPoolSizeMb, TestGlobals.DefaultPageSize), lockManager, TestGlobals.TestFileLogger);
 
             var logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;

@@ -20,7 +20,7 @@ namespace PageManagerTests
         public void Insert()
         {
             var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new byte[DefaultSize], 0, new DummyTran());
 
             rows.ForEach(r => page.Insert(r, new DummyTran()));
 
@@ -31,7 +31,7 @@ namespace PageManagerTests
         public void VerifyFromStream()
         {
             var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
-            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new DummyTran());
+            MixedPage page = new MixedPage(DefaultSize, DefaultPageId, types, DefaultPrevPage, DefaultNextPage, new byte[DefaultSize - IPage.FirstElementPosition], 0, new DummyTran());
 
             rows.ForEach(r => page.Insert(r, new DummyTran()));
 
@@ -44,7 +44,7 @@ namespace PageManagerTests
             }
 
             var source = new BinaryReader(new MemoryStream(content));
-            MixedPage pageDeserialized = new MixedPage(source, types);
+            MixedPage pageDeserialized = new MixedPage(source, new byte[DefaultSize], 0, types);
 
             Assert.AreEqual(page.PageId(), pageDeserialized.PageId());
             Assert.AreEqual(page.PageType(), pageDeserialized.PageType());

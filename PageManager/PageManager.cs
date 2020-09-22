@@ -24,8 +24,10 @@ namespace PageManager
         private InstrumentationInterface logger = null;
         private int pageCount;
 
+        private const int DefaultBufferPoolSizeMb = 32;
+
         public PageManager(uint defaultPageSize, IPageEvictionPolicy evictionPolicy, IPersistedStream persistedStream)
-            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(), new LockManager.LockManager(), new NoOpLogging())
+            : this(defaultPageSize, evictionPolicy, persistedStream, new BufferPool(DefaultBufferPoolSizeMb, (int)defaultPageSize), new LockManager.LockManager(), new NoOpLogging())
         {
         }
 
@@ -46,7 +48,7 @@ namespace PageManager
                 logger.LogInfo("Initializing the persisted stream.");
                 using (ITransaction tran = new NotLoggedTransaction())
                 {
-                    MixedPage allocationMapFirstPage = new MixedPage(pageSize, (ulong)AllocationMapPageId,  new [] { new ColumnInfo(ColumnType.Int) }, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                    MixedPage allocationMapFirstPage = new MixedPage(pageSize, (ulong)AllocationMapPageId,  new [] { new ColumnInfo(ColumnType.Int) }, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, new byte[4096], 0, tran);
                     BitTrackingPage.NullifyMixedPage(allocationMapFirstPage, tran);
 
                     this.AllocatationMapPages.Add(new BitTrackingPage(allocationMapFirstPage));
@@ -58,7 +60,7 @@ namespace PageManager
                 // TODO: Read boot page.
                 logger.LogInfo("Using already initialized stream.");
                 ulong position = AllocationMapPageId * this.pageSize;
-                MixedPage allocationMapFirstPage = (MixedPage)this.persistedStream.SeekAndRead(position, PageType.MixedPage, new ColumnInfo[] { new ColumnInfo(ColumnType.Int) }).Result;
+                MixedPage allocationMapFirstPage = (MixedPage)this.persistedStream.SeekAndRead(position, PageType.MixedPage, this.bufferPool, new ColumnInfo[] { new ColumnInfo(ColumnType.Int) }).Result;
                 this.AllocatationMapPages.Add(new BitTrackingPage(allocationMapFirstPage));
 
                 using (ITransaction tran = new NotLoggedTransaction())
@@ -96,10 +98,12 @@ namespace PageManager
 
             using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive).ConfigureAwait(false);
 
+            (Memory<byte> memory, ulong token) = this.bufferPool.GetMemory();
+
             page = pageType switch
             {
                 PageType.StringPage => new StringOnlyPage(pageSize, pageId, prevPageId, nextPageId, tran),
-                PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, tran),
+                PageType.MixedPage => new MixedPage(pageSize, pageId, columnTypes, prevPageId, nextPageId, memory, token, tran),
                 _ => throw new ArgumentException("Unknown page type")
             };
 
@@ -166,7 +170,7 @@ namespace PageManager
 
                     await this.FlushPage(pageToEvict).ConfigureAwait(false);
 
-                    bufferPool.EvictPage(pageToEvict.PageId());
+                    bufferPool.EvictPage(pageToEvict.PageId(), pageToEvict.GetBufferPoolToken());
 
                     logger.LogDebug($"Page {pageIdToEvict} evicted from buffer pool and flushed to the disk.");
                 }
@@ -187,7 +191,17 @@ namespace PageManager
             {
                 using (ITransaction gamAllocTran = new NotLoggedTransaction())
                 {
-                    MixedPage newAmPage = new MixedPage(pageSize, (ulong)AllocationMapPageId + (ulong)(maxFit * this.AllocatationMapPages.Count), new ColumnInfo[] { new ColumnInfo(ColumnType.Int) }, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, gamAllocTran);
+                    // TODO: Need to keep the list linked here.
+                    (Memory<byte> memory, ulong token) = this.bufferPool.GetMemory();
+                    MixedPage newAmPage = new MixedPage(
+                        pageSize,
+                        (ulong)AllocationMapPageId + (ulong)(maxFit * this.AllocatationMapPages.Count),
+                        new ColumnInfo[] { new ColumnInfo(ColumnType.Int) },
+                        PageManagerConstants.NullPageId,
+                        PageManagerConstants.NullPageId,
+                        memory,
+                        token,
+                        gamAllocTran);
                     BitTrackingPage.NullifyMixedPage(newAmPage, gamAllocTran);
 
                     this.AllocatationMapPages.Add(new BitTrackingPage(newAmPage));
@@ -242,7 +256,7 @@ namespace PageManager
         internal async Task<IPage> FetchPage(ulong pageId, PageType pageType, ColumnInfo[] columnTypes)
         {
             ulong position = pageId * this.pageSize;
-            return await this.persistedStream.SeekAndRead(position, pageType, columnTypes).ConfigureAwait(false);
+            return await this.persistedStream.SeekAndRead(position, pageType, this.bufferPool, columnTypes).ConfigureAwait(false);
         }
 
         public async Task<StringOnlyPage> AllocatePageStr(ulong prevPage, ulong nextPage, ITransaction tran)
