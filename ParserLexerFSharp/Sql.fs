@@ -6,6 +6,8 @@ type value =
     | String    of string
     | Id        of string
 
+type aggType = Min | Max | Avg | Count
+
 type dir = Asc | Desc
 type op = Eq | Gt | Ge | Lt | Le
 
@@ -16,6 +18,10 @@ type where =
     | And of where * where
     | Or of where * where
 
+type columnSelect =
+    | Aggregate of (aggType * string)
+    | Projection of string
+
 type joinType = Inner | Left | Right
 
 type join = string * joinType * where option // table name, join, optional on clause
@@ -23,7 +29,7 @@ type join = string * joinType * where option // table name, join, optional on cl
 type sqlStatement =
     { 
         Table : string;
-        Columns : string list;
+        Columns : columnSelect list;
         Joins : join list;
         Where : where option
         GroupBy : string list;

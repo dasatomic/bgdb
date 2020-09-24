@@ -17,6 +17,10 @@ type token =
   | ASC
   | DESC
   | CREATE_TABLE
+  | MAX
+  | MIN
+  | AVG
+  | COUNT
   | SELECT
   | FROM
   | WHERE
@@ -57,6 +61,10 @@ type tokenId =
     | TOKEN_ASC
     | TOKEN_DESC
     | TOKEN_CREATE_TABLE
+    | TOKEN_MAX
+    | TOKEN_MIN
+    | TOKEN_AVG
+    | TOKEN_COUNT
     | TOKEN_SELECT
     | TOKEN_FROM
     | TOKEN_WHERE
@@ -94,6 +102,7 @@ type nonTerminalId =
     | NONTERM_columnType
     | NONTERM_SelectStatement
     | NONTERM_columnList
+    | NONTERM_aggregate
     | NONTERM_joinList
     | NONTERM_joinClause
     | NONTERM_joinOnClause

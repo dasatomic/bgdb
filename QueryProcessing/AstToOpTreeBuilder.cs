@@ -24,7 +24,13 @@ namespace QueryProcessing
             // TODO: query builder is currently manual. i.e. SCAN -> optional(FILTER) -> PROJECT.
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
             string tableName = sqlStatement.Table;
-            string[] columns = sqlStatement.Columns.ToArray();
+
+            // TODO: Need to support aggregates in select.
+            Sql.columnSelect[] columns = sqlStatement.Columns.ToArray();
+
+            string[] projections = columns
+                .Where(c => c.IsProjection == true)
+                .Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
@@ -34,7 +40,7 @@ namespace QueryProcessing
 
             // Project Op.
             List<int> columnMapping = new List<int>();
-            foreach (string columnName in columns)
+            foreach (string columnName in projections)
             {
                 if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
                 {

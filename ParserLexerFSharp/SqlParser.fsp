@@ -12,6 +12,7 @@ open Sql
 %token EQ LT LE GT GE   
 %token JOIN INNER LEFT RIGHT ON   
 %token SELECT FROM WHERE ORDER BY GROUP
+%token MAX MIN AVG COUNT
 %token CREATE_TABLE
 %token ASC DESC   
 %token CREATE
@@ -90,8 +91,16 @@ SelectStatement:  columnList
                                   OrderBy = $7 }
                             }
 columnList:
-    | ID                    { [$1] }
-    | columnList COMMA ID  { $3 :: $1 }
+    | ID                        { [Projection($1)] }
+    | columnList COMMA ID       { Projection($3) :: $1 }
+    | aggregate        { [$1] }
+    | columnList COMMA aggregate { $3 :: $1 }
+
+aggregate:
+    | MAX OBRCK ID CBRCK { Aggregate(Max, $3) }
+    | MIN OBRCK ID CBRCK { Aggregate(Min, $3) }
+    | AVG OBRCK ID CBRCK { Aggregate(Avg, $3) }
+    | COUNT OBRCK ID CBRCK { Aggregate(Count, $3) }
 
 // join clause
 joinList:   
