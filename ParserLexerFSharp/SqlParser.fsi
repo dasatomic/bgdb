@@ -22,6 +22,7 @@ type token =
   | WHERE
   | ORDER
   | BY
+  | GROUP
   | JOIN
   | INNER
   | LEFT
@@ -61,6 +62,7 @@ type tokenId =
     | TOKEN_WHERE
     | TOKEN_ORDER
     | TOKEN_BY
+    | TOKEN_GROUP
     | TOKEN_JOIN
     | TOKEN_INNER
     | TOKEN_LEFT
@@ -99,6 +101,8 @@ type nonTerminalId =
     | NONTERM_whereClause
     | NONTERM_op
     | NONTERM_value
+    | NONTERM_groupByClause
+    | NONTERM_groupByList
     | NONTERM_orderByClause
     | NONTERM_orderByList
     | NONTERM_orderBy

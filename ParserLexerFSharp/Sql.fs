@@ -26,6 +26,7 @@ type sqlStatement =
         Columns : string list;
         Joins : join list;
         Where : where option
+        GroupBy : string list;
         OrderBy : order list
     }
 

@@ -29,6 +29,7 @@ let keywords =
         "AND", AND;   
         "OR", OR;   
         "ON", ON;   
+        "GROUP", GROUP;
     ] |> Map.ofList   
 
 let ops =   

@@ -121,5 +121,29 @@ namespace ParserLexerTests
             Assert.AreEqual(((Sql.value.String)insertStatement.Values[1]).Item, "11");
             Assert.AreEqual(((Sql.value.String)insertStatement.Values[2]).Item, "TST");
         }
+
+        [Test]
+        public void GroupByStatementTest()
+        {
+            string query =
+                @"SELECT x, y, z   
+                FROM t1   
+                GROUP BY z, y, x";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
+
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+
+            Assert.AreEqual(new string[] { "x", "y", "z" }, selectStatement.Columns.ToArray());
+            Assert.AreEqual("t1", selectStatement.Table);
+
+            string[] groupBys = selectStatement.GroupBy.ToArray();
+            Assert.AreEqual(new[] { "z", "y", "x" }, groupBys);
+        }
     }
 }
