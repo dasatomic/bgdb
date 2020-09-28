@@ -117,7 +117,6 @@ GROUP BY a
         }
 
         [Test]
-        [Ignore("no support for pure agg without group by")]
         public async Task AggNoGroupBy()
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))

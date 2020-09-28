@@ -8,6 +8,14 @@ namespace PageManager
         public readonly byte[] Storage;
         public readonly short[] ColumnPosition;
 
+        public static RowHolderFixed Zero() => new RowHolderFixed(new byte[0], new short[0]);
+
+        private RowHolderFixed(byte[] storage, short[] columnPositions)
+        {
+            this.Storage = storage;
+            this.ColumnPosition = columnPositions;
+        }
+
         public RowHolderFixed(ColumnType[] columnTypes)
         {
             this.ColumnPosition = new short[columnTypes.Length];
@@ -175,6 +183,12 @@ namespace PageManager
         public override int GetHashCode()
         {
             HashCode hash = new HashCode();
+
+            if (this.Storage == null)
+            {
+                // This is identity (empty) row.
+                return 0;
+            }
 
             foreach (byte b in this.Storage)
             {

@@ -76,7 +76,14 @@ namespace QueryProcessing
 
             Func<RowHolderFixed, RowHolderFixed> grouper = (rowHolder) =>
             {
-                return rowHolder.Project(mdInGroupBy);
+                if (!mdInGroupBy.Any())
+                {
+                    return RowHolderFixed.Zero();
+                }
+                else
+                {
+                    return rowHolder.Project(mdInGroupBy);
+                }
             };
 
             Func<RowHolderFixed /* Current Row, after project */, RowHolderFixed /* Current state */, RowHolderFixed /* New state */> aggregator =
