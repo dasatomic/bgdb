@@ -41,27 +41,6 @@ namespace QueryProcessing
             // Scan Op.
             PhyOpScan scanOp = new PhyOpScan(table.Collection, tran);
 
-            // Project Op.
-            List<int> columnMapping = new List<int>();
-            foreach (string columnName in projections)
-            {
-                if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
-                {
-
-                    throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
-                }
-
-                columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
-            }
-
-            // Group by.
-            if (sqlStatement.GroupBy.Any())
-            {
-                string[] groupByColumns = sqlStatement.GroupBy.ToArray();
-
-                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, aggregates, table.Columns);
-            }
-
             // Where op.
             IPhysicalOperator<RowHolderFixed> sourceForProject = scanOp;
 
@@ -70,12 +49,36 @@ namespace QueryProcessing
                 Sql.where whereStatement = sqlStatement.Where.Value;
                 PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, table.Columns));
                 sourceForProject = filterOp;
-
             }
 
-            PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.ToArray());
+            if (sqlStatement.GroupBy.Any())
+            {
+                // Group by + project.
+                string[] groupByColumns = sqlStatement.GroupBy.ToArray();
 
-            return projectOp;
+                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, aggregates, table.Columns);
+                PhyOpGroupBy phyOpGroupBy = new PhyOpGroupBy(sourceForProject, groupByFunctors);
+
+                return phyOpGroupBy;
+            } else
+            {
+                // Project Op.
+                List<int> columnMapping = new List<int>();
+                foreach (string columnName in projections)
+                {
+                    if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
+                    {
+
+                        throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
+                    }
+
+                    columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
+                }
+
+                PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.ToArray());
+
+                return projectOp;
+            }
         }
 
         public async Task<PhyOpTableInsert> ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran)

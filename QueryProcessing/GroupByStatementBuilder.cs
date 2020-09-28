@@ -41,37 +41,52 @@ namespace QueryProcessing
     {
         public static GroupByFunctors EvalGroupBy(string[] groupByColumns, Tuple<Sql.aggType, string>[] aggregators, MetadataColumn[] metadataColumns)
         {
+            // TODO: Can't use column id as column position fetcher.
+            int[] mdInGroupBy = metadataColumns.Where(mc => groupByColumns.Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
+            int[] mdInAgg = metadataColumns.Where(mc => aggregators.Select(agg => agg.Item2).Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
+            Debug.Assert(!Enumerable.Intersect(mdInGroupBy, mdInAgg).Any());
+            int[] columnUnion = mdInGroupBy.Union(mdInAgg).ToArray();
+
+            Dictionary<int, int> oldNewColumnMapping = new Dictionary<int, int>();
+            for (int i = 0; i < columnUnion.Length; i++)
+            {
+                oldNewColumnMapping.Add(columnUnion[i], i);
+            }
+
+            MetadataColumn[] mdColumnsForAggs = new MetadataColumn[mdInAgg.Length];
+
+            int pos = 0;
+            foreach (Tuple<Sql.aggType, string> agg in aggregators)
+            {
+                mdColumnsForAggs[pos] = metadataColumns.First(metadataColumns => metadataColumns.ColumnName == agg.Item2);
+
+                // Need to align with new position of this column after project.
+                // TODO: This should be handled in more systematic way.
+                // e.g. by building logical tree from ast.
+                mdColumnsForAggs[pos].ColumnId = oldNewColumnMapping[mdColumnsForAggs[pos].ColumnId];
+
+                pos++;
+            }
+
             // TODO: Aiming for correctness. Perf comes later.
             Func<RowHolderFixed, RowHolderFixed> projector = (rowHolder) =>
             {
-                // TODO: Can't use column id as column position fetcher.
-                int[] mdInGroupBy = metadataColumns.Where(mc => groupByColumns.Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
-                int[] mdInAgg = metadataColumns.Where(mc => aggregators.Select(agg => agg.Item2).Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
-
-                Debug.Assert(!Enumerable.Intersect(mdInGroupBy, mdInAgg).Any());
-
-                // Grouper extracts both group by part and aggregate part.
-                return rowHolder.Project(mdInGroupBy.Union(mdInAgg).ToArray());
+                return rowHolder.Project(columnUnion);
             };
 
             Func<RowHolderFixed, RowHolderFixed> grouper = (rowHolder) =>
             {
-                // TODO: Can't use column id as column position fetcher.
-                int[] mdInGroupBy = metadataColumns.Where(mc => groupByColumns.Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
-
-                // Grouper extracts both group by part and aggregate part.
                 return rowHolder.Project(mdInGroupBy);
             };
 
-            Func<RowHolderFixed /* Current Row */, RowHolderFixed /* Current state */, RowHolderFixed /* New state */> aggregator =
+            Func<RowHolderFixed /* Current Row, after project */, RowHolderFixed /* Current state */, RowHolderFixed /* New state */> aggregator =
                 (inputRhf, stateRhf) =>
                 {
+                    int pos = 0;
                     foreach (Tuple<Sql.aggType, string> agg in aggregators)
                     {
-                        MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == agg.Item2);
-
-                        QueryProcessingAccessors.ApplyAgg(mc, ref inputRhf, agg.Item1, ref stateRhf);
-
+                        QueryProcessingAccessors.ApplyAgg(mdColumnsForAggs[pos], ref inputRhf, agg.Item1, ref stateRhf);
+                        pos++;
                     }
 
                     return stateRhf;
