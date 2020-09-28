@@ -47,6 +47,18 @@ namespace QueryProcessing
             Debug.Assert(!Enumerable.Intersect(mdInGroupBy, mdInAgg).Any());
             int[] columnUnion = mdInGroupBy.Union(mdInAgg).ToArray();
 
+            if (mdInGroupBy.Length != groupByColumns.Length)
+            {
+                string message = string.Join(',', groupByColumns.Except(metadataColumns.Select(mc => mc.ColumnName)));
+                throw new KeyNotFoundException($"Can't find columns in group by {message}");
+            }
+
+            if (mdInAgg.Length != aggregators.Length)
+            {
+                string message = string.Join(',', aggregators.Select(agg => agg.Item2).Except(metadataColumns.Select(mc => mc.ColumnName)));
+                throw new KeyNotFoundException($"Can't find columns in agg {message}");
+            }
+
             Dictionary<int, int> oldNewColumnMapping = new Dictionary<int, int>();
             for (int i = 0; i < columnUnion.Length; i++)
             {

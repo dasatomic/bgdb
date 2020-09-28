@@ -169,7 +169,6 @@ GROUP BY a
         }
 
         [Test]
-        [Ignore("Need to fix the bug.")]
         public void GroupByInvalidColumn()
         {
             Assert.ThrowsAsync<KeyNotFoundException>(async () =>
@@ -188,7 +187,6 @@ GROUP BY z
         }
 
         [Test]
-        [Ignore("Need to fix the bug.")]
         public void AggInvalidColumn()
         {
             Assert.ThrowsAsync<KeyNotFoundException>(async () =>
