@@ -7,7 +7,7 @@ namespace QueryProcessing
 {
     public class PhyOpFilter : IPhysicalOperator<RowHolderFixed>
     {
-        Func< RowHolderFixed, bool> filterFunc;
+        private Func<RowHolderFixed, bool> filterFunc;
         private IPhysicalOperator<RowHolderFixed> source;
 
         public PhyOpFilter(IPhysicalOperator<RowHolderFixed> source, Func<RowHolderFixed, bool> filterFunc)

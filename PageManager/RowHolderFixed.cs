@@ -174,7 +174,14 @@ namespace PageManager
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Storage, ColumnPosition);
+            HashCode hash = new HashCode();
+
+            foreach (byte b in this.Storage)
+            {
+                hash.Add(b);
+            }
+
+            return hash.ToHashCode();
         }
 
         public static ushort CalculateSizeNeeded(ColumnInfo[] columnInfos)

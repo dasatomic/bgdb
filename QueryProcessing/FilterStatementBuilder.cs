@@ -13,27 +13,11 @@ namespace QueryProcessing
             if (op.IsId)
             {
                 Sql.value.Id idVal = (Sql.value.Id)op;
-                MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == idVal.Item);
 
-                if (mc.ColumnType.ColumnType == ColumnType.Int)
-                {
-                    return rowHolder.GetField<int>(mc.ColumnId);
-                }
-                else if (mc.ColumnType.ColumnType == ColumnType.Double)
-                {
-                    return rowHolder.GetField<double>(mc.ColumnId);
-                }
-                else if (mc.ColumnType.ColumnType == ColumnType.String)
-                {
-                    // TODO: Since char[] doesn't implement IComparable need to cast it to string.
-                    // This is super slow...
-                    // Consider creating your own string type.
-                    return new string(rowHolder.GetStringField(mc.ColumnId));
-                }
-                else
-                {
-                    Debug.Fail("Invalid column type");
-                }
+                // When I have group by and source that is not related to metadata position
+                // this is not going to work.
+                MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == idVal.Item);
+                return QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(mc, rowHolder);
             }
             else if (op.IsFloat)
             {

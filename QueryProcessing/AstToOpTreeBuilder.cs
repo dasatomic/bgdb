@@ -25,12 +25,15 @@ namespace QueryProcessing
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
             string tableName = sqlStatement.Table;
 
-            // TODO: Need to support aggregates in select.
             Sql.columnSelect[] columns = sqlStatement.Columns.ToArray();
 
             string[] projections = columns
                 .Where(c => c.IsProjection == true)
                 .Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray();
+
+            Tuple<Sql.aggType, string>[] aggregates = columns
+                .Where(c => c.IsAggregate == true)
+                .Select(c => ((Sql.columnSelect.Aggregate)c).Item).ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
@@ -49,6 +52,14 @@ namespace QueryProcessing
                 }
 
                 columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
+            }
+
+            // Group by.
+            if (sqlStatement.GroupBy.Any())
+            {
+                string[] groupByColumns = sqlStatement.GroupBy.ToArray();
+
+                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, aggregates, table.Columns);
             }
 
             // Where op.
