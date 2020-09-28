@@ -237,5 +237,24 @@ namespace PageManagerTests
 
             rhf.Project(arr);
         }
+
+        [Test]
+        public void ProjectRepeatedColumn()
+        {
+            var columnTypes = new ColumnInfo[] { 
+                new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
+            var rhf = new RowHolderFixed(columnTypes);
+
+            rhf.SetField(0, "TESTTEST00".ToCharArray());
+            rhf.SetField(1, "TEST0".ToCharArray());
+            rhf.SetField(2, 17);
+
+            var rhfnew = rhf.Project(new[] { 1, 1, 2, 2 });
+
+            Assert.AreEqual("TEST0".ToCharArray(), rhfnew.GetStringField(0));
+            Assert.AreEqual("TEST0".ToCharArray(), rhfnew.GetStringField(1));
+            Assert.AreEqual(17, rhfnew.GetField<int>(2));
+            Assert.AreEqual(17, rhfnew.GetField<int>(3));
+        }
     }
 }
