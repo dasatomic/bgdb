@@ -41,9 +41,15 @@ namespace QueryProcessing
     {
         public static GroupByFunctors EvalGroupBy(string[] groupByColumns, Tuple<Sql.aggType, string>[] aggregators, MetadataColumn[] metadataColumns)
         {
+            if (aggregators.Select(agg => agg.Item2).Except(metadataColumns.Select(mc => mc.ColumnName)).Any())
+            {
+                throw new KeyNotFoundException($"Can't find columns in agg.");
+            }
+
             // TODO: Can't use column id as column position fetcher.
             int[] mdInGroupBy = metadataColumns.Where(mc => groupByColumns.Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
-            int[] mdInAgg = metadataColumns.Where(mc => aggregators.Select(agg => agg.Item2).Contains(mc.ColumnName)).Select(mc => mc.ColumnId).ToArray();
+            int[] mdInAgg = aggregators.Select(agg => metadataColumns.First(mc => mc.ColumnName == agg.Item2).ColumnId).ToArray();
+
             Debug.Assert(!Enumerable.Intersect(mdInGroupBy, mdInAgg).Any());
             int[] columnUnion = mdInGroupBy.Union(mdInAgg).ToArray();
 
@@ -51,12 +57,6 @@ namespace QueryProcessing
             {
                 string message = string.Join(',', groupByColumns.Except(metadataColumns.Select(mc => mc.ColumnName)));
                 throw new KeyNotFoundException($"Can't find columns in group by {message}");
-            }
-
-            if (mdInAgg.Length != aggregators.Length)
-            {
-                string message = string.Join(',', aggregators.Select(agg => agg.Item2).Except(metadataColumns.Select(mc => mc.ColumnName)));
-                throw new KeyNotFoundException($"Can't find columns in agg {message}");
             }
 
             Dictionary<int, int> oldNewColumnMapping = new Dictionary<int, int>();

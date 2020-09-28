@@ -151,7 +151,6 @@ GROUP BY a
         }
 
         [Test]
-        [Ignore("Need to fix the bug.")]
         public async Task DoubleAggOnSameColumn()
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
