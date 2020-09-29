@@ -53,7 +53,6 @@ namespace QueryProcessing
 
             if (sqlStatement.GroupBy.Any() || aggregates.Any())
             {
-                // Group by + project + aggs.
                 string[] groupByColumns = sqlStatement.GroupBy.ToArray();
 
                 GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, aggregates, table.Columns);

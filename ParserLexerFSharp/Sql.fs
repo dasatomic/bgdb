@@ -6,7 +6,7 @@ type value =
     | String    of string
     | Id        of string
 
-type aggType = Min | Max | Avg | Count
+type aggType = Min | Max | Avg | Count | Sum
 
 type dir = Asc | Desc
 type op = Eq | Gt | Ge | Lt | Le

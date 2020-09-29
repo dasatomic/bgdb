@@ -40,8 +40,8 @@ namespace QueryProcessing
             // TODO: Can't use ColumnId as fetcher.
             if (mc.ColumnType.ColumnType == ColumnType.Int)
             {
-                IComparable inputValue = inputRowHolder.GetField<int>(mc.ColumnId);
-                IComparable stateValue = stateRowHolder.GetField<int>(mc.ColumnId);
+                int inputValue = inputRowHolder.GetField<int>(mc.ColumnId);
+                int stateValue = stateRowHolder.GetField<int>(mc.ColumnId);
 
                 if (aggType.IsMax)
                 {
@@ -49,7 +49,7 @@ namespace QueryProcessing
                     {
                         // Update state.
                         // TODO: boxing/unboxing hurts perf.
-                        stateRowHolder.SetField<int>(mc.ColumnId, (int)inputValue);
+                        stateRowHolder.SetField<int>(mc.ColumnId, inputValue);
                     }
                 }
                 else if (aggType.IsMin)
@@ -57,8 +57,13 @@ namespace QueryProcessing
                     if (inputValue.CompareTo(stateValue) == -1)
                     {
                         // TODO: boxing/unboxing hurts perf.
-                        stateRowHolder.SetField<int>(mc.ColumnId, (int)inputValue);
+                        stateRowHolder.SetField<int>(mc.ColumnId, inputValue);
                     }
+                }
+                else if (aggType.IsSum)
+                {
+                    
+                    stateRowHolder.SetField<int>(mc.ColumnId, inputValue + stateValue);
                 }
                 else
                 {
@@ -67,8 +72,8 @@ namespace QueryProcessing
             }
             else if (mc.ColumnType.ColumnType == ColumnType.Double)
             {
-                IComparable inputValue = inputRowHolder.GetField<double>(mc.ColumnId);
-                IComparable stateValue = stateRowHolder.GetField<double>(mc.ColumnId);
+                double inputValue = inputRowHolder.GetField<double>(mc.ColumnId);
+                double stateValue = stateRowHolder.GetField<double>(mc.ColumnId);
 
                 if (aggType.IsMax)
                 {
@@ -84,8 +89,12 @@ namespace QueryProcessing
                     if (inputValue.CompareTo(stateValue) == -1)
                     {
                         // TODO: boxing/unboxing hurts perf.
-                        stateRowHolder.SetField<double>(mc.ColumnId, (double)inputValue);
+                        stateRowHolder.SetField<double>(mc.ColumnId, inputValue);
                     }
+                }
+                else if (aggType.IsSum)
+                {
+                    stateRowHolder.SetField<double>(mc.ColumnId, inputValue + stateValue);
                 }
                 else
                 {

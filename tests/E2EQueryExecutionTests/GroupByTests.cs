@@ -202,5 +202,46 @@ GROUP BY a
                 }
             });
         }
+
+        [Test]
+        public async Task SumTest()
+        {
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"
+SELECT SUM(a), SUM(b), MAX(a)
+FROM MyTable
+";
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+
+                Assert.AreEqual(400, result[0].GetField<int>(0));
+                Assert.AreEqual(4, result[0].GetField<int>(2));
+            }
+        }
+
+        [Test]
+        [Ignore("Need fix")]
+        public async Task AggBeforeGroupBy()
+        {
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"
+SELECT MAX(b), a
+FROM MyTable
+GROUP BY a
+";
+                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+
+                for (int i = 0; i < 5; i++)
+                {
+                    Assert.AreEqual(i + 95.1, result[i].GetField<double>(0));
+                    Assert.AreEqual(i, result[i].GetField<int>(1));
+                }
+            }
+        }
     }
 }

@@ -21,6 +21,7 @@ type token =
   | MIN
   | AVG
   | COUNT
+  | SUM
   | SELECT
   | FROM
   | WHERE
@@ -65,6 +66,7 @@ type tokenId =
     | TOKEN_MIN
     | TOKEN_AVG
     | TOKEN_COUNT
+    | TOKEN_SUM
     | TOKEN_SELECT
     | TOKEN_FROM
     | TOKEN_WHERE

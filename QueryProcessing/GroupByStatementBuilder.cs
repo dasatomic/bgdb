@@ -51,18 +51,22 @@ namespace QueryProcessing
             int[] mdInAgg = aggregators.Select(agg => metadataColumns.First(mc => mc.ColumnName == agg.Item2).ColumnId).ToArray();
 
             Debug.Assert(!Enumerable.Intersect(mdInGroupBy, mdInAgg).Any());
-            int[] columnUnion = mdInGroupBy.Union(mdInAgg).ToArray();
+
+            int[] columnUnion = new int[mdInGroupBy.Length + mdInAgg.Length];
+            for (int i = 0; i < mdInGroupBy.Length; i++)
+            {
+                columnUnion[i] = mdInGroupBy[i];
+            }
+
+            for (int i = 0; i < mdInAgg.Length; i++)
+            {
+                columnUnion[i + mdInGroupBy.Length] = mdInAgg[i];
+            }
 
             if (mdInGroupBy.Length != groupByColumns.Length)
             {
                 string message = string.Join(',', groupByColumns.Except(metadataColumns.Select(mc => mc.ColumnName)));
                 throw new KeyNotFoundException($"Can't find columns in group by {message}");
-            }
-
-            Dictionary<int, int> oldNewColumnMapping = new Dictionary<int, int>();
-            for (int i = 0; i < columnUnion.Length; i++)
-            {
-                oldNewColumnMapping.Add(columnUnion[i], i);
             }
 
             MetadataColumn[] mdColumnsForAggs = new MetadataColumn[mdInAgg.Length];
@@ -75,7 +79,7 @@ namespace QueryProcessing
                 // Need to align with new position of this column after project.
                 // TODO: This should be handled in more systematic way.
                 // e.g. by building logical tree from ast.
-                mdColumnsForAggs[pos].ColumnId = oldNewColumnMapping[mdColumnsForAggs[pos].ColumnId];
+                mdColumnsForAggs[pos].ColumnId = mdInGroupBy.Length + pos;
 
                 pos++;
             }
