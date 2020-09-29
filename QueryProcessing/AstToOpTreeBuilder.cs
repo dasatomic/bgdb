@@ -55,7 +55,7 @@ namespace QueryProcessing
             {
                 string[] groupByColumns = sqlStatement.GroupBy.ToArray();
 
-                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, aggregates, table.Columns);
+                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, columns, table.Columns);
                 PhyOpGroupBy phyOpGroupBy = new PhyOpGroupBy(sourceForProject, groupByFunctors);
 
                 return phyOpGroupBy;

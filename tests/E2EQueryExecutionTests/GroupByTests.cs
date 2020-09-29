@@ -222,7 +222,6 @@ FROM MyTable
         }
 
         [Test]
-        [Ignore("Need fix")]
         public async Task AggBeforeGroupBy()
         {
 
