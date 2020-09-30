@@ -242,5 +242,23 @@ GROUP BY a
                 }
             }
         }
+
+        [Test]
+        public async Task AggAndGroupByEmptyTable()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
+            {
+                await this.queryEntryGate.Execute("CREATE TABLE EmptyTable (TYPE_INT A)", tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
+            {
+                RowHolderFixed[] result = await this.queryEntryGate.Execute("SELECT MAX(A) FROM EmptyTable", tran).ToArrayAsync();
+                Assert.AreEqual(0, result.Length);
+                result = await this.queryEntryGate.Execute("SELECT A FROM EmptyTable GROUP BY A", tran).ToArrayAsync();
+                Assert.AreEqual(0, result.Length);
+            }
+        }
     }
 }
