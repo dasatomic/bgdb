@@ -25,14 +25,18 @@ namespace QueryProcessing
         /// </summary>
         public Func<RowHolder, RowHolder> Projector { get; }
 
+        public MetadataColumn[] ProjectColumnInfo { get; }
+
         public GroupByFunctors(
             Func<RowHolder, RowHolder> projector,
             Func<RowHolder, RowHolder> grouper,
-            Func<RowHolder, RowHolder, RowHolder> aggs)
+            Func<RowHolder, RowHolder, RowHolder> aggs,
+            MetadataColumn[] projectColumnInfo)
         {
             this.Projector = projector;
             this.Grouper = grouper;
             this.Aggregate = aggs;
+            this.ProjectColumnInfo = projectColumnInfo;
         }
     }
 
@@ -74,7 +78,8 @@ namespace QueryProcessing
                 throw new KeyNotFoundException($"Can't find columns in agg.");
             }
 
-            int[] projectColumnPosition = projectColumnNames.Select(col => metadataColumns.First(mc => mc.ColumnName == col).ColumnId).ToArray();
+            MetadataColumn[] projectColumns = projectColumnNames.Select(col => metadataColumns.First(mc => mc.ColumnName == col)).ToArray();
+            int[] projectColumnPosition = projectColumns.Select(col => col.ColumnId).ToArray();
 
             MetadataColumn[] mdColumnsForAggs = new MetadataColumn[aggregators.Length];
             MetadataColumn[] mdColumnsForGroupBy = new MetadataColumn[groupByColumns.Length];
@@ -140,7 +145,7 @@ namespace QueryProcessing
                     return stateRhf;
                 };
 
-            return new GroupByFunctors(projector, grouper, aggregator);
+            return new GroupByFunctors(projector, grouper, aggregator, projectColumns);
         }
     }
 }

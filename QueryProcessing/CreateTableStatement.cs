@@ -1,8 +1,8 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -17,7 +17,9 @@ namespace QueryProcessing
             this.metadataManager = metadataManager;
         }
 
-        public async IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsCreate;
+
+        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsCreate)
             {
@@ -57,9 +59,7 @@ namespace QueryProcessing
 
             await tableManager.CreateObject(tableCreateDefinition, tran).ConfigureAwait(false);
 
-            yield break;
+            return new RowProvider(TaskExtension.EmptyEnumerable<RowHolder>(), new MetadataColumn[0]);
         }
-
-        public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsCreate;
     }
 }

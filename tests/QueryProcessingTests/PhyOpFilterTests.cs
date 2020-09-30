@@ -61,8 +61,8 @@ namespace QueryProcessingTests
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(source);
 
             tran = logManager.CreateTransaction(allocator);
-            PhyOpTableInsert op = new PhyOpTableInsert(table.Collection, opStatic, tran);
-            await op.Invoke();
+            PhyOpTableInsert op = new PhyOpTableInsert(table.Collection, opStatic);
+            await op.Iterate(tran).AllResultsAsync();
             await tran.Commit();
 
             tran = logManager.CreateTransaction(allocator);

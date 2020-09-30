@@ -9,6 +9,21 @@ using QueryProcessing.Exceptions;
 
 namespace QueryProcessing
 {
+    /// <summary>
+    /// Pair of async enumerable, that can yield rows from root op of query tree and columns of root op.
+    /// </summary>
+    public class RowProvider
+    {
+        public RowProvider(IAsyncEnumerable<RowHolder> enumerator, MetadataColumn[] columnInfo)
+        {
+            this.Enumerator = enumerator;
+            this.ColumnInfo = columnInfo;
+        }
+
+        public IAsyncEnumerable<RowHolder> Enumerator { get; }
+        public MetadataColumn[] ColumnInfo { get; }
+    }
+
     public class AstToOpTreeBuilder
     {
         private MetadataManager.MetadataManager metadataManager;
@@ -19,7 +34,7 @@ namespace QueryProcessing
         }
 
 
-        public async Task<IPhysicalOperator<RowHolder>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
+        public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
             // TODO: query builder is currently manual. i.e. SCAN -> optional(FILTER) -> PROJECT.
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
@@ -58,11 +73,11 @@ namespace QueryProcessing
                 GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, columns, table.Columns);
                 PhyOpGroupBy phyOpGroupBy = new PhyOpGroupBy(sourceForProject, groupByFunctors);
 
-                return phyOpGroupBy;
+                return new RowProvider(phyOpGroupBy.Iterate(tran), groupByFunctors.ProjectColumnInfo);
             } else
             {
                 // Project Op.
-                List<int> columnMapping = new List<int>();
+                List<MetadataColumn> columnMapping = new List<MetadataColumn>();
                 foreach (string columnName in projections)
                 {
                     if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
@@ -71,12 +86,12 @@ namespace QueryProcessing
                         throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
                     }
 
-                    columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName).ColumnId);
+                    columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName));
                 }
 
-                PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.ToArray());
+                PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.Select(mc => mc.ColumnId).ToArray());
 
-                return projectOp;
+                return new RowProvider(projectOp.Iterate(tran), columnMapping.ToArray());
             }
         }
 
@@ -140,7 +155,7 @@ namespace QueryProcessing
 
             PhyOpStaticRowProvider opStatic = new PhyOpStaticRowProvider(rowHolder);
 
-            PhyOpTableInsert op = new PhyOpTableInsert(table.Collection, opStatic, tran);
+            PhyOpTableInsert op = new PhyOpTableInsert(table.Collection, opStatic);
             return op;
         }
     }

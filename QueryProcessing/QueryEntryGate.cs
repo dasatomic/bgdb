@@ -3,6 +3,7 @@ using Microsoft.FSharp.Core;
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
@@ -30,12 +31,28 @@ namespace QueryProcessing
             {
                 if (handler.ShouldExecute(statement))
                 {
-                    await foreach (RowHolder row in handler.Execute(statement, tran))
+                    IAsyncEnumerable<RowHolder> rowProvider = (await handler.BuildTree(statement, tran)).Enumerator;
+                    await foreach (RowHolder row in rowProvider)
                     {
                         yield return row;
                     }
 
                     yield break;
+                }
+            }
+
+            throw new ArgumentException();
+        }
+
+        public async Task<RowProvider> BuildRootOperator(string queryText, ITransaction tran)
+        {
+            Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
+
+            foreach (ISqlStatement handler in statementHandlers)
+            {
+                if (handler.ShouldExecute(statement))
+                {
+                    return await handler.BuildTree(statement, tran);
                 }
             }
 

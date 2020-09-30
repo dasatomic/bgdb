@@ -25,10 +25,5 @@ namespace QueryProcessing
                 yield return await Task.FromResult(row);
             }
         }
-
-        public async Task Invoke()
-        {
-            await Task.FromResult(0);
-        }
     }
 }

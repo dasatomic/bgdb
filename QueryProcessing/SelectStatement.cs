@@ -1,6 +1,5 @@
 ﻿using PageManager;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
@@ -14,7 +13,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsSelect)
             {
@@ -23,12 +22,7 @@ namespace QueryProcessing
 
             Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
 
-            IPhysicalOperator<RowHolder> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
-
-            await foreach (RowHolder row in rootOp.Iterate(tran))
-            {
-                yield return row;
-            }
+            return await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsSelect;
