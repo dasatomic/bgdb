@@ -19,7 +19,7 @@ namespace QueryProcessing
         }
 
 
-        public async Task<IPhysicalOperator<RowHolderFixed>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
+        public async Task<IPhysicalOperator<RowHolder>> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
         {
             // TODO: query builder is currently manual. i.e. SCAN -> optional(FILTER) -> PROJECT.
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
@@ -42,7 +42,7 @@ namespace QueryProcessing
             PhyOpScan scanOp = new PhyOpScan(table.Collection, tran);
 
             // Where op.
-            IPhysicalOperator<RowHolderFixed> sourceForProject = scanOp;
+            IPhysicalOperator<RowHolder> sourceForProject = scanOp;
 
             if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Where))
             {
@@ -89,7 +89,7 @@ namespace QueryProcessing
 
             ColumnInfo[] columnInfosFromTable = table.Columns.Select(mt => mt.ColumnType).ToArray();
 
-            RowHolderFixed rowHolder = new RowHolderFixed(columnInfosFromTable);
+            RowHolder rowHolder = new RowHolder(columnInfosFromTable);
 
             int colNum = 0;
             foreach (var value in insertStatement.Values)

@@ -101,7 +101,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTableWithEviction";
-                RowHolderFixed[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync().ConfigureAwait(false);
+                RowHolder[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync().ConfigureAwait(false);
 
                 Assert.AreEqual(result.Length, Interlocked.CompareExchange(ref totalInsert, 0, 0));
 

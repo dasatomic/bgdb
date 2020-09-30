@@ -14,7 +14,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsSelect)
             {
@@ -23,9 +23,9 @@ namespace QueryProcessing
 
             Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
 
-            IPhysicalOperator<RowHolderFixed> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
+            IPhysicalOperator<RowHolder> rootOp = await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
 
-            await foreach (RowHolderFixed row in rootOp.Iterate(tran))
+            await foreach (RowHolder row in rootOp.Iterate(tran))
             {
                 yield return row;
             }

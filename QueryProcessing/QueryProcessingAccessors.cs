@@ -7,7 +7,7 @@ namespace QueryProcessing
 {
     static class QueryProcessingAccessors
     {
-        public static IComparable MetadataColumnRowsetHolderFetcher(MetadataColumn mc, RowHolderFixed rowHolder)
+        public static IComparable MetadataColumnRowsetHolderFetcher(MetadataColumn mc, RowHolder rowHolder)
         {
             // TODO: Can't use ColumnId as fetcher.
             if (mc.ColumnType.ColumnType == ColumnType.Int)
@@ -35,7 +35,7 @@ namespace QueryProcessing
         // TODO: This is just bad.
         // It is very hard to keep all type -> agg mappings.
         // Needs refactoring.
-        public static void ApplyAgg(MetadataColumn mc, ref RowHolderFixed inputRowHolder, Sql.aggType aggType, ref RowHolderFixed stateRowHolder) 
+        public static void ApplyAgg(MetadataColumn mc, ref RowHolder inputRowHolder, Sql.aggType aggType, ref RowHolder stateRowHolder) 
         {
             // TODO: Can't use ColumnId as fetcher.
             if (mc.ColumnType.ColumnType == ColumnType.Int)

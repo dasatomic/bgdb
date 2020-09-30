@@ -63,7 +63,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = logManager.CreateTransaction(pageManager, "SELECT"))
             {
                 string query = @"SELECT a, b, c FROM LargeTable";
-                RowHolderFixed[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(rowInsert, result.Length);
             }

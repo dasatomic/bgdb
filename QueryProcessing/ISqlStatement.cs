@@ -5,7 +5,7 @@ namespace QueryProcessing
 {
     public interface ISqlStatement
     {
-        IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran);
+        IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran);
 
         bool ShouldExecute(Sql.DmlDdlSqlStatement statement);
     }

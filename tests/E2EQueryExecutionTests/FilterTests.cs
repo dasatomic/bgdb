@@ -36,7 +36,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM FilterTable WHERE a = 2";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(1, result.Length);
                 Assert.AreEqual(2, result[0].GetField<int>(0));
@@ -74,7 +74,7 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 Assert.AreEqual(expectedRowCount, result.Length);
                 await tran.Commit();
             }

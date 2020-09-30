@@ -48,7 +48,7 @@ SELECT a, MAX(b)
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 Assert.AreEqual(5, result.Length);
                 await tran.Commit();
             }
@@ -66,7 +66,7 @@ FROM MyTable
 WHERE a < 4 
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 Assert.AreEqual(4, result.Length);
                 await tran.Commit();
             }
@@ -83,7 +83,7 @@ SELECT a, MAX(b)
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 for (int i = 0; i < 5; i++)
@@ -105,7 +105,7 @@ SELECT a, MIN(b)
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 for (int i = 0; i < 5; i++)
@@ -125,7 +125,7 @@ GROUP BY a
 SELECT MIN(b)
 FROM MyTable
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 Assert.AreEqual(1, result.Length);
@@ -143,7 +143,7 @@ SELECT a
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 Assert.AreEqual(5, result.Length);
@@ -160,7 +160,7 @@ SELECT a, MIN(b), MAX(b)
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 Assert.AreEqual(5, result.Length);
@@ -179,7 +179,7 @@ SELECT a, MIN(b)
 FROM MyTable
 GROUP BY z
 ";
-                    RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                    RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                     await tran.Commit();
                 }
             });
@@ -197,7 +197,7 @@ SELECT a, MIN(z)
 FROM MyTable
 GROUP BY a
 ";
-                    RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                    RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                     await tran.Commit();
                 }
             });
@@ -213,7 +213,7 @@ GROUP BY a
 SELECT SUM(a), SUM(b), MAX(a)
 FROM MyTable
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 Assert.AreEqual(400, result[0].GetField<int>(0));
@@ -232,7 +232,7 @@ SELECT MAX(b), a
 FROM MyTable
 GROUP BY a
 ";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
 
                 for (int i = 0; i < 5; i++)
@@ -254,7 +254,7 @@ GROUP BY a
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
             {
-                RowHolderFixed[] result = await this.queryEntryGate.Execute("SELECT MAX(A) FROM EmptyTable", tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute("SELECT MAX(A) FROM EmptyTable", tran).ToArrayAsync();
                 Assert.AreEqual(0, result.Length);
                 result = await this.queryEntryGate.Execute("SELECT A FROM EmptyTable GROUP BY A", tran).ToArrayAsync();
                 Assert.AreEqual(0, result.Length);
@@ -277,7 +277,7 @@ GROUP BY a
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
             {
-                RowHolderFixed[] result = await this.queryEntryGate.Execute("SELECT MAX(B), A FROM T1 GROUP BY A", tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute("SELECT MAX(B), A FROM T1 GROUP BY A", tran).ToArrayAsync();
                 Assert.AreEqual(1, result.Length);
                 Assert.AreEqual(2, result[0].GetField<int>(0));
                 Assert.AreEqual(1, result[0].GetField<int>(1));

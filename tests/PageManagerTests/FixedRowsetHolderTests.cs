@@ -14,7 +14,7 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
             rs.SetRowGeneric(3, 0, 42);
             rs.SetRowGeneric(3, 1, 17);
             rs.SetRowGeneric(3, 2, 17.3);
@@ -42,13 +42,13 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
             rs.SetRowGeneric(3, 0, 42);
             rs.SetRowGeneric(3, 1, 17);
             rs.SetRowGeneric(3, 2, 17.3);
             rs.SetRowGeneric(3, 3, new PagePointerOffsetPair(1, 17));
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rs.GetRow(3, ref rh);
 
             Assert.AreEqual(42, rh.GetField<int>(0));
@@ -63,9 +63,9 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rh.SetField<int>(0, 1);
             rh.SetField<int>(1, 2);
             rh.SetField<double>(2, 3.1);
@@ -86,9 +86,9 @@ namespace PageManagerTests
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rh.SetField<int>(0, 1);
             rh.SetField<int>(1, 2);
             rh.SetField<double>(2, 3.1);
@@ -114,9 +114,9 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rh.SetField<int>(0, 1);
             rh.SetField<int>(1, 2);
             rh.SetField<double>(2, 3.1);
@@ -139,9 +139,9 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rh.SetField<int>(0, 1);
             rh.SetField<int>(1, 2);
             rh.SetField<double>(2, 3.1);
@@ -150,9 +150,9 @@ namespace PageManagerTests
             Assert.AreEqual(0, rs.InsertRow(rh));
             int oldFreeSpace = rs.FreeSpaceForItems();
 
-            RowsetHolderFixed rsnew = new RowsetHolderFixed(columnTypes, mem, false);
+            RowsetHolder rsnew = new RowsetHolder(columnTypes, mem, false);
 
-            RowHolderFixed rhnew = new RowHolderFixed(columnTypes);
+            RowHolder rhnew = new RowHolder(columnTypes);
             rsnew.GetRow(0, ref rhnew);
 
             Assert.AreEqual(rh, rhnew);
@@ -165,11 +165,11 @@ namespace PageManagerTests
             Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.StringPointer) };
-            RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, mem, true);
+            RowsetHolder rs = new RowsetHolder(columnTypes, mem, true);
 
             for (int i = 0; i < rs.MaxRowCount(); i++)
             {
-                RowHolderFixed rh = new RowHolderFixed(columnTypes);
+                RowHolder rh = new RowHolder(columnTypes);
                 rh.SetField<int>(0, i);
                 rh.SetField<int>(1, i + 1);
                 rh.SetField<double>(2, 3.1);
@@ -194,7 +194,7 @@ namespace PageManagerTests
         {
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
-            var rhf = new RowHolderFixed(columnTypes);
+            var rhf = new RowHolder(columnTypes);
 
             rhf.SetField(0, "TESTTEST00".ToCharArray());
             rhf.SetField(1, "TEST0".ToCharArray());
@@ -210,7 +210,7 @@ namespace PageManagerTests
         {
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
-            var rhf = new RowHolderFixed(columnTypes);
+            var rhf = new RowHolder(columnTypes);
 
             rhf.SetField(0, "TESTTEST00".ToCharArray());
             rhf.SetField(1, "TEST0".ToCharArray());
@@ -227,7 +227,7 @@ namespace PageManagerTests
         public void RandomRowHolderProject()
         {
             ColumnInfo[] cis = GenerateDataUtils.GenerateRandomColumns(10).ToArray();
-            var rhf = new RowHolderFixed(cis);
+            var rhf = new RowHolder(cis);
 
             Random r = new Random();
             int[] arr = Enumerable.Range(0, 9).ToArray();
@@ -243,7 +243,7 @@ namespace PageManagerTests
         {
             var columnTypes = new ColumnInfo[] { 
                 new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
-            var rhf = new RowHolderFixed(columnTypes);
+            var rhf = new RowHolder(columnTypes);
 
             rhf.SetField(0, "TESTTEST00".ToCharArray());
             rhf.SetField(1, "TEST0".ToCharArray());

@@ -8,7 +8,7 @@ namespace QueryProcessing
 {
     static class FilterStatementBuilder
     {
-        private static IComparable ValToIComp(Sql.value op, ref MetadataColumn[] metadataColumns, ref RowHolderFixed rowHolder)
+        private static IComparable ValToIComp(Sql.value op, ref MetadataColumn[] metadataColumns, ref RowHolder rowHolder)
         {
             if (op.IsId)
             {
@@ -36,13 +36,13 @@ namespace QueryProcessing
             throw new InvalidProgramException("Invalid state.");
         }
 
-        public static Func<RowHolderFixed, bool> EvalWhere(Sql.where where, MetadataColumn[] metadataColumns)
+        public static Func<RowHolder, bool> EvalWhere(Sql.where where, MetadataColumn[] metadataColumns)
         {
             // TODO: This is all functional programming and nice
             // but I really doubt the perf.
             // Recursion + higher order functions is probably super slow...
 
-            Func<RowHolderFixed, bool> returnFilterFunc = null;
+            Func<RowHolder, bool> returnFilterFunc = null;
 
             returnFilterFunc = (rowHolder) =>
             {
@@ -50,8 +50,8 @@ namespace QueryProcessing
                 {
                     Sql.where.And andStmt = (Sql.where.And)where;
 
-                    Func<RowHolderFixed, bool> leftOp = EvalWhere(andStmt.Item1, metadataColumns);
-                    Func<RowHolderFixed, bool> rightOp = EvalWhere(andStmt.Item2, metadataColumns);
+                    Func<RowHolder, bool> leftOp = EvalWhere(andStmt.Item1, metadataColumns);
+                    Func<RowHolder, bool> rightOp = EvalWhere(andStmt.Item2, metadataColumns);
 
                     return leftOp(rowHolder) && rightOp(rowHolder);
                 }
@@ -59,8 +59,8 @@ namespace QueryProcessing
                 {
                     Sql.where.Or orStmt = (Sql.where.Or)where;
 
-                    Func<RowHolderFixed, bool> leftOp = EvalWhere(orStmt.Item1, metadataColumns);
-                    Func<RowHolderFixed, bool> rightOp = EvalWhere(orStmt.Item2, metadataColumns);
+                    Func<RowHolder, bool> leftOp = EvalWhere(orStmt.Item1, metadataColumns);
+                    Func<RowHolder, bool> rightOp = EvalWhere(orStmt.Item2, metadataColumns);
 
                     return leftOp(rowHolder) || rightOp(rowHolder);
                 }

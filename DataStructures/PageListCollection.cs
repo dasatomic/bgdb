@@ -17,7 +17,7 @@ namespace DataStructures
         public ColumnInfo[] GetColumnTypes();
     }
 
-    public class PageListCollection : IPageCollection<RowHolderFixed>
+    public class PageListCollection : IPageCollection<RowHolder>
     {
         private ulong collectionRootPageId;
         private IAllocateMixedPage pageAllocator;
@@ -65,7 +65,7 @@ namespace DataStructures
             return rowCount;
         }
 
-        public async Task Add(RowHolderFixed item, ITransaction tran)
+        public async Task Add(RowHolder item, ITransaction tran)
         {
             MixedPage currPage = null;
             for (ulong currPageId = this.lastPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
@@ -107,7 +107,7 @@ namespace DataStructures
             }
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Where(Func<RowHolderFixed, bool> filter, ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Where(Func<RowHolder, bool> filter, ITransaction tran)
         {
             MixedPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
@@ -115,7 +115,7 @@ namespace DataStructures
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
                 using Releaser lck = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
 
-                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
+                foreach (RowHolder rhf in currPage.Fetch(tran))
                 {
                     if (filter(rhf))
                     {
@@ -125,7 +125,7 @@ namespace DataStructures
             }
         }
 
-        public async Task<U> Max<U>(Func<RowHolderFixed, U> projector, U startMin, ITransaction tran) where U : IComparable
+        public async Task<U> Max<U>(Func<RowHolder, U> projector, U startMin, ITransaction tran) where U : IComparable
         {
             MixedPage currPage;
             U max = startMin;
@@ -135,7 +135,7 @@ namespace DataStructures
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
 
-                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
+                foreach (RowHolder rhf in currPage.Fetch(tran))
                 {
                     U curr = projector(rhf);
                     if (curr.CompareTo(max) == 1)
@@ -148,7 +148,7 @@ namespace DataStructures
             return max;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
             MixedPage currPage;
             for (ulong currPageId = collectionRootPageId; currPageId != PageManagerConstants.NullPageId; currPageId = currPage.NextPageId())
@@ -156,7 +156,7 @@ namespace DataStructures
                 using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
                 currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.columnTypes).ConfigureAwait(false);
 
-                foreach (RowHolderFixed rhf in currPage.Fetch(tran))
+                foreach (RowHolder rhf in currPage.Fetch(tran))
                 {
                     yield return rhf;
                 }

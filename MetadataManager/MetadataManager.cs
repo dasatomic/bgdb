@@ -19,7 +19,7 @@ namespace MetadataManager
             new ColumnInfo(ColumnType.PagePointer),
         };
 
-        private IPageCollection<RowHolderFixed> masterMetadataCollection;
+        private IPageCollection<RowHolder> masterMetadataCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
         private MetadataColumnsManager columnsManager;
@@ -66,7 +66,7 @@ namespace MetadataManager
             MixedPage mdTableFirstPage = this.pageAllocator.AllocateMixedPage(MetadataTablesManager.GetSchemaDefinition(), PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran).Result;
             this.tableManager = new MetadataTablesManager(this.pageAllocator, mdTableFirstPage, this.stringHeap, this.columnsManager);
 
-            RowHolderFixed rhf = new RowHolderFixed(this.masterPageColumnDefinition);
+            RowHolder rhf = new RowHolder(this.masterPageColumnDefinition);
             rhf.SetField<int>(0, (int)MetadataObjectEnum.MdTableId);
             rhf.SetField<long>(1, (long)mdTableFirstPage.PageId());
 

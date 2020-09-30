@@ -15,7 +15,7 @@ namespace PageManagerTests
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
-                RowHolderFixed rhf = new RowHolderFixed(new ColumnType[] { ColumnType.Int });
+                RowHolder rhf = new RowHolder(new ColumnType[] { ColumnType.Int });
                 rhf.SetField<int>(0, 0);
                 page.Insert(rhf, new DummyTran());
             }
@@ -35,7 +35,7 @@ namespace PageManagerTests
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
-                RowHolderFixed rhf = new RowHolderFixed(new ColumnType[] { ColumnType.Int });
+                RowHolder rhf = new RowHolder(new ColumnType[] { ColumnType.Int });
                 rhf.SetField<int>(0, 0);
                 page.Insert(rhf, new DummyTran());
             }
@@ -54,7 +54,7 @@ namespace PageManagerTests
 
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
-                RowHolderFixed rhf = new RowHolderFixed(new ColumnType[] { ColumnType.Int });
+                RowHolder rhf = new RowHolder(new ColumnType[] { ColumnType.Int });
                 rhf.SetField<int>(0, 0);
                 Assert.AreEqual(i, page.Insert(rhf, new DummyTran()));
             }

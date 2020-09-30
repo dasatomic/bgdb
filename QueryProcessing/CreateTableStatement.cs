@@ -17,7 +17,7 @@ namespace QueryProcessing
             this.metadataManager = metadataManager;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsCreate)
             {

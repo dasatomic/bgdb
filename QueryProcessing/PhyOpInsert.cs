@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpTableInsert : IPhysicalOperator<RowHolderFixed>
+    public class PhyOpTableInsert : IPhysicalOperator<RowHolder>
     {
-        private IPageCollection<RowHolderFixed> pageCollection;
-        private IPhysicalOperator<RowHolderFixed> input;
+        private IPageCollection<RowHolder> pageCollection;
+        private IPhysicalOperator<RowHolder> input;
         private ITransaction tran;
 
-        public PhyOpTableInsert(IPageCollection<RowHolderFixed> pageCollection, IPhysicalOperator<RowHolderFixed> input, ITransaction tran)
+        public PhyOpTableInsert(IPageCollection<RowHolder> pageCollection, IPhysicalOperator<RowHolder> input, ITransaction tran)
         {
             this.pageCollection = pageCollection;
             this.input = input;
@@ -22,13 +22,13 @@ namespace QueryProcessing
 
         public async Task Invoke()
         {
-            await foreach (RowHolderFixed row in this.input.Iterate(this.tran))
+            await foreach (RowHolder row in this.input.Iterate(this.tran))
             {
                 await this.pageCollection.Add(row, tran).ConfigureAwait(false);
             }
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
             await Task.FromResult(0);
             yield break;

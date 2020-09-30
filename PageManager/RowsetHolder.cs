@@ -13,7 +13,7 @@ namespace PageManager
     /// directly from loaded memory (i.e. from buffer pool which just loads raw bytes from disk.
     /// It doesn't care about Endianess and presumes that data is loaded in the same format as it was stored.
     /// </summary>
-    public unsafe struct RowsetHolderFixed
+    public unsafe struct RowsetHolder
     {
         private Memory<byte> storage;
         private readonly ushort rowSize;
@@ -35,7 +35,7 @@ namespace PageManager
 
         private ushort rowCount;
 
-        public RowsetHolderFixed(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
+        public RowsetHolder(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
         {
             System.Diagnostics.Debug.Assert(BitConverter.IsLittleEndian, "Rowset holder fixed assumes that we are running on little endian");
 
@@ -100,7 +100,7 @@ namespace PageManager
             }
         }
 
-        public void GetRow(int row, ref RowHolderFixed rowHolder)
+        public void GetRow(int row, ref RowHolder rowHolder)
         {
             System.Diagnostics.Debug.Assert(IsPresent(row));
 
@@ -108,7 +108,7 @@ namespace PageManager
             rowHolder.Fill(new Span<byte>(Unsafe.AsPointer(ref this.storage.Span[position]), this.rowSize));
         }
 
-        public void SetRow(int row, RowHolderFixed rowHolder)
+        public void SetRow(int row, RowHolder rowHolder)
         {
             ushort position = (ushort)(row * this.rowSize + this.dataStartPosition);
 
@@ -119,7 +119,7 @@ namespace PageManager
             }
         }
 
-        public int InsertRow(RowHolderFixed rowHolder)
+        public int InsertRow(RowHolder rowHolder)
         {
             fixed (byte* ptr = this.storage.Span)
             {
@@ -144,13 +144,13 @@ namespace PageManager
         }
 
         // TODO: This is not performant and it is not natural to pass column type here.
-        public IEnumerable<RowHolderFixed> Iterate(ColumnInfo[] columnTypes)
+        public IEnumerable<RowHolder> Iterate(ColumnInfo[] columnTypes)
         {
             for (int i = 0; i < this.maxRowCount; i++)
             {
                 if (BitArray.IsSet(i, this.storage.Span))
                 {
-                    RowHolderFixed rowHolder = new RowHolderFixed(columnTypes);
+                    RowHolder rowHolder = new RowHolder(columnTypes);
                     GetRow(i, ref rowHolder);
                     yield return rowHolder;
                 }
@@ -171,9 +171,9 @@ namespace PageManager
 
         public override bool Equals(object obj)
         {
-            if (obj is RowsetHolderFixed)
+            if (obj is RowsetHolder)
             {
-                RowsetHolderFixed c = (RowsetHolderFixed)obj;
+                RowsetHolder c = (RowsetHolder)obj;
 
                 if (this.storage.Length != c.storage.Length)
                 {

@@ -29,9 +29,9 @@ namespace Test.Common
             return result;
         }
 
-        public static List<RowHolderFixed> GenerateRowsWithSampleData(out ColumnInfo[] columnTypes, int rowNumber = 10)
+        public static List<RowHolder> GenerateRowsWithSampleData(out ColumnInfo[] columnTypes, int rowNumber = 10)
         {
-            List<RowHolderFixed> rhfs = new List<RowHolderFixed>();
+            List<RowHolder> rhfs = new List<RowHolder>();
 
             columnTypes = new ColumnInfo[]
             {
@@ -45,7 +45,7 @@ namespace Test.Common
 
             for (int i = 0; i < 10; i++)
             {
-                RowHolderFixed rowhf = new RowHolderFixed(columnTypes);
+                RowHolder rowhf = new RowHolder(columnTypes);
                 rowhf.SetField<int>(0, i);
                 rowhf.SetField<int>(1, i + 1);
                 rowhf.SetField<double>(2, (double)i);

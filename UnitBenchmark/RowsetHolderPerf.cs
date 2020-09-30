@@ -21,7 +21,7 @@ namespace UnitBenchmark
                 new ColumnInfo(ColumnType.String, 20)
             };
 
-            RowHolderFixed rh = new RowHolderFixed(columnTypes);
+            RowHolder rh = new RowHolder(columnTypes);
             rh.SetField<int>(0, 1);
             rh.SetField<double>(1, 3.1);
             rh.SetField(2, new PagePointerOffsetPair(5, 5));
@@ -31,7 +31,7 @@ namespace UnitBenchmark
 
             for (int i = 0; i < IterNum / 10; i++)
             {
-                RowsetHolderFixed rs = new RowsetHolderFixed(columnTypes, memory, true);
+                RowsetHolder rs = new RowsetHolder(columnTypes, memory, true);
 
                 for (int j = 0; j < 10; j++)
                 {

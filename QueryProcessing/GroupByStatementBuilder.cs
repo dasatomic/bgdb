@@ -12,23 +12,23 @@ namespace QueryProcessing
         /// Grouper function is responsible to push items into
         /// buckets. Bucket is projection by group by columns.
         /// </summary>
-        public Func<RowHolderFixed, RowHolderFixed> Grouper { get; }
+        public Func<RowHolder, RowHolder> Grouper { get; }
 
         /// <summary>
         /// List of functors that are to be applied for aggregation.
         /// Input is RowHolder, state and output is new state of aggregation.
         /// </summary>
-        public Func<RowHolderFixed, RowHolderFixed, RowHolderFixed> Aggregate { get; }
+        public Func<RowHolder, RowHolder, RowHolder> Aggregate { get; }
 
         /// <summary>
         /// Projects is union of columns from group by and aggregate.
         /// </summary>
-        public Func<RowHolderFixed, RowHolderFixed> Projector { get; }
+        public Func<RowHolder, RowHolder> Projector { get; }
 
         public GroupByFunctors(
-            Func<RowHolderFixed, RowHolderFixed> projector,
-            Func<RowHolderFixed, RowHolderFixed> grouper,
-            Func<RowHolderFixed, RowHolderFixed, RowHolderFixed> aggs)
+            Func<RowHolder, RowHolder> projector,
+            Func<RowHolder, RowHolder> grouper,
+            Func<RowHolder, RowHolder, RowHolder> aggs)
         {
             this.Projector = projector;
             this.Grouper = grouper;
@@ -110,16 +110,16 @@ namespace QueryProcessing
             }
 
             // TODO: Aiming for correctness. Perf comes later.
-            Func<RowHolderFixed, RowHolderFixed> projector = (rowHolder) =>
+            Func<RowHolder, RowHolder> projector = (rowHolder) =>
             {
                 return rowHolder.Project(projectColumnPosition);
             };
 
-            Func<RowHolderFixed, RowHolderFixed> grouper = (rowHolder) =>
+            Func<RowHolder, RowHolder> grouper = (rowHolder) =>
             {
                 if (!groupByColumns.Any())
                 {
-                    return RowHolderFixed.Zero();
+                    return RowHolder.Zero();
                 }
                 else
                 {
@@ -127,7 +127,7 @@ namespace QueryProcessing
                 }
             };
 
-            Func<RowHolderFixed /* Current Row, after project */, RowHolderFixed /* Current state */, RowHolderFixed /* New state */> aggregator =
+            Func<RowHolder /* Current Row, after project */, RowHolder /* Current state */, RowHolder /* New state */> aggregator =
                 (inputRhf, stateRhf) =>
                 {
                     int pos = 0;

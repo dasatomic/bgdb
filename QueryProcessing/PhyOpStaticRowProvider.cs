@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpStaticRowProvider : IPhysicalOperator<RowHolderFixed>
+    public class PhyOpStaticRowProvider : IPhysicalOperator<RowHolder>
     {
-        private IEnumerable<RowHolderFixed> source;
+        private IEnumerable<RowHolder> source;
 
-        public PhyOpStaticRowProvider(IEnumerable<RowHolderFixed> rows)
+        public PhyOpStaticRowProvider(IEnumerable<RowHolder> rows)
         {
             this.source = rows;
         }
 
-        public PhyOpStaticRowProvider(RowHolderFixed row)
+        public PhyOpStaticRowProvider(RowHolder row)
         {
-            this.source = new RowHolderFixed[] { row };
+            this.source = new RowHolder[] { row };
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction _)
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction _)
         {
-            foreach (RowHolderFixed row in source)
+            foreach (RowHolder row in source)
             {
                 yield return await Task.FromResult(row);
             }

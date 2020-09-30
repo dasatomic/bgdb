@@ -5,24 +5,24 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpFilter : IPhysicalOperator<RowHolderFixed>
+    public class PhyOpFilter : IPhysicalOperator<RowHolder>
     {
-        private Func<RowHolderFixed, bool> filterFunc;
-        private IPhysicalOperator<RowHolderFixed> source;
+        private Func<RowHolder, bool> filterFunc;
+        private IPhysicalOperator<RowHolder> source;
 
-        public PhyOpFilter(IPhysicalOperator<RowHolderFixed> source, Func<RowHolderFixed, bool> filterFunc)
+        public PhyOpFilter(IPhysicalOperator<RowHolder> source, Func<RowHolder, bool> filterFunc)
         {
             this.source = source;
             this.filterFunc = filterFunc;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
             // TODO: Filter is currently applied externally, in query processing layer.
             // It would be much more efficient if filter could be pushed to storage layer
             // and have RowsetHolder return only subset of rows based on filter.
 
-            await foreach (RowHolderFixed row in this.source.Iterate(tran))
+            await foreach (RowHolder row in this.source.Iterate(tran))
             {
                 if (filterFunc(row))
                 {

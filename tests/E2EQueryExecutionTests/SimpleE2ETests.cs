@@ -79,7 +79,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(1, result[0].GetField<int>(0));
                 Assert.AreEqual(1.1, result[0].GetField<double>(1));
@@ -130,7 +130,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM Table";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(1, result[0].GetField<int>(0));
                 Assert.AreEqual(1.1, result[0].GetField<double>(1));

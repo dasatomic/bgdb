@@ -108,7 +108,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(workerCount * rowCount, totalInsert);
 
@@ -173,7 +173,7 @@ namespace E2EQueryExecutionTests
                     try
                     {
                         string selectQuery = @"SELECT a, b, c FROM ConcurrentTable";
-                        RowHolderFixed[] result = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
+                        RowHolder[] result = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
                     }
                     catch (DeadlockException)
                     {
@@ -198,7 +198,7 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"SELECT a, b, c FROM ConcurrentTable";
-                RowHolderFixed[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(writerCount* rowCount, totalInsert);
 

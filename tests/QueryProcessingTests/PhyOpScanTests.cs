@@ -39,10 +39,10 @@ namespace QueryProcessingTests
             var table = await tm.GetById(id, tran);
             await tran.Commit();
 
-            List<RowHolderFixed> source = new List<RowHolderFixed>();
+            List<RowHolder> source = new List<RowHolder>();
             for (int i = 0; i < 5; i++)
             {
-                var rhf = new RowHolderFixed(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) });
+                var rhf = new RowHolder(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) });
                 rhf.SetField<int>(0, i);
                 rhf.SetField(1, i.ToString().ToCharArray());
                 rhf.SetField<double>(2, i + 1.1);
@@ -60,7 +60,7 @@ namespace QueryProcessingTests
             PageListCollection pcl = new PageListCollection(allocator, columnInfos, table.RootPage);
             PhyOpScan scan = new PhyOpScan(pcl, tran);
 
-            List<RowHolderFixed> result = new List<RowHolderFixed>();
+            List<RowHolder> result = new List<RowHolder>();
 
             await foreach (var row in scan.Iterate(tran))
             {

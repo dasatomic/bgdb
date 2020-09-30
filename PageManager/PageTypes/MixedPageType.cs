@@ -15,7 +15,7 @@ namespace PageManager
         Task<MixedPage> GetMixedPage(ulong pageId, ITransaction tran, ColumnInfo[] columnTypes);
     }
 
-    public class MixedPage : PageSerializerBase<RowsetHolderFixed, RowHolderFixed>
+    public class MixedPage : PageSerializerBase<RowsetHolder, RowHolder>
     {
         private readonly ColumnInfo[] columnTypes;
         private Memory<byte> inMemoryStorage;
@@ -35,7 +35,7 @@ namespace PageManager
             this.nextPageId = nextPageId;
             this.inMemoryStorage = memory;
             this.bufferPoolToken = bufferPoolToken;
-            this.items = new RowsetHolderFixed(this.columnTypes, this.inMemoryStorage, init: true);
+            this.items = new RowsetHolder(this.columnTypes, this.inMemoryStorage, init: true);
 
             ILogRecord logRecord = new AllocatePageLogRecord(pageId, tran.TranscationId(), global::PageManager.PageType.MixedPage, pageSize, nextPageId, prevPageId, columnTypes);
             tran.AddRecord(logRecord);
@@ -70,7 +70,7 @@ namespace PageManager
             this.inMemoryStorage = memory;
             this.bufferPoolToken = token;
             stream.Read(this.inMemoryStorage.Span);
-            this.items = new RowsetHolderFixed(this.columnTypes, this.inMemoryStorage, init: false);
+            this.items = new RowsetHolder(this.columnTypes, this.inMemoryStorage, init: false);
 
             Debug.Assert(this.items.GetRowCount() == this.rowCount);
 
@@ -79,13 +79,13 @@ namespace PageManager
 
         public override PageType PageType() => global::PageManager.PageType.MixedPage;
 
-        public override IEnumerable<RowHolderFixed> Fetch(ITransaction tran)
+        public override IEnumerable<RowHolder> Fetch(ITransaction tran)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.items.Iterate(this.columnTypes);
         }
 
-        public override int Insert(RowHolderFixed item, ITransaction transaction)
+        public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
@@ -108,7 +108,7 @@ namespace PageManager
 
         public override uint MaxRowCount() => this.items.MaxRowCount();
 
-        public override bool CanFit(RowHolderFixed item, ITransaction transaction)
+        public override bool CanFit(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             return this.items.FreeSpaceForItems() > 0;
@@ -132,7 +132,7 @@ namespace PageManager
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
             var redoContent = record.GetRedoContent();
-            RowHolderFixed rs = new RowHolderFixed(this.columnTypes, redoContent.DataToApply);
+            RowHolder rs = new RowHolder(this.columnTypes, redoContent.DataToApply);
 
             if (record.GetRecordType() == LogRecordType.RowModify)
             {
@@ -152,7 +152,7 @@ namespace PageManager
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
             var undoContent = record.GetUndoContent();
-            RowHolderFixed rs = new RowHolderFixed(this.columnTypes, undoContent.DataToUndo);
+            RowHolder rs = new RowHolder(this.columnTypes, undoContent.DataToUndo);
 
             if (record.GetRecordType() == LogRecordType.RowModify)
             {
@@ -169,7 +169,7 @@ namespace PageManager
             }
         }
 
-        public override bool Equals(PageSerializerBase<RowsetHolderFixed, RowHolderFixed> other, ITransaction tran)
+        public override bool Equals(PageSerializerBase<RowsetHolder, RowHolder> other, ITransaction tran)
         {
             if (this.pageId != other.PageId())
             {
@@ -199,11 +199,11 @@ namespace PageManager
             return true;
         }
 
-        public override void Update(RowHolderFixed item, ushort position, ITransaction transaction)
+        public override void Update(RowHolder item, ushort position, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
-            RowHolderFixed oldVal = new RowHolderFixed(this.columnTypes);
+            RowHolder oldVal = new RowHolder(this.columnTypes);
             this.items.GetRow(position, ref oldVal);
 
             this.items.SetRow(position, item);
@@ -214,7 +214,7 @@ namespace PageManager
             this.isDirty = true;
         }
 
-        public override void At(ushort position, ITransaction tran, ref RowHolderFixed item)
+        public override void At(ushort position, ITransaction tran, ref RowHolder item)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
             this.items.GetRow(position, ref item);

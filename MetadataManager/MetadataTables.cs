@@ -18,7 +18,7 @@ namespace MetadataManager
         public MetadataColumn[] Columns;
 
         // Virtual fields.
-        public IPageCollection<RowHolderFixed> Collection;
+        public IPageCollection<RowHolder> Collection;
     }
 
     public struct TableCreateDefinition
@@ -32,7 +32,7 @@ namespace MetadataManager
     {
         public const string MetadataTableName = "sys.tables";
 
-        private IPageCollection<RowHolderFixed> pageListCollection;
+        private IPageCollection<RowHolder> pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
         private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition, Tuple<int, int>> columnManager;
         private IAllocateMixedPage pageAllocator;
@@ -64,7 +64,7 @@ namespace MetadataManager
 
         public async Task<bool> Exists(TableCreateDefinition def, ITransaction tran)
         {
-            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolder rh in pageListCollection.Iterate(tran))
             {
                 PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(1);
 
@@ -98,7 +98,7 @@ namespace MetadataManager
 
             MixedPage rootPage = await this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
-            RowHolderFixed rh = new RowHolderFixed(columnDefinitions);
+            RowHolder rh = new RowHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.TableName.ToCharArray(), tran);
 
             rh.SetField<int>(0, id);
@@ -117,7 +117,7 @@ namespace MetadataManager
 
         public async IAsyncEnumerable<MetadataTable> Iterate(ITransaction tran)
         {
-            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolder rh in pageListCollection.Iterate(tran))
             {
                 var mdObj = 
                     new MetadataTable()

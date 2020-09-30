@@ -4,33 +4,33 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    public class PhyOpGroupBy : IPhysicalOperator<RowHolderFixed>
+    public class PhyOpGroupBy : IPhysicalOperator<RowHolder>
     {
         private GroupByFunctors functors;
-        private IPhysicalOperator<RowHolderFixed> source;
+        private IPhysicalOperator<RowHolder> source;
 
-        public PhyOpGroupBy(IPhysicalOperator<RowHolderFixed> source, GroupByFunctors functors)
+        public PhyOpGroupBy(IPhysicalOperator<RowHolder> source, GroupByFunctors functors)
         {
             this.source = source;
             this.functors = functors;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Iterate(ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
             // TODO: Group by can work with disk spills. This comes later when we get support for tempdb and spills.
 
             // Grouped part -> entire row with latest state.
-            Dictionary<RowHolderFixed, RowHolderFixed> groupSet = new Dictionary<RowHolderFixed, RowHolderFixed>();
+            Dictionary<RowHolder, RowHolder> groupSet = new Dictionary<RowHolder, RowHolder>();
 
-            await foreach (RowHolderFixed row in this.source.Iterate(tran))
+            await foreach (RowHolder row in this.source.Iterate(tran))
             {
                 // This is key for grouper.
-                RowHolderFixed groupedPart = functors.Grouper(row);
-                RowHolderFixed projectPart = functors.Projector(row);
+                RowHolder groupedPart = functors.Grouper(row);
+                RowHolder projectPart = functors.Projector(row);
 
-                if (groupSet.TryGetValue(groupedPart, out RowHolderFixed rowFromGroup /* this is the state */))
+                if (groupSet.TryGetValue(groupedPart, out RowHolder rowFromGroup /* this is the state */))
                 {
-                    RowHolderFixed newState = functors.Aggregate(projectPart, rowFromGroup);
+                    RowHolder newState = functors.Aggregate(projectPart, rowFromGroup);
                     groupSet[groupedPart] = newState;
                 }
                 else
@@ -39,7 +39,7 @@ namespace QueryProcessing
                 }
             }
 
-            foreach (RowHolderFixed rhf in groupSet.Values)
+            foreach (RowHolder rhf in groupSet.Values)
             {
                 yield return rhf;
             }

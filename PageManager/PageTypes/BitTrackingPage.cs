@@ -26,7 +26,7 @@ namespace PageManager.PageTypes
             }
 
             (int positionInIntArray, int offsetInIntArray) = (pos / (sizeof(int) * 8), pos % (sizeof(int) * 8));
-            RowHolderFixed rhf = new RowHolderFixed(columnTypes);
+            RowHolder rhf = new RowHolder(columnTypes);
             storage.At((ushort)positionInIntArray, transaction, ref rhf);
 
             return BitArray.IsSet(offsetInIntArray, BitConverter.GetBytes(rhf.GetField<int>(0)));
@@ -40,7 +40,7 @@ namespace PageManager.PageTypes
             }
 
             (int positionInIntArray, int offsetInIntArray) = (pos / (sizeof(int) * 8), pos % (sizeof(int) * 8));
-            RowHolderFixed rhf = new RowHolderFixed(columnTypes);
+            RowHolder rhf = new RowHolder(columnTypes);
             storage.At((ushort)positionInIntArray, transaction, ref rhf);
 
             byte[] val = BitConverter.GetBytes(rhf.GetField<int>(0));
@@ -69,7 +69,7 @@ namespace PageManager.PageTypes
         {
             for (int i = 0; i < page.MaxRowCount(); i++)
             {
-                RowHolderFixed rhf = new RowHolderFixed(new ColumnType[] { ColumnType.Int });
+                RowHolder rhf = new RowHolder(new ColumnType[] { ColumnType.Int });
                 rhf.SetField<int>(0, 0);
                 page.Insert(rhf, tran);
             }

@@ -60,7 +60,7 @@ namespace MetadataManager
     {
         public const string MetadataTableName = "sys.columns";
 
-        private IPageCollection<RowHolderFixed> pageListCollection;
+        private IPageCollection<RowHolder> pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
 
         private const int MAX_NAME_LENGTH = 20;
@@ -89,7 +89,7 @@ namespace MetadataManager
 
         public async IAsyncEnumerable<MetadataColumn> Iterate(ITransaction tran)
         {
-            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolder rh in pageListCollection.Iterate(tran))
             {
                 var mdObj =
                     new MetadataColumn()
@@ -114,7 +114,7 @@ namespace MetadataManager
                 throw new ElementWithSameNameExistsException();
             }
 
-            RowHolderFixed rh = new RowHolderFixed(columnDefinitions);
+            RowHolder rh = new RowHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.ColumnName.ToCharArray(), tran);
 
             rh.SetField<int>(0, def.ColumnId);
@@ -130,7 +130,7 @@ namespace MetadataManager
 
         public async Task<bool> Exists(ColumnCreateDefinition def, ITransaction tran)
         {
-            await foreach (RowHolderFixed rh in pageListCollection.Iterate(tran))
+            await foreach (RowHolder rh in pageListCollection.Iterate(tran))
             {
                 int tableId = rh.GetField<int>(MetadataColumn.TableIdColumnPos);
 

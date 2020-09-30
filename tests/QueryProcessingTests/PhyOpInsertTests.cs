@@ -37,7 +37,7 @@ namespace QueryProcessingTests
             await using ITransaction tranCreate = logManager.CreateTransaction(allocator);
             var table = await tm.GetById(id, tranCreate);
 
-            var rhf = new RowHolderFixed(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.String, 10) });
+            var rhf = new RowHolder(new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.Double), new ColumnInfo(ColumnType.String, 10) });
             rhf.SetField<int>(0, 1);
             rhf.SetField(1, 1.ToString().ToCharArray());
             rhf.SetField<double>(2, 1 + 1.1);

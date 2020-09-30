@@ -13,7 +13,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async IAsyncEnumerable<RowHolderFixed> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async IAsyncEnumerable<RowHolder> Execute(Sql.DmlDdlSqlStatement statement, ITransaction tran)
         {
             if (!statement.IsInsert)
             {
@@ -21,7 +21,7 @@ namespace QueryProcessing
             }
 
             Sql.DmlDdlSqlStatement.Insert insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement);
-            IPhysicalOperator<RowHolderFixed> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran).ConfigureAwait(false);
+            IPhysicalOperator<RowHolder> rootOp = await this.treeBuilder.ParseInsertStatement(insertStatement.Item, tran).ConfigureAwait(false);
             await rootOp.Invoke().ConfigureAwait(false);
 
             yield break;

@@ -3,20 +3,20 @@ using System.Linq;
 
 namespace PageManager
 {
-    public unsafe struct RowHolderFixed
+    public unsafe struct RowHolder
     {
         public readonly byte[] Storage;
         public readonly short[] ColumnPosition;
 
-        public static RowHolderFixed Zero() => new RowHolderFixed(new byte[0], new short[0]);
+        public static RowHolder Zero() => new RowHolder(new byte[0], new short[0]);
 
-        private RowHolderFixed(byte[] storage, short[] columnPositions)
+        private RowHolder(byte[] storage, short[] columnPositions)
         {
             this.Storage = storage;
             this.ColumnPosition = columnPositions;
         }
 
-        public RowHolderFixed(ColumnType[] columnTypes)
+        public RowHolder(ColumnType[] columnTypes)
         {
             this.ColumnPosition = new short[columnTypes.Length];
 
@@ -30,7 +30,7 @@ namespace PageManager
             this.Storage = new byte[totalSize];
         }
 
-        public RowHolderFixed(ColumnInfo[] columnTypes, byte[] byteArr)
+        public RowHolder(ColumnInfo[] columnTypes, byte[] byteArr)
         {
             this.ColumnPosition = new short[columnTypes.Length];
 
@@ -42,7 +42,7 @@ namespace PageManager
             this.Storage = byteArr;
         }
 
-        public RowHolderFixed(ColumnInfo[] columnTypes)
+        public RowHolder(ColumnInfo[] columnTypes)
         {
             ushort size = CalculateSizeNeeded(columnTypes);
             byte[] storage = new byte[size];
@@ -57,7 +57,7 @@ namespace PageManager
             this.Storage = storage;
         }
 
-        private RowHolderFixed(short[] columnPositions, byte[] data)
+        private RowHolder(short[] columnPositions, byte[] data)
         {
             this.ColumnPosition = columnPositions;
             this.Storage = data;
@@ -119,9 +119,9 @@ namespace PageManager
 
         public override bool Equals(object obj)
         {
-            if (obj is RowHolderFixed)
+            if (obj is RowHolder)
             {
-                RowHolderFixed c = (RowHolderFixed)obj;
+                RowHolder c = (RowHolder)obj;
                 return Enumerable.SequenceEqual(c.Storage, this.Storage) && Enumerable.SequenceEqual(c.ColumnPosition, this.ColumnPosition);
             }
             else
@@ -130,7 +130,7 @@ namespace PageManager
             }
         }
 
-        public RowHolderFixed Project(int[] cols)
+        public RowHolder Project(int[] cols)
         {
             // only copy relevant chunks of data.
             short[] newColPositions = new short[cols.Length];
@@ -177,7 +177,7 @@ namespace PageManager
                 }
             }
 
-            return new RowHolderFixed(newColPositions, newStorage);
+            return new RowHolder(newColPositions, newStorage);
         }
 
         public override int GetHashCode()
