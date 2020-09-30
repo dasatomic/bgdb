@@ -21,14 +21,42 @@ namespace MetadataManager
         public ColumnInfo ColumnType;
     }
 
+    /// <summary>
+    ///  Definition of one column.
+    ///  Table id and column id are unique identifiers.
+    /// </summary>
     public struct ColumnCreateDefinition
     {
-        public int TableId;
-        public string ColumnName;
-        public ColumnInfo ColumnType;
+        public ColumnCreateDefinition(int tableId, string columnName, ColumnInfo columnInfo, int columnId)
+        {
+            this.TableId = tableId;
+            this.ColumnName = columnName;
+            this.ColumnType = columnInfo;
+            this.ColumnId = columnId;
+        }
+
+        /// <summary>
+        /// Table id this column belongs to.
+        /// </summary>
+        public int TableId { get; }
+
+        /// <summary>
+        /// Name of this column.
+        /// </summary>
+        public string ColumnName { get; }
+
+        /// <summary>
+        /// Type of this column.
+        /// </summary>
+        public ColumnInfo ColumnType { get; }
+
+        /// <summary>
+        /// Column position in table.
+        /// </summary>
+        public int ColumnId { get; }
     }
 
-    public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition>
+    public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition, Tuple<int, int> /* column id - table id */>
     {
         public const string MetadataTableName = "sys.columns";
 
@@ -86,17 +114,10 @@ namespace MetadataManager
                 throw new ElementWithSameNameExistsException();
             }
 
-            int id = 0;
-            if (! (await pageListCollection.IsEmpty(tran)))
-            {
-                int maxId = await pageListCollection.Max<int>(rh => rh.GetField<int>(MetadataColumn.ColumnIdColumnPos), startMin: 0, tran);
-                id = maxId + 1;
-            }
-
             RowHolderFixed rh = new RowHolderFixed(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.ColumnName.ToCharArray(), tran);
 
-            rh.SetField<int>(0, id);
+            rh.SetField<int>(0, def.ColumnId);
             rh.SetField<int>(1, def.TableId);
             rh.SetField<PagePointerOffsetPair>(2, namePointer);
             rh.SetField<int>(3, (int)def.ColumnType.ColumnType);
@@ -104,7 +125,7 @@ namespace MetadataManager
 
             await pageListCollection.Add(rh, tran);
 
-            return id;
+            return def.ColumnId;
         }
 
         public async Task<bool> Exists(ColumnCreateDefinition def, ITransaction tran)
@@ -127,11 +148,11 @@ namespace MetadataManager
             return false;
         }
 
-        public async Task<MetadataColumn> GetById(int id, ITransaction tran)
+        public async Task<MetadataColumn> GetById(Tuple<int, int> id, ITransaction tran)
         {
             await foreach (var column in this.Iterate(tran))
             {
-                if (column.ColumnId == id)
+                if (column.ColumnId == id.Item1 && column.TableId == id.Item2)
                 {
                     return column;
                 }

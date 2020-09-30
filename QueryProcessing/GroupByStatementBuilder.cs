@@ -74,7 +74,6 @@ namespace QueryProcessing
                 throw new KeyNotFoundException($"Can't find columns in agg.");
             }
 
-            // TODO: Can't use column id as column position fetcher.
             int[] projectColumnPosition = projectColumnNames.Select(col => metadataColumns.First(mc => mc.ColumnName == col).ColumnId).ToArray();
 
             MetadataColumn[] mdColumnsForAggs = new MetadataColumn[aggregators.Length];

@@ -28,13 +28,13 @@ namespace MetadataManager
         public ColumnInfo[] ColumnTypes;
     }
 
-    public class MetadataTablesManager : IMetadataObjectManager<MetadataTable, TableCreateDefinition>
+    public class MetadataTablesManager : IMetadataObjectManager<MetadataTable, TableCreateDefinition, int>
     {
         public const string MetadataTableName = "sys.tables";
 
         private IPageCollection<RowHolderFixed> pageListCollection;
         private HeapWithOffsets<char[]> stringHeap;
-        private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager;
+        private IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition, Tuple<int, int>> columnManager;
         private IAllocateMixedPage pageAllocator;
 
         private static ColumnInfo[] columnDefinitions = new ColumnInfo[]
@@ -49,7 +49,7 @@ namespace MetadataManager
 
         public static ColumnInfo[] GetSchemaDefinition() => columnDefinitions;
 
-        public MetadataTablesManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap, IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition> columnManager)
+        public MetadataTablesManager(IAllocateMixedPage pageAllocator, MixedPage firstPage, HeapWithOffsets<char[]> stringHeap, IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition, Tuple<int, int>> columnManager)
         {
             if (pageAllocator == null || firstPage == null || columnManager == null)
             {
@@ -108,13 +108,7 @@ namespace MetadataManager
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
             {
-                ColumnCreateDefinition ccd = new ColumnCreateDefinition()
-                {
-                    ColumnName = def.ColumnNames[i],
-                    ColumnType = def.ColumnTypes[i],
-                    TableId = id,
-                };
-
+                ColumnCreateDefinition ccd = new ColumnCreateDefinition(id, def.ColumnNames[i], def.ColumnTypes[i], i);
                 await columnManager.CreateObject(ccd, tran);
             }
 

@@ -260,5 +260,32 @@ GROUP BY a
                 Assert.AreEqual(0, result.Length);
             }
         }
+
+        [Test]
+        public async Task MultiTableGroupBy()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
+            {
+                await this.queryEntryGate.Execute("CREATE TABLE T1 (TYPE_INT A, TYPE_INT B)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("CREATE TABLE T2 (TYPE_INT A, TYPE_INT B)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 1)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 2)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 3)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 4)", tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
+            {
+                RowHolderFixed[] result = await this.queryEntryGate.Execute("SELECT MAX(B), A FROM T1 GROUP BY A", tran).ToArrayAsync();
+                Assert.AreEqual(1, result.Length);
+                Assert.AreEqual(2, result[0].GetField<int>(0));
+                Assert.AreEqual(1, result[0].GetField<int>(1));
+                result = await this.queryEntryGate.Execute("SELECT MAX(B), A FROM T2 GROUP BY A", tran).ToArrayAsync();
+                Assert.AreEqual(1, result.Length);
+                Assert.AreEqual(4, result[0].GetField<int>(0));
+                Assert.AreEqual(2, result[0].GetField<int>(1));
+            }
+        }
     }
 }

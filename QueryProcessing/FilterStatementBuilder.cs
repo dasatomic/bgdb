@@ -13,9 +13,6 @@ namespace QueryProcessing
             if (op.IsId)
             {
                 Sql.value.Id idVal = (Sql.value.Id)op;
-
-                // When I have group by and source that is not related to metadata position
-                // this is not going to work.
                 MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == idVal.Item);
                 return QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(mc, rowHolder);
             }
