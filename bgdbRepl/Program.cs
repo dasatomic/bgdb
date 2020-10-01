@@ -1,8 +1,9 @@
-﻿using DataStructures;
+﻿using bgdbRepl;
+using CommandLine;
+using DataStructures;
 using PageManager;
 using QueryProcessing;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,6 +12,13 @@ namespace atomicdbstarter
 {
     class Program
     {
+        // TODO: Figure out usage.
+        public class Options
+        {
+            [Option("set_load_path", Required = false)]
+            public string TitanicSetPath { get; set; }
+        }
+
         static int GetColumnWidth(ColumnInfo ci)
         {
             if (ci.ColumnType == ColumnType.Double)
@@ -56,6 +64,12 @@ namespace atomicdbstarter
 
         static async Task Main(string[] args)
         {
+            string datasetPathToLoad = null;
+            Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
+            {
+                datasetPathToLoad = o.TitanicSetPath;
+            });
+
             string fileName = "repl.db";
             const int fileSize = 1024 * 1024 * 10;
 
@@ -91,6 +105,26 @@ namespace atomicdbstarter
             Console.WriteLine($"Query entry gate ready.");
 
             Console.WriteLine($"Transactions are implicit for now. Every command will be executed in separate transaction.");
+
+            if (datasetPathToLoad != null)
+            {
+                Console.WriteLine("Loading dataset");
+                foreach (string cmd in TitanicDatasetToSql.TitanicCsvToSql(datasetPathToLoad))
+                {
+                    await using (ITransaction tran = logManager.CreateTransaction(pageManager))
+                    {
+                        try
+                        {
+                            await queryEntryGate.Execute(cmd, tran).AllResultsAsync();
+                            await tran.Commit();
+                        }
+                        catch (Exception)
+                        {
+                            await tran.Rollback();
+                        }
+                    }
+                }
+            }
 
             Console.WriteLine("====================");
 
