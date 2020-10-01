@@ -283,5 +283,35 @@ namespace E2EQueryExecutionTests
                 Assert.AreEqual(42, res[0].GetField<int>(0));
             }
         }
+
+        [Test]
+        public async Task SelectWithBuildTreeOnly()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_INT b, TYPE_DOUBLE c, TYPE_STRING(20) d)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
+            {
+                var res = await this.queryEntryGate.BuildExecutionTree("SELECT d, c, b, a FROM Table", tran);
+                Assert.AreEqual("d", res.ColumnInfo[0].ColumnName);
+                Assert.AreEqual(ColumnType.String, res.ColumnInfo[0].ColumnType.ColumnType);
+                Assert.AreEqual(20, res.ColumnInfo[0].ColumnType.RepCount);
+
+                Assert.AreEqual("c", res.ColumnInfo[1].ColumnName);
+                Assert.AreEqual(ColumnType.Double, res.ColumnInfo[1].ColumnType.ColumnType);
+
+                Assert.AreEqual("b", res.ColumnInfo[2].ColumnName);
+                Assert.AreEqual(ColumnType.Int, res.ColumnInfo[2].ColumnType.ColumnType);
+
+                Assert.AreEqual("a", res.ColumnInfo[3].ColumnName);
+                Assert.AreEqual(ColumnType.Int, res.ColumnInfo[3].ColumnType.ColumnType);
+
+                Assert.AreEqual(0, await res.Enumerator.CountAsync());
+            }
+        }
     }
 }
