@@ -25,26 +25,15 @@ namespace QueryProcessing
 
         public async IAsyncEnumerable<RowHolder> Execute(string queryText, ITransaction tran)
         {
-            Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
+            RowProvider provider = await this.BuildExecutionTree(queryText, tran);
 
-            foreach (ISqlStatement handler in statementHandlers)
+            await foreach (RowHolder row in provider.Enumerator)
             {
-                if (handler.ShouldExecute(statement))
-                {
-                    IAsyncEnumerable<RowHolder> rowProvider = (await handler.BuildTree(statement, tran)).Enumerator;
-                    await foreach (RowHolder row in rowProvider)
-                    {
-                        yield return row;
-                    }
-
-                    yield break;
-                }
+                yield return row;
             }
-
-            throw new ArgumentException();
         }
 
-        public async Task<RowProvider> BuildRootOperator(string queryText, ITransaction tran)
+        public async Task<RowProvider> BuildExecutionTree(string queryText, ITransaction tran)
         {
             Sql.DmlDdlSqlStatement statement = BuildStatement(queryText);
 
