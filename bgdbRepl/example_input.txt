@@ -5,7 +5,5 @@ INSERT INTO T VALUES (10, 20.1, 'blablabl1')
 INSERT INTO T VALUES (10, 20.1, 'blablabl1')
 INSERT INTO T VALUES (13, 20.1, 'blablabl2')
 SELECT a, b, c FROM T
-
 SELECT MAX(a), SUM(b), c FROM T GROUP BY c
-
 SELECT MAX(a), SUM(b), c FROM T WHERE a > 10 GROUP BY c
