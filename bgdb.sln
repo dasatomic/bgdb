@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "atomicdbstarter", "atomicdbstarter\atomicdbstarter.csproj", "{6EDC6868-199F-4922-8400-9CE4F935064D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bgdbRepl", "atomicdbstarter\bgdbRepl.csproj", "{6EDC6868-199F-4922-8400-9CE4F935064D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageManager", "PageManager\PageManager.csproj", "{47BAD1E5-1717-4138-AFBE-0F27587C7CE6}"
 EndProject
@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LockManager", "LockManager\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LockManagerTests", "tests\LockManagerTests\LockManagerTests.csproj", "{B29986CC-604A-4E62-863D-ED18DD2D8F42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Instrumentation", "Instrumentation\Instrumentation.csproj", "{E53631B2-B716-4418-8196-506C6A162846}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Instrumentation", "Instrumentation\Instrumentation.csproj", "{E53631B2-B716-4418-8196-506C6A162846}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
