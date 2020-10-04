@@ -1,7 +1,7 @@
 {
   "profiles": {
     "bgdbRepl": {
-      "commandName": "Project",
+      "commandName": "Project"
     }
   }
 }

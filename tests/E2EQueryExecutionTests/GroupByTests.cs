@@ -1,6 +1,7 @@
 ﻿using NuGet.Frameworks;
 using NUnit.Framework;
 using PageManager;
+using QueryProcessing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -266,12 +267,12 @@ GROUP BY a
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
-                await this.queryEntryGate.Execute("CREATE TABLE T1 (TYPE_INT A, TYPE_INT B)", tran).ToArrayAsync();
-                await this.queryEntryGate.Execute("CREATE TABLE T2 (TYPE_INT A, TYPE_INT B)", tran).ToArrayAsync();
-                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 1)", tran).ToArrayAsync();
-                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 2)", tran).ToArrayAsync();
-                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 3)", tran).ToArrayAsync();
-                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 4)", tran).ToArrayAsync();
+                await this.queryEntryGate.Execute("CREATE TABLE T1 (TYPE_INT A, TYPE_INT B)", tran).AllResultsAsync();
+                await this.queryEntryGate.Execute("CREATE TABLE T2 (TYPE_INT A, TYPE_INT B)", tran).AllResultsAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 1)", tran).AllResultsAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T1 VALUES (1, 2)", tran).AllResultsAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 3)", tran).AllResultsAsync();
+                await this.queryEntryGate.Execute("INSERT INTO T2 VALUES (2, 4)", tran).AllResultsAsync();
                 await tran.Commit();
             }
 
