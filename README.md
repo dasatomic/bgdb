@@ -101,7 +101,7 @@ dotnet run --set_load_path .\datasets\titanic-passengers.csv
 Repl is currently pretty limited. There is also no support for transactions in parser layer (transactions are implicit and linked to single command, `BEGIN/COMMIT/ROLLBACK TRAN` support will be added). To get a feeling how things are working under the hood it is best to take a look at end to end tests.
 
 For example:
-```C#
+```cs
 [Test]
 public async Task MultiTableGroupBy()
 {
@@ -153,12 +153,12 @@ Engine currently supports page level locking and read committed isolation. On st
 
 Logging is traditional [Write Ahead Logging](https://en.wikipedia.org/wiki/Write-ahead_logging). To ramp-up, recommendation is to take a look at `PageManager` [constructor](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/PageManager/PageManager.cs).
 
-```C#
+```cs
 public PageManager(uint defaultPageSize, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager, InstrumentationInterface logger)
 ```
 
 Log Manager only sits on top of .NET stream that is used for logging.
-```C#
+```cs
 public LogManager(BinaryWriter storage)
 ```
 
@@ -171,7 +171,7 @@ There is still no support for indexes so tables are currently organized as simpl
 Query tree is currently assembled through a set of rules that can be found [here](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/QueryProcessing/AstToOpTreeBuilder.cs). When work on Query Optimizer starts this will have to change.
 
 Operators follow this simple interface:
-```C#
+```cs
 public interface IPhysicalOperator<T>
 {
     IAsyncEnumerable<T> Iterate(ITransaction tran);
