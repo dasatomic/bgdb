@@ -54,11 +54,11 @@ Querying
 ```
 SELECT MAX(a), MIN(b), c FROM T1 WHERE a > 1 GROUP BY c
 
-|         a |         b |                     c |
+|     a_Max |     b_Min |                     c |
 -------------------------------------------------
-|         2 |     0:2.2 |     somerandomstring1 |
+|         2 |       2.2 |     somerandomstring1 |
 -------------------------------------------------
-|         5 |     0:2.2 |     somerandomstring2 |
+|         5 |       2.2 |     somerandomstring2 |
 -------------------------------------------------
 
 Total rows returned 2
