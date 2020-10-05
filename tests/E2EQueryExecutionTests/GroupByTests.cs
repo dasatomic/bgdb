@@ -1,11 +1,8 @@
-﻿using NuGet.Frameworks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace E2EQueryExecutionTests
@@ -207,7 +204,6 @@ GROUP BY a
         [Test]
         public async Task SumTest()
         {
-
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"
@@ -223,13 +219,32 @@ FROM MyTable
         }
 
         [Test]
+        public async Task CountTest()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"
+SELECT SUM(a), COUNT(b), COUNT(a), COUNT(c)
+FROM MyTable
+";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+
+                Assert.AreEqual(400, result[0].GetField<int>(0));
+                Assert.AreEqual(200, result[0].GetField<int>(1));
+                Assert.AreEqual(200, result[0].GetField<int>(2));
+                Assert.AreEqual(200, result[0].GetField<int>(3));
+            }
+        }
+
+        [Test]
         public async Task AggBeforeGroupBy()
         {
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
                 string query = @"
-SELECT MAX(b), a
+SELECT MAX(b), a, COUNT(b)
 FROM MyTable
 GROUP BY a
 ";
@@ -240,6 +255,7 @@ GROUP BY a
                 {
                     Assert.AreEqual(i + 95.1, result[i].GetField<double>(0));
                     Assert.AreEqual(i, result[i].GetField<int>(1));
+                    Assert.AreEqual(40, result[i].GetField<int>(2));
                 }
             }
         }

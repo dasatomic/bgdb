@@ -44,6 +44,8 @@ namespace QueryProcessing
     {
         public static GroupByFunctors EvalGroupBy(string[] groupByColumns, Sql.columnSelect[] selectColumns, MetadataColumn[] metadataColumns)
         {
+            // Just prototyping for now. This needs a lot of refactoring.
+
             foreach (string groupBy in groupByColumns)
             {
                 if (!metadataColumns.Any(mc => mc.ColumnName == groupBy))
@@ -52,22 +54,57 @@ namespace QueryProcessing
                 }
             }
 
-            string[] projectColumnNames = selectColumns
+            // metadata column, is extended.
+            (MetadataColumn, bool)[] projectColumns = selectColumns
                 .Select(c =>
                 {
                     if (c.IsAggregate)
                     {
-                        return ((Sql.columnSelect.Aggregate)c).Item.Item2;
+                        var agg = ((Sql.columnSelect.Aggregate)c).Item;
+                        if (!metadataColumns.Any(mc => mc.ColumnName == agg.Item2))
+                        {
+                            throw new KeyNotFoundException($"Can't find columns in agg.");
+                        }
+
+                        MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == agg.Item2);
+
+                        if (agg.Item1.IsCount)
+                        {
+                            // For count we need to update return type to int.
+                            mc.ColumnType = new ColumnInfo(ColumnType.Int);
+                            return (mc, true);
+                        }
+
+                        return (mc, false);
                     }
                     else if (c.IsProjection)
                     {
-                        return ((Sql.columnSelect.Projection)c).Item;
+                        string projection = ((Sql.columnSelect.Projection)c).Item;
+                        if (!metadataColumns.Any(mc => mc.ColumnName == projection))
+                        {
+                            throw new KeyNotFoundException($"Can't find columns in agg.");
+                        }
+
+                        return (metadataColumns.First(mc => mc.ColumnName == projection), false);
                     }
                     else
                     {
                         throw new InvalidProgramException("Invalid state");
                     }
                 }).ToArray();
+
+            // Need to find all count aggregates.
+            List<int> countPositions = new List<int>();
+            for (int countPos = 0; countPos < selectColumns.Length; countPos++)
+            {
+                if (selectColumns[countPos].IsAggregate)
+                {
+                    if (((Sql.columnSelect.Aggregate)selectColumns[countPos]).Item.Item1.IsCount)
+                    {
+                        countPositions.Add(countPos);
+                    }
+                }
+            }
 
             Tuple<Sql.aggType, string>[] aggregators = selectColumns
                 .Where(c => c.IsAggregate == true)
@@ -78,8 +115,17 @@ namespace QueryProcessing
                 throw new KeyNotFoundException($"Can't find columns in agg.");
             }
 
-            MetadataColumn[] projectColumns = projectColumnNames.Select(col => metadataColumns.First(mc => mc.ColumnName == col)).ToArray();
-            int[] projectColumnPosition = projectColumns.Select(col => col.ColumnId).ToArray();
+            (int?, ColumnInfo?)[] projectExtendInfo = projectColumns.Select<(MetadataColumn, bool), (int?, ColumnInfo?)>(pc =>
+            {
+                if (pc.Item2 == false)
+                {
+                    return (pc.Item1.ColumnId, null);
+                }
+                else
+                {
+                    return (null, pc.Item1.ColumnType);
+                }
+            }).ToArray();
 
             MetadataColumn[] mdColumnsForAggs = new MetadataColumn[aggregators.Length];
             MetadataColumn[] mdColumnsForGroupBy = new MetadataColumn[groupByColumns.Length];
@@ -92,10 +138,17 @@ namespace QueryProcessing
                 if (column.IsAggregate)
                 {
                     Tuple<Sql.aggType, string> agg = ((Sql.columnSelect.Aggregate)column).Item;
+
                     mdColumnsForAggs[posInAggs] = metadataColumns.First(metadataColumns => metadataColumns.ColumnName == agg.Item2);
 
                     // Relative position.
                     mdColumnsForAggs[posInAggs].ColumnId = posInAggs + posInGroupBy;
+
+                    if (agg.Item1.IsCount)
+                    {
+                        // For count we need to change column type to int.
+                        mdColumnsForAggs[posInAggs].ColumnType = new ColumnInfo(ColumnType.Int);
+                    }
 
                     posInAggs++;
                 }
@@ -114,10 +167,17 @@ namespace QueryProcessing
                 }
             }
 
-            // TODO: Aiming for correctness. Perf comes later.
             Func<RowHolder, RowHolder> projector = (rowHolder) =>
             {
-                return rowHolder.Project(projectColumnPosition);
+                RowHolder res = rowHolder.ProjectAndExtend(projectExtendInfo);
+
+                // init all counts to 1.
+                foreach (int pos in countPositions)
+                {
+                    res.SetField<int>(pos, 1);
+                }
+
+                return res;
             };
 
             Func<RowHolder, RowHolder> grouper = (rowHolder) =>
@@ -145,7 +205,7 @@ namespace QueryProcessing
                     return stateRhf;
                 };
 
-            return new GroupByFunctors(projector, grouper, aggregator, projectColumns);
+            return new GroupByFunctors(projector, grouper, aggregator, projectColumns.Select(pc => pc.Item1).ToArray());
         }
     }
 }

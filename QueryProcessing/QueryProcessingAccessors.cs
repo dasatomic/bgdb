@@ -65,6 +65,10 @@ namespace QueryProcessing
                     
                     stateRowHolder.SetField<int>(mc.ColumnId, inputValue + stateValue);
                 }
+                else if (aggType.IsCount)
+                {
+                    stateRowHolder.SetField<int>(mc.ColumnId, 1 + stateValue);
+                }
                 else
                 {
                     throw new InvalidProgramException("Aggregate not supported.");
