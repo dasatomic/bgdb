@@ -72,7 +72,20 @@ namespace QueryProcessing
                         {
                             // For count we need to update return type to int.
                             mc.ColumnType = new ColumnInfo(ColumnType.Int);
+                            mc.ColumnName = mc.ColumnName + "_Count";
                             return (mc, true);
+                        }
+                        else if (agg.Item1.IsMax)
+                        {
+                            mc.ColumnName = mc.ColumnName + "_Max";
+                        }
+                        else if (agg.Item1.IsMin)
+                        {
+                            mc.ColumnName = mc.ColumnName + "_Min";
+                        }
+                        else if (agg.Item1.IsSum)
+                        {
+                            mc.ColumnName = mc.ColumnName + "_Sum";
                         }
 
                         return (mc, false);
