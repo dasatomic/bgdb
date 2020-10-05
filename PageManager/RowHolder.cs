@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PageManager
@@ -174,6 +175,76 @@ namespace PageManager
                 for (int j = 0; j < sourceLenght; j++)
                 {
                     newStorage[newColPositions[i] + j] = this.Storage[sourceIndex + j];
+                }
+            }
+
+            return new RowHolder(newColPositions, newStorage);
+        }
+
+        /// <summary>
+        /// Each column in new RowHolder will be either projected from source RowHolder
+        /// by using first element of tuple, or extended with new type by using given type and filled with default value.
+        /// </summary>
+        /// <param name="projectExtendInfo"></param>
+        /// <returns></returns>
+        public RowHolder ProjectAndExtend((int?, ColumnInfo?)[] projectExtendInfo)
+        {
+            short[] newColPositions = new short[projectExtendInfo.Length];
+            short totalSize = 0;
+            newColPositions[0] = 0;
+
+            for (int i = 0; i < projectExtendInfo.Length; i++)
+            {
+                short diff;
+
+                if (projectExtendInfo[i].Item1 != null)
+                {
+                    if (projectExtendInfo[i].Item1.Value == this.ColumnPosition.Length - 1)
+                    {
+                        diff = (short)(this.Storage.Length - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                    }
+                    else
+                    {
+                        diff = (short)(this.ColumnPosition[projectExtendInfo[i].Item1.Value + 1] - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                    }
+                }
+                else
+                {
+                    Debug.Assert(projectExtendInfo[i].Item2 != null);
+
+                    diff = (short)projectExtendInfo[i].Item2.Value.GetSize();
+                }
+
+                totalSize += diff;
+
+                if (i != projectExtendInfo.Length - 1)
+                {
+                    newColPositions[i + 1] = (short)(newColPositions[i] + diff);
+                }
+            }
+
+            byte[] newStorage = new byte[totalSize];
+            for (int i = 0; i < projectExtendInfo.Length; i++)
+            {
+                if (projectExtendInfo[i].Item1 != null)
+                {
+                    // This is project operation. For extend we don't want to do anything.
+                    short sourceIndex = this.ColumnPosition[projectExtendInfo[i].Item1.Value];
+                    short sourceLength;
+
+                    if (projectExtendInfo[i].Item1.Value == this.ColumnPosition.Length - 1)
+                    {
+                        sourceLength = (short)(this.Storage.Length - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                    }
+                    else
+                    {
+                        sourceLength = (short)(this.ColumnPosition[projectExtendInfo[i].Item1.Value + 1] - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                    }
+
+                    for (int j = 0; j < sourceLength; j++)
+                    {
+                        newStorage[newColPositions[i] + j] = this.Storage[sourceIndex + j];
+                    }
                 }
             }
 

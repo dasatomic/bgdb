@@ -256,5 +256,33 @@ namespace PageManagerTests
             Assert.AreEqual(17, rhfnew.GetField<int>(2));
             Assert.AreEqual(17, rhfnew.GetField<int>(3));
         }
+
+        [Test]
+        public void ProjectAndExtend()
+        {
+            var columnTypes = new ColumnInfo[] { 
+                new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
+            var rhf = new RowHolder(columnTypes);
+
+            rhf.SetField(0, "TESTTEST00".ToCharArray());
+            rhf.SetField(1, "TEST0".ToCharArray());
+            rhf.SetField(2, 17);
+
+            var rhfnew = rhf.ProjectAndExtend(new (int?, ColumnInfo?)[]
+            {
+                (2, null),
+                (null, new ColumnInfo(ColumnType.Int)),
+                (null, new ColumnInfo(ColumnType.String, 10)),
+                (1, null)
+            });
+
+            rhfnew.SetField<int>(1, 42);
+            rhfnew.SetField(2, "NEWTEST".ToCharArray());
+
+            Assert.AreEqual(17, rhfnew.GetField<int>(0));
+            Assert.AreEqual(42, rhfnew.GetField<int>(1));
+            Assert.AreEqual("NEWTEST".ToCharArray(), rhfnew.GetStringField(2));
+            Assert.AreEqual("TEST0".ToCharArray(), rhfnew.GetStringField(3));
+        }
     }
 }
