@@ -113,6 +113,13 @@ Or something a bit more complex.
 Total rows returned 4
 ```
 
+If you want to play with more data you can start repl with argument `--rep_load_count N` that will duplicate input dataset N times. E.g.
+```
+dotnet run --set_load_path .\datasets\titanic-passengers.csv --rep_load_count 1000
+```
+
+Will load ~800k rows.
+
 ## From code init
 
 Repl is currently pretty limited. There is also no support for transactions in parser layer (transactions are implicit and linked to single command, `BEGIN/COMMIT/ROLLBACK TRAN` support will be added). To get a feeling how things are working under the hood it is best to take a look at end to end tests.
