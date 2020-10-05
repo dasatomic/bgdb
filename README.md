@@ -164,7 +164,7 @@ At this point list of features is rather limited but, hopefully, the list will k
 2) `INSERT INTO TABLE`
 3) FILTERS (`WHERE` statement with basic arithmetic)
 4) `GROUP BY` stetement
-5) Aggregates (`MAX`, `MIN`, `SUM`)
+5) Aggregates (`MAX`, `MIN`, `SUM`, `COUNT`)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)
