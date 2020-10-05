@@ -4,6 +4,7 @@ using DataStructures;
 using PageManager;
 using QueryProcessing;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +18,9 @@ namespace atomicdbstarter
         {
             [Option("set_load_path", Required = false)]
             public string TitanicSetPath { get; set; }
+
+            [Option("rep_load_count", Required = false, Default = 1)]
+            public int RepCount { get; set; }
         }
 
         static int GetColumnWidth(ColumnInfo ci)
@@ -65,9 +69,11 @@ namespace atomicdbstarter
         static async Task Main(string[] args)
         {
             string datasetPathToLoad = null;
+            int repCount = 1;
             Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
                 datasetPathToLoad = o.TitanicSetPath;
+                repCount = o.RepCount;
             });
 
             string fileName = "repl.db";
@@ -109,21 +115,35 @@ namespace atomicdbstarter
             if (datasetPathToLoad != null)
             {
                 Console.WriteLine("Loading dataset");
-                foreach (string cmd in TitanicDatasetToSql.TitanicCsvToSql(datasetPathToLoad))
+                Console.WriteLine("Duplicating dataset X{0} times", repCount);
+
+                List<string> insertCommands = TitanicDatasetToSql.TitanicCsvToSql(datasetPathToLoad);
+                int insertCount = 0;
+
+                for (int i  = 0; i < repCount; i++)
                 {
-                    await using (ITransaction tran = logManager.CreateTransaction(pageManager))
+                    foreach (string cmd in insertCommands)
                     {
-                        try
+                        await using (ITransaction tran = logManager.CreateTransaction(pageManager))
                         {
-                            await queryEntryGate.Execute(cmd, tran).AllResultsAsync();
-                            await tran.Commit();
-                        }
-                        catch (Exception)
-                        {
-                            await tran.Rollback();
+                            try
+                            {
+                                await queryEntryGate.Execute(cmd, tran).AllResultsAsync();
+                                await tran.Commit();
+                                insertCount++;
+                            }
+                            catch (Exception)
+                            {
+                                await tran.Rollback();
+                            }
                         }
                     }
+
+                    Console.WriteLine("Loaded iteration {0}/{1}", i, repCount);
                 }
+
+                Console.WriteLine("Loaded {0} rows.", insertCount);
+
             }
 
             Console.WriteLine("====================");
