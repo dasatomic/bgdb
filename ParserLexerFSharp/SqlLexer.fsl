@@ -32,7 +32,6 @@ let keywords =
         "GROUP", GROUP;
         "MAX", MAX;
         "MIN", MIN;
-        "AVG", AVG;
         "COUNT", COUNT;
         "SUM", SUM;
     ] |> Map.ofList   

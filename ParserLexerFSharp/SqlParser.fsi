@@ -19,7 +19,6 @@ type token =
   | CREATE_TABLE
   | MAX
   | MIN
-  | AVG
   | COUNT
   | SUM
   | SELECT
@@ -64,7 +63,6 @@ type tokenId =
     | TOKEN_CREATE_TABLE
     | TOKEN_MAX
     | TOKEN_MIN
-    | TOKEN_AVG
     | TOKEN_COUNT
     | TOKEN_SUM
     | TOKEN_SELECT

@@ -12,7 +12,7 @@ open Sql
 %token EQ LT LE GT GE   
 %token JOIN INNER LEFT RIGHT ON   
 %token SELECT FROM WHERE ORDER BY GROUP
-%token MAX MIN AVG COUNT SUM
+%token MAX MIN COUNT SUM
 %token CREATE_TABLE
 %token ASC DESC   
 %token CREATE
@@ -99,7 +99,6 @@ columnList:
 aggregate:
     | MAX OBRCK ID CBRCK { Aggregate(Max, $3) }
     | MIN OBRCK ID CBRCK { Aggregate(Min, $3) }
-    | AVG OBRCK ID CBRCK { Aggregate(Avg, $3) }
     | COUNT OBRCK ID CBRCK { Aggregate(Count, $3) }
     | SUM OBRCK ID CBRCK { Aggregate(Sum, $3) }
 
