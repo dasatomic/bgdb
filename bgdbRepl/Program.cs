@@ -45,7 +45,7 @@ namespace atomicdbstarter
             if (ci.ColumnType == ColumnType.Double)
             {
                 double value = row.GetField<double>(columnPosition);
-                strVal = value.ToString("0:0.###");
+                strVal = string.Format("{0:0.###}", value);
             }
             else if (ci.ColumnType == ColumnType.Int)
             {
