@@ -61,7 +61,7 @@ namespace atomicdbstarter
                 strVal = new string(row.GetStringField(columnPosition));
             }
 
-            int missingWhiteSpace = tableWidth - strVal.Length;
+            int missingWhiteSpace = Math.Max(tableWidth - strVal.Length, 0);
             char[] ws =Enumerable.Repeat(' ', missingWhiteSpace).ToArray();
             return (new string(ws)) + strVal;
         }
@@ -221,6 +221,8 @@ namespace atomicdbstarter
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine($" Error : {ex.GetType()}");
+                    Console.WriteLine($" Message: {ex.Message}");
+                    Console.WriteLine($" Callstack: {ex.StackTrace}");
                 }
             }
         }

@@ -71,7 +71,7 @@ dotnet run --set_load_path .\datasets\titanic-passengers.csv
 ```
 
 ```
->SELECT PassengerId, Survived, Class, Name, Sex, Age, Siblings, Parents, EmbarkedPort FROM Passengers
+>SELECT * FROM Passengers
 
 |PassengerId |Survived |     Class |                                                                Name |     Sex |       Age |  Siblings |   Parents |EmbarkedPort |
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
