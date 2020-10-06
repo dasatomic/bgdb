@@ -164,7 +164,7 @@ At this point list of features is rather limited but, hopefully, the list will k
 2) `INSERT INTO TABLE`
 3) FILTERS (`WHERE` statement with basic arithmetic)
 4) `GROUP BY` stetement
-5) Aggregates (`MAX`, `MIN`, `SUM`)
+5) Aggregates (`MAX`, `MIN`, `SUM`, `COUNT`)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)
@@ -189,7 +189,7 @@ public LogManager(BinaryWriter storage)
 [Lock Manager](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/LockManager/LockImplementation/AsyncReadWriterLock.cs) currently supports only Read and Write locks that prioritize Writers.
 
 ## Data Structures
-There is still no support for indexes so tables are currently organized as simple [linked list](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/DataStructures/PageListCollection.cs). This is hopefully going to change soon.
+There is still no support for indexes so tables are currently organized as simple [linked list](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/DataStructures/PageListCollection.cs) of pages. This is hopefully going to change soon.
 
 ## Query Processing
 Query tree is currently assembled through a set of rules that can be found [here](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/QueryProcessing/AstToOpTreeBuilder.cs). When work on Query Optimizer starts this will have to change.
