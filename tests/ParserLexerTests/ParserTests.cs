@@ -30,7 +30,7 @@ namespace ParserLexerTests
 
             Assert.AreEqual(
                 new string[] { "x", "y", "z" },
-                selectStatement.Columns.Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace ParserLexerTests
 
             Assert.AreEqual(
                 new string[] { "x", "y", "z" },
-                selectStatement.Columns.Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
             Assert.AreEqual("t1", selectStatement.Table);
 
             Sql.where whereStatement = selectStatement.Where.Value;
@@ -143,7 +143,8 @@ namespace ParserLexerTests
 
             var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
 
-            Assert.AreEqual(new string[] { "x", "y", "z" }, selectStatement.Columns.Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
+            Assert.AreEqual(new string[] { "x", "y", "z" },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
             Assert.AreEqual("t1", selectStatement.Table);
 
             string[] groupBys = selectStatement.GroupBy.ToArray();
@@ -167,13 +168,31 @@ namespace ParserLexerTests
 
             var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
 
-            Assert.AreEqual("x", ((Sql.columnSelect.Aggregate)selectStatement.Columns[0]).Item.Item2);
-            Assert.AreEqual(Sql.aggType.Max ,((Sql.columnSelect.Aggregate)selectStatement.Columns[0]).Item.Item1);
+            var columns = (((Sql.selectType.ColumnList)selectStatement.Columns).Item);
 
-            Assert.AreEqual("y", ((Sql.columnSelect.Aggregate)selectStatement.Columns[1]).Item.Item2);
-            Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)selectStatement.Columns[1]).Item.Item1);
+            Assert.AreEqual("x", ((Sql.columnSelect.Aggregate)columns[0]).Item.Item2);
+            Assert.AreEqual(Sql.aggType.Max ,((Sql.columnSelect.Aggregate)columns[0]).Item.Item1);
 
-            Assert.AreEqual("z", ((Sql.columnSelect.Projection)selectStatement.Columns[2]).Item);
+            Assert.AreEqual("y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
+            Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
+
+            Assert.AreEqual("z", ((Sql.columnSelect.Projection)columns[2]).Item);
+        }
+
+        [Test]
+        public void StartSelectTest()
+        {
+            string query = "SELECT * FROM t1";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
+
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            Assert.IsTrue(selectStatement.Columns.IsStar);
         }
     }
 }

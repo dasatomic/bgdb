@@ -54,6 +54,7 @@ let identifier  = char(char|digit|['-' '_' '.'])*
 let whitespace  = [' ' '\t']   
 let newline     = "\n\r" | '\n' | '\r'  
 let operator    = ">" | ">=" | "<" | "<=" | "="  
+let star        = '*'
 let quotation = "\'"
 let openbracket = "("
 let closedbracket = ")"
@@ -72,3 +73,4 @@ rule tokenize = parse
 | openbracket   { OBRCK }
 | closedbracket { CBRCK }
 | quotation     { QUOT }
+| star          { STAR }

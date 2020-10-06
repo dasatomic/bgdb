@@ -22,6 +22,11 @@ type columnSelect =
     | Aggregate of (aggType * string)
     | Projection of string
 
+type selectType =
+    | ColumnList of columnSelect list
+    | Star
+
+
 type joinType = Inner | Left | Right
 
 type join = string * joinType * where option // table name, join, optional on clause
@@ -29,7 +34,7 @@ type join = string * joinType * where option // table name, join, optional on cl
 type sqlStatement =
     { 
         Table : string;
-        Columns : columnSelect list;
+        Columns : selectType;
         Joins : join list;
         Where : where option
         GroupBy : string list;

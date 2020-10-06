@@ -26,6 +26,7 @@ open Sql
 %token TYPE_INT TYPE_DOUBLE TYPE_STRING
 %token EOF
 %token QUOT
+%token STAR
 
 %start startCT
 %type <Sql.DmlDdlSqlStatement> startCT
@@ -76,7 +77,7 @@ columnType:
     | TYPE_STRING OBRCK INT CBRCK ID { StringCType, $3, $5 }
 
 // Select statement
-SelectStatement:  columnList
+SelectStatement:  columnSelect
         FROM ID
         joinList
         whereClause
@@ -84,12 +85,17 @@ SelectStatement:  columnList
         orderByClause
         EOF                 {
                                 { Table = $3;
-                                  Columns = List.rev $1;
+                                  Columns = $1;
                                   Joins = $4;
                                   Where = $5;
                                   GroupBy = $6;
                                   OrderBy = $7 }
                             }
+
+columnSelect:
+    | STAR { Star }
+    | columnList { ColumnList(List.rev $1) }
+
 columnList:
     | ID                        { [Projection($1)] }
     | columnList COMMA ID       { Projection($3) :: $1 }

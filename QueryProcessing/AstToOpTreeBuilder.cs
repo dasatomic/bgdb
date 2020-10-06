@@ -40,7 +40,13 @@ namespace QueryProcessing
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
             string tableName = sqlStatement.Table;
 
-            Sql.columnSelect[] columns = sqlStatement.Columns.ToArray();
+            if (sqlStatement.Columns.IsStar)
+            {
+                // star support is todo.
+                throw new NotImplementedException();
+            }
+
+            Sql.columnSelect[] columns = (((Sql.selectType.ColumnList)sqlStatement.Columns).Item).ToArray();
 
             string[] projections = columns
                 .Where(c => c.IsProjection == true)
