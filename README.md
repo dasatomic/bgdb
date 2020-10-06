@@ -165,6 +165,7 @@ At this point list of features is rather limited but, hopefully, the list will k
 3) FILTERS (`WHERE` statement with basic arithmetic)
 4) `GROUP BY` stetement
 5) Aggregates (`MAX`, `MIN`, `SUM`, `COUNT`)
+6) Support for wildcard select (`SELECT * FROM`)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)

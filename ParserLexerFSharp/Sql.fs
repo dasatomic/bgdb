@@ -33,6 +33,7 @@ type join = string * joinType * where option // table name, join, optional on cl
 
 type sqlStatement =
     { 
+        Top : int option
         Table : string;
         Columns : selectType;
         Joins : join list;

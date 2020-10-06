@@ -27,6 +27,7 @@ open Sql
 %token EOF
 %token QUOT
 %token STAR
+%token TOP
 
 %start startCT
 %type <Sql.DmlDdlSqlStatement> startCT
@@ -77,20 +78,26 @@ columnType:
     | TYPE_STRING OBRCK INT CBRCK ID { StringCType, $3, $5 }
 
 // Select statement
-SelectStatement:  columnSelect
+SelectStatement: topClause columnSelect
         FROM ID
         joinList
         whereClause
         groupByClause
         orderByClause
         EOF                 {
-                                { Table = $3;
-                                  Columns = $1;
-                                  Joins = $4;
-                                  Where = $5;
-                                  GroupBy = $6;
-                                  OrderBy = $7 }
+                                { 
+                                  Top = $1
+                                  Table = $4;
+                                  Columns = $2;
+                                  Joins = $5;
+                                  Where = $6;
+                                  GroupBy = $7;
+                                  OrderBy = $8 }
                             }
+
+topClause:
+    | TOP INT { Some($2) }
+    |         { None }
 
 columnSelect:
     | STAR { Star }

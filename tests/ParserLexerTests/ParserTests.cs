@@ -194,5 +194,24 @@ namespace ParserLexerTests
             var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
             Assert.IsTrue(selectStatement.Columns.IsStar);
         }
+
+        [Test]
+        public void TopStatement()
+        {
+            string query = "SELECT TOP 10 * FROM t1";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
+
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            Assert.IsTrue(selectStatement.Columns.IsStar);
+
+            Assert.IsTrue(FSharpOption<int>.get_IsSome(selectStatement.Top));
+            Assert.AreEqual(10, selectStatement.Top.Value);
+        }
     }
 }
