@@ -66,7 +66,7 @@ namespace QueryProcessing
 
             string result = new string(inputChars);
 
-            if (result.StartsWith("CREATE TABLE TABLE"))
+            if (result.StartsWith("CREATE TABLE TABLE "))
             {
                 throw new InvalidTableNameException();
             }
