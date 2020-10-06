@@ -10,18 +10,43 @@ namespace QueryProcessing
     {
         private IPhysicalOperator<RowHolder> source;
         private int[] columnChooser;
+        bool isStar = false;
+        int? topRows;
 
-        public PhyOpProject(IPhysicalOperator<RowHolder> source, int[] columnChooser)
+        public PhyOpProject(IPhysicalOperator<RowHolder> source, int[] columnChooser, int? topRows)
         {
             this.source = source;
             this.columnChooser = columnChooser;
+            this.topRows = topRows;
+            this.isStar = false;
+        }
+
+        public PhyOpProject(IPhysicalOperator<RowHolder> source, int? topRows)
+        {
+            this.source = source;
+            this.topRows = topRows;
+            this.isStar = true;
         }
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
+            int breakAfter = topRows ?? int.MaxValue;
+
             await foreach (RowHolder row in this.source.Iterate(tran))
             {
-                yield return row.Project(this.columnChooser);
+                if (isStar)
+                {
+                    yield return row;
+                }
+                else
+                {
+                    yield return row.Project(this.columnChooser);
+                }
+
+                if (--topRows == 0)
+                {
+                    yield break;
+                }
             }
         }
 
@@ -32,8 +57,15 @@ namespace QueryProcessing
 
         public MetadataColumn[] GetOutputColumns()
         {
-            MetadataColumn[] sourceColumns = source.GetOutputColumns();
-            return columnChooser.Select(cc => sourceColumns[cc]).ToArray();
+            if (isStar)
+            {
+                return source.GetOutputColumns();
+            }
+            else
+            {
+                MetadataColumn[] sourceColumns = source.GetOutputColumns();
+                return columnChooser.Select(cc => sourceColumns[cc]).ToArray();
+            }
         }
     }
 }

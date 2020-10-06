@@ -144,6 +144,48 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
+        public async Task SelectWithTop()
+        {  
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    string insertQuery = "INSERT INTO T1 VALUES (1, 1.1, 'mystring')";
+                    await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                }
+
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT TOP 10 * FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(10, result.Length);
+
+                query = @"SELECT TOP 17 * FROM T1";
+                result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(17, result.Length);
+
+                query = @"SELECT TOP 100 * FROM T1";
+                result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                query = @"SELECT TOP 0 * FROM T1";
+                Assert.ThrowsAsync<InvalidTopCountException>(async () => await this.queryEntryGate.Execute(query, tran).ToArrayAsync());
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
         public async Task E2EWithRollback()
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))

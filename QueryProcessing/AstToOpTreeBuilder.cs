@@ -45,6 +45,18 @@ namespace QueryProcessing
             Tuple<Sql.aggType, string>[] aggregates = new Tuple<Sql.aggType, string>[0];
             bool isStar = false;
 
+            int? topRows = null;
+
+            if (FSharpOption<int>.get_IsSome(sqlStatement.Top))
+            {
+                topRows = sqlStatement.Top.Value;
+
+                if (topRows < 1)
+                {
+                    throw new InvalidTopCountException();
+                }
+            }
+
             if (sqlStatement.Columns.IsStar)
             {
                 isStar = true;
@@ -92,25 +104,29 @@ namespace QueryProcessing
                 if (isStar)
                 {
                     // no need for project, just return everything.
-                    return new RowProvider(sourceForProject.Iterate(tran), sourceForProject.GetOutputColumns());
+                    PhyOpProject projectOp = new PhyOpProject(sourceForProject, topRows);
+                    return new RowProvider(projectOp.Iterate(tran), projectOp.GetOutputColumns());
                 }
-
-                // Project Op.
-                List<MetadataColumn> columnMapping = new List<MetadataColumn>();
-                foreach (string columnName in projections)
+                else
                 {
-                    if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
+                    // Project Op.
+                    List<MetadataColumn> columnMapping = new List<MetadataColumn>();
+                    foreach (string columnName in projections)
                     {
+                        if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
+                        {
 
-                        throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
+                            throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
+                        }
+
+                        columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName));
                     }
 
-                    columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName));
+                    PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.Select(mc => mc.ColumnId).ToArray(), topRows);
+
+                    return new RowProvider(projectOp.Iterate(tran), projectOp.GetOutputColumns());
                 }
 
-                PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.Select(mc => mc.ColumnId).ToArray());
-
-                return new RowProvider(projectOp.Iterate(tran), columnMapping.ToArray());
             }
         }
 
