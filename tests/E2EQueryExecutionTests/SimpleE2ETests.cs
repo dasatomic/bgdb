@@ -107,6 +107,43 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
+        public async Task SelectWithStar()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+            {
+                string insertQuery = "INSERT INTO T1 VALUES (1, 1.1, 'mystring')";
+                await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+
+                insertQuery = "INSERT INTO T1 VALUES (2, 2.2, 'mystring2')";
+                await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT * FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+
+                Assert.AreEqual(1, result[0].GetField<int>(0));
+                Assert.AreEqual(1.1, result[0].GetField<double>(1));
+                Assert.AreEqual("mystring", result[0].GetStringField(2));
+
+                Assert.AreEqual(2, result[1].GetField<int>(0));
+                Assert.AreEqual(2.2, result[1].GetField<double>(1));
+                Assert.AreEqual("mystring2", result[1].GetStringField(2));
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
         public async Task E2EWithRollback()
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))

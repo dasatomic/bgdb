@@ -40,21 +40,28 @@ namespace QueryProcessing
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
             string tableName = sqlStatement.Table;
 
+            string[] projections = new string[0];
+            Sql.columnSelect[] columns = new Sql.columnSelect[0];
+            Tuple<Sql.aggType, string>[] aggregates = new Tuple<Sql.aggType, string>[0];
+            bool isStar = false;
+
             if (sqlStatement.Columns.IsStar)
             {
-                // star support is todo.
-                throw new NotImplementedException();
+                isStar = true;
+            }
+            else
+            {
+                columns = (((Sql.selectType.ColumnList)sqlStatement.Columns).Item).ToArray();
+
+                projections = columns
+                    .Where(c => c.IsProjection == true)
+                    .Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray();
+
+                aggregates = columns
+                    .Where(c => c.IsAggregate == true)
+                    .Select(c => ((Sql.columnSelect.Aggregate)c).Item).ToArray();
             }
 
-            Sql.columnSelect[] columns = (((Sql.selectType.ColumnList)sqlStatement.Columns).Item).ToArray();
-
-            string[] projections = columns
-                .Where(c => c.IsProjection == true)
-                .Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray();
-
-            Tuple<Sql.aggType, string>[] aggregates = columns
-                .Where(c => c.IsAggregate == true)
-                .Select(c => ((Sql.columnSelect.Aggregate)c).Item).ToArray();
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
@@ -82,6 +89,12 @@ namespace QueryProcessing
                 return new RowProvider(phyOpGroupBy.Iterate(tran), groupByFunctors.ProjectColumnInfo);
             } else
             {
+                if (isStar)
+                {
+                    // no need for project, just return everything.
+                    return new RowProvider(sourceForProject.Iterate(tran), sourceForProject.GetOutputColumns());
+                }
+
                 // Project Op.
                 List<MetadataColumn> columnMapping = new List<MetadataColumn>();
                 foreach (string columnName in projections)
