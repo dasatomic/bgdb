@@ -16,6 +16,8 @@ The starting point is that database development is fun and that it can help us l
 ## Dependencies
 After cloning the enlistment you will need `dotnet core 3.1` or above. It can be found [here](https://dotnet.microsoft.com/download/dotnet-core/3.1).
 
+The engine it self doesn't have any dependencies, besides .net core. Tests and perf benchmarks will pull additional nugets. For running perf tests and updating plots you will need to install R. Instaructions are in perf [readme.md](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/UnitBenchmark/readme.md).
+
 ## Read eval print loop
 
 To try it out you can start bgdbRepl (read-eval-print-loop) by starting project in bgdbRepl folder. From root enlistment do folloowing:
