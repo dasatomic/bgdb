@@ -1,6 +1,7 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace QueryProcessing
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsCreate;
 
-        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran, InputStringNormalizer _)
         {
             if (!statement.IsCreate)
             {

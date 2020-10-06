@@ -21,10 +21,7 @@ namespace bgdbRepl
                 string line = lines[i];
                 string[] vals = line.Split(";");
 
-                string[] charsToRemove = new string[]
-                {
-                    " ", ",", ".", "'", "\"", "\\", "(", ")", ";"
-                };
+                string[] charsToRemove = new string[] { "'", };
 
                 string nameNormalized = vals[3];
                 foreach (string rem in charsToRemove)

@@ -1,7 +1,9 @@
 using NUnit.Framework;
 using PageManager;
 using PageManager.Exceptions;
+using QueryProcessing;
 using QueryProcessing.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,6 +25,17 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
                 await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task CreateTableInvalidName()
+        {
+            string query = @"CREATE TABLE TabLe (TYPE_INT a)";
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                Assert.ThrowsAsync<InvalidTableNameException>(async () => await this.queryEntryGate.Execute(query, tran).AllResultsAsync());
                 await tran.Commit();
             }
         }
@@ -61,24 +74,24 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
+                string insertQuery = "INSERT INTO T1 VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
 
-                insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
+                insertQuery = "INSERT INTO T1 VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
-                string query = @"SELECT a, b, c FROM Table";
+                string query = @"SELECT a, b, c FROM T1";
                 RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(1, result[0].GetField<int>(0));
@@ -98,38 +111,38 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
+                string insertQuery = "INSERT INTO T1 VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (1, 1.1, 'mystring')";
+                string insertQuery = "INSERT INTO T1 VALUES (1, 1.1, 'mystring')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
 
-                insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
+                insertQuery = "INSERT INTO T1 VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Rollback();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (2, 2.2, 'mystring2')";
+                string insertQuery = "INSERT INTO T1 VALUES (2, 2.2, 'mystring2')";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
-                string query = @"SELECT a, b, c FROM Table";
+                string query = @"SELECT a, b, c FROM T1";
                 RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
 
                 Assert.AreEqual(1, result[0].GetField<int>(0));
@@ -195,7 +208,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_DOUBLE b)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_DOUBLE b)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -203,14 +216,14 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
             {
                 // value 1 will be parsed as INT, but it should be inserted as float.
-                string insertQuery = "INSERT INTO Table VALUES (42)";
+                string insertQuery = "INSERT INTO T1 VALUES (42)";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "SELECT"))
             {
-                string insertQuery = "SELECT b FROM Table";
+                string insertQuery = "SELECT b FROM T1";
                 var result = await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
 
@@ -223,7 +236,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT b)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -233,7 +246,7 @@ namespace E2EQueryExecutionTests
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
                 {
                     // Float will be truncated. Hence we don't allow it.
-                    string insertQuery = "INSERT INTO Table VALUES (42.17)";
+                    string insertQuery = "INSERT INTO T1 VALUES (42.17)";
                     await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 }
             });
@@ -244,7 +257,7 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT b)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
@@ -253,7 +266,7 @@ namespace E2EQueryExecutionTests
             {
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "INSERT"))
                 {
-                    string insertQuery = "INSERT INTO Table VALUES (42)";
+                    string insertQuery = "INSERT INTO T1 VALUES (42)";
                     await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 }
             });
@@ -264,21 +277,21 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT b)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT b)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager,  "INSERT"))
             {
-                string insertQuery = "INSERT INTO Table VALUES (42)";
+                string insertQuery = "INSERT INTO T1 VALUES (42)";
                 await this.queryEntryGate.Execute(insertQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, isReadOnly: true, "SELECT"))
             {
-                string selectQuery = "SELECT b FROM Table";
+                string selectQuery = "SELECT b FROM T1";
                 var res = await this.queryEntryGate.Execute(selectQuery, tran).ToArrayAsync();
                 Assert.AreEqual(42, res[0].GetField<int>(0));
             }
@@ -289,25 +302,25 @@ namespace E2EQueryExecutionTests
         {
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
             {
-                string createTableQuery = "CREATE TABLE Table (TYPE_INT a, TYPE_INT b, TYPE_DOUBLE c, TYPE_STRING(20) d)";
+                string createTableQuery = "CREATE TABLE T1 (TYPE_INT a, TYPE_INT b, TYPE_DOUBLE c, TYPE_STRING(20) d)";
                 await this.queryEntryGate.Execute(createTableQuery, tran).ToArrayAsync();
                 await tran.Commit();
             }
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
-                var res = await this.queryEntryGate.BuildExecutionTree("SELECT d, c, b, a FROM Table", tran);
-                Assert.AreEqual("d", res.ColumnInfo[0].ColumnName);
+                var res = await this.queryEntryGate.BuildExecutionTree("SELECT d, c, b, a FROM T1", tran);
+                Assert.AreEqual("D", res.ColumnInfo[0].ColumnName);
                 Assert.AreEqual(ColumnType.String, res.ColumnInfo[0].ColumnType.ColumnType);
                 Assert.AreEqual(20, res.ColumnInfo[0].ColumnType.RepCount);
 
-                Assert.AreEqual("c", res.ColumnInfo[1].ColumnName);
+                Assert.AreEqual("C", res.ColumnInfo[1].ColumnName);
                 Assert.AreEqual(ColumnType.Double, res.ColumnInfo[1].ColumnType.ColumnType);
 
-                Assert.AreEqual("b", res.ColumnInfo[2].ColumnName);
+                Assert.AreEqual("B", res.ColumnInfo[2].ColumnName);
                 Assert.AreEqual(ColumnType.Int, res.ColumnInfo[2].ColumnType.ColumnType);
 
-                Assert.AreEqual("a", res.ColumnInfo[3].ColumnName);
+                Assert.AreEqual("A", res.ColumnInfo[3].ColumnName);
                 Assert.AreEqual(ColumnType.Int, res.ColumnInfo[3].ColumnType.ColumnType);
 
                 Assert.AreEqual(0, await res.Enumerator.CountAsync());

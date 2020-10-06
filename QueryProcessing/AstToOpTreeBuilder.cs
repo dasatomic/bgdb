@@ -34,7 +34,7 @@ namespace QueryProcessing
         }
 
 
-        public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran)
+        public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {
             // TODO: query builder is currently manual. i.e. SCAN -> optional(FILTER) -> PROJECT.
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
@@ -62,7 +62,7 @@ namespace QueryProcessing
             if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Where))
             {
                 Sql.where whereStatement = sqlStatement.Where.Value;
-                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, table.Columns));
+                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, table.Columns, stringNormalizer));
                 sourceForProject = filterOp;
             }
 
@@ -95,7 +95,7 @@ namespace QueryProcessing
             }
         }
 
-        public async Task<PhyOpTableInsert> ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran)
+        public async Task<PhyOpTableInsert> ParseInsertStatement(Sql.insertStatement insertStatement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {
             string tableName = insertStatement.Table;
 
@@ -141,7 +141,10 @@ namespace QueryProcessing
                     if (columnInfosFromTable[colNum].ColumnType == ColumnType.String)
                     {
                         // TODO: For string heap (strings of variable length separate logic is needed.
-                        rowHolder.SetField(colNum, ((Sql.value.String)value).Item.ToCharArray());
+
+                        string input = ((Sql.value.String)value).Item;
+                        input = stringNormalizer.ApplyReplacementTokens(input);
+                        rowHolder.SetField(colNum, input.ToCharArray());
                     }
                     else
                     {

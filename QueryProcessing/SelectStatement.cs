@@ -13,7 +13,7 @@ namespace QueryProcessing
             this.treeBuilder = treeBuilder;
         }
 
-        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran)
+        public async Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {
             if (!statement.IsSelect)
             {
@@ -22,7 +22,7 @@ namespace QueryProcessing
 
             Sql.DmlDdlSqlStatement.Select selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement);
 
-            return await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran).ConfigureAwait(false);
+            return await this.treeBuilder.ParseSqlStatement(selectStatement.Item, tran, stringNormalizer).ConfigureAwait(false);
         }
 
         public bool ShouldExecute(Sql.DmlDdlSqlStatement statement) => statement.IsSelect;

@@ -5,7 +5,7 @@ namespace QueryProcessing
 {
     public interface ISqlStatement
     {
-        Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran);
+        Task<RowProvider> BuildTree(Sql.DmlDdlSqlStatement statement, ITransaction tran, InputStringNormalizer stringNormalizer);
 
         bool ShouldExecute(Sql.DmlDdlSqlStatement statement);
     }

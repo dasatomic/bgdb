@@ -36,7 +36,7 @@ namespace QueryProcessing
             throw new InvalidProgramException("Invalid state.");
         }
 
-        public static Func<RowHolder, bool> EvalWhere(Sql.where where, MetadataColumn[] metadataColumns)
+        public static Func<RowHolder, bool> EvalWhere(Sql.where where, MetadataColumn[] metadataColumns, InputStringNormalizer stringNormalizer)
         {
             // TODO: This is all functional programming and nice
             // but I really doubt the perf.
@@ -50,8 +50,8 @@ namespace QueryProcessing
                 {
                     Sql.where.And andStmt = (Sql.where.And)where;
 
-                    Func<RowHolder, bool> leftOp = EvalWhere(andStmt.Item1, metadataColumns);
-                    Func<RowHolder, bool> rightOp = EvalWhere(andStmt.Item2, metadataColumns);
+                    Func<RowHolder, bool> leftOp = EvalWhere(andStmt.Item1, metadataColumns, stringNormalizer);
+                    Func<RowHolder, bool> rightOp = EvalWhere(andStmt.Item2, metadataColumns, stringNormalizer);
 
                     return leftOp(rowHolder) && rightOp(rowHolder);
                 }
@@ -59,17 +59,17 @@ namespace QueryProcessing
                 {
                     Sql.where.Or orStmt = (Sql.where.Or)where;
 
-                    Func<RowHolder, bool> leftOp = EvalWhere(orStmt.Item1, metadataColumns);
-                    Func<RowHolder, bool> rightOp = EvalWhere(orStmt.Item2, metadataColumns);
+                    Func<RowHolder, bool> leftOp = EvalWhere(orStmt.Item1, metadataColumns, stringNormalizer);
+                    Func<RowHolder, bool> rightOp = EvalWhere(orStmt.Item2, metadataColumns, stringNormalizer);
 
                     return leftOp(rowHolder) || rightOp(rowHolder);
                 }
                 else if (where.IsCond)
                 {
                     Sql.where.Cond condStmt = (Sql.where.Cond)where;
-                    Sql.value leftOp = condStmt.Item.Item1;
+                    Sql.value leftOp = stringNormalizer.ApplyReplacementTokens(condStmt.Item.Item1);
                     Sql.op op = condStmt.Item.Item2;
-                    Sql.value rightOp = condStmt.Item.Item3;
+                    Sql.value rightOp = stringNormalizer.ApplyReplacementTokens(condStmt.Item.Item3);
 
                     IComparable leftOpComp, rightOpComp;
 
