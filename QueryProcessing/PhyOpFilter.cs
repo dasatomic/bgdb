@@ -1,4 +1,5 @@
-﻿using PageManager;
+﻿using MetadataManager;
+using PageManager;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -35,5 +36,7 @@ namespace QueryProcessing
         {
             await Task.FromResult(0);
         }
+
+        public MetadataColumn[] GetOutputColumns() => source.GetOutputColumns();
     }
 }

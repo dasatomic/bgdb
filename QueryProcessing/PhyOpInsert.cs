@@ -1,4 +1,5 @@
 ﻿using DataStructures;
+using MetadataManager;
 using PageManager;
 using System.Collections.Generic;
 
@@ -14,6 +15,8 @@ namespace QueryProcessing
             this.pageCollection = pageCollection;
             this.input = input;
         }
+
+        public MetadataColumn[] GetOutputColumns() => new MetadataColumn[0];
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {

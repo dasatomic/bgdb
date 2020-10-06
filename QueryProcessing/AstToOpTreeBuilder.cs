@@ -60,7 +60,7 @@ namespace QueryProcessing
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
             // Scan Op.
-            PhyOpScan scanOp = new PhyOpScan(table.Collection, tran);
+            PhyOpScan scanOp = new PhyOpScan(table.Collection, tran, table.Columns);
 
             // Where op.
             IPhysicalOperator<RowHolder> sourceForProject = scanOp;

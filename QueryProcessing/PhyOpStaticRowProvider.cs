@@ -1,4 +1,5 @@
-﻿using PageManager;
+﻿using MetadataManager;
+using PageManager;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,6 +18,8 @@ namespace QueryProcessing
         {
             this.source = new RowHolder[] { row };
         }
+
+        public MetadataColumn[] GetOutputColumns() => new MetadataColumn[0];
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction _)
         {

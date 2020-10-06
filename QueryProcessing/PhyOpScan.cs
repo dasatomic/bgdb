@@ -1,4 +1,5 @@
 ﻿using DataStructures;
+using MetadataManager;
 using PageManager;
 using System;
 using System.Collections.Generic;
@@ -10,11 +11,13 @@ namespace QueryProcessing
     {
         private readonly IPageCollection<RowHolder> source;
         private readonly ITransaction tran;
+        private readonly MetadataColumn[] scanColumnInfo;
 
-        public PhyOpScan(IPageCollection<RowHolder> collection, ITransaction tran)
+        public PhyOpScan(IPageCollection<RowHolder> collection, ITransaction tran, MetadataColumn[] scanColumnInfo)
         {
             this.source = collection;
             this.tran = tran;
+            this.scanColumnInfo = scanColumnInfo;
         }
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
@@ -29,5 +32,7 @@ namespace QueryProcessing
         {
             throw new NotImplementedException();
         }
+
+        public MetadataColumn[] GetOutputColumns() => this.scanColumnInfo;
     }
 }
