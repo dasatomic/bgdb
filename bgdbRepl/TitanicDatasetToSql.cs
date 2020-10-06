@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+using System.Linq;
 
 namespace bgdbRepl
 {
@@ -16,10 +15,16 @@ namespace bgdbRepl
             string createTable = @"CREATE TABLE Passengers (TYPE_INT PassengerId, TYPE_STRING(3) Survived, TYPE_INT Class, TYPE_STRING(70) Name, TYPE_STRING(6) Sex, TYPE_DOUBLE Age, TYPE_INT Siblings, TYPE_INT Parents, TYPE_STRING(1) EmbarkedPort)";
             returnSql.Add(createTable);
 
+            int[] colPositions = new[] { 0, 2, 5, 6, 7, 11 };
             for (int i = 1; i < lines.Length; i++)
             {
                 string line = lines[i];
                 string[] vals = line.Split(";");
+
+                if (colPositions.Any(pos => string.IsNullOrEmpty(vals[pos])))
+                {
+                    continue;
+                }
 
                 string[] charsToRemove = new string[] { "'", };
 

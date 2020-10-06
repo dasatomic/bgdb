@@ -16,7 +16,7 @@ namespace QueryProcessing
     public class InputStringNormalizer
     {
         private Dictionary<string, List<(int pos, char old)>> replacementDictionary;
-        private char[] substitutions = new[] { ' ', '.', ',', '(', ')', '\"', '\\', ';' };
+        private char[] substitutions = new[] { ' ', '.', ',', '(', ')', '\"', '\\', ';', '/' };
 
         public string InputForLexer { get; private set; }
 

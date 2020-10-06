@@ -120,26 +120,25 @@ namespace atomicdbstarter
                 List<string> insertCommands = TitanicDatasetToSql.TitanicCsvToSql(datasetPathToLoad);
                 int insertCount = 0;
 
+                await using (ITransaction tran = logManager.CreateTransaction(pageManager))
+                {
+                    await queryEntryGate.Execute(insertCommands[0], tran).AllResultsAsync();
+                    await tran.Commit();
+                }
+
                 for (int i  = 0; i < repCount; i++)
                 {
-                    foreach (string cmd in insertCommands)
+                    foreach (string cmd in insertCommands.Skip(1))
                     {
                         await using (ITransaction tran = logManager.CreateTransaction(pageManager))
                         {
-                            try
-                            {
-                                await queryEntryGate.Execute(cmd, tran).AllResultsAsync();
-                                await tran.Commit();
-                                insertCount++;
-                            }
-                            catch (Exception)
-                            {
-                                await tran.Rollback();
-                            }
+                            await queryEntryGate.Execute(cmd, tran).AllResultsAsync();
+                            await tran.Commit();
+                            insertCount++;
                         }
                     }
 
-                    Console.WriteLine("Loaded iteration {0}/{1}", i, repCount);
+                    Console.WriteLine("Loaded iteration {0}/{1}", i + 1, repCount);
                 }
 
                 Console.WriteLine("Loaded {0} rows.", insertCount);
