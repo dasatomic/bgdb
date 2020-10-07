@@ -46,12 +46,10 @@ namespace QueryProcessing
         {
             // Just prototyping for now. This needs a lot of refactoring.
 
-            foreach (string groupBy in groupByColumns)
+            foreach (string groupByColumn in groupByColumns)
             {
-                if (!metadataColumns.Any(mc => mc.ColumnName == groupBy))
-                {
-                    throw new KeyNotFoundException($"Unknown column {groupBy}");
-                }
+                // Just checking whether all columns have correct name.
+                var _ = QueryProcessingAccessors.GetMetadataColumn(groupByColumn, metadataColumns);
             }
 
             // metadata column, is extended.
@@ -61,31 +59,25 @@ namespace QueryProcessing
                     if (c.IsAggregate)
                     {
                         var agg = ((Sql.columnSelect.Aggregate)c).Item;
-                        if (!metadataColumns.Any(mc => mc.ColumnName == agg.Item2))
-                        {
-                            throw new KeyNotFoundException($"Can't find columns in agg.");
-                        }
-
-                        MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == agg.Item2);
+                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(agg.Item2, metadataColumns);
 
                         if (agg.Item1.IsCount)
                         {
                             // For count we need to update return type to int.
-                            mc.ColumnType = new ColumnInfo(ColumnType.Int);
-                            mc.ColumnName = mc.ColumnName + "_Count";
+                            mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Count", new ColumnInfo(ColumnType.Int));
                             return (mc, true);
                         }
                         else if (agg.Item1.IsMax)
                         {
-                            mc.ColumnName = mc.ColumnName + "_Max";
+                            mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Max", mc.ColumnType);
                         }
                         else if (agg.Item1.IsMin)
                         {
-                            mc.ColumnName = mc.ColumnName + "_Min";
+                            mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Min", mc.ColumnType);
                         }
                         else if (agg.Item1.IsSum)
                         {
-                            mc.ColumnName = mc.ColumnName + "_Sum";
+                            mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Sum", mc.ColumnType);
                         }
 
                         return (mc, false);
@@ -93,12 +85,8 @@ namespace QueryProcessing
                     else if (c.IsProjection)
                     {
                         string projection = ((Sql.columnSelect.Projection)c).Item;
-                        if (!metadataColumns.Any(mc => mc.ColumnName == projection))
-                        {
-                            throw new KeyNotFoundException($"Can't find columns in agg.");
-                        }
-
-                        return (metadataColumns.First(mc => mc.ColumnName == projection), false);
+                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projection, metadataColumns);
+                        return (mc, false);
                     }
                     else
                     {
@@ -122,11 +110,6 @@ namespace QueryProcessing
             Tuple<Sql.aggType, string>[] aggregators = selectColumns
                 .Where(c => c.IsAggregate == true)
                 .Select(c => ((Sql.columnSelect.Aggregate)c).Item).ToArray();
-
-            if (aggregators.Select(agg => agg.Item2).Except(metadataColumns.Select(mc => mc.ColumnName)).Any())
-            {
-                throw new KeyNotFoundException($"Can't find columns in agg.");
-            }
 
             (int?, ColumnInfo?)[] projectExtendInfo = projectColumns.Select<(MetadataColumn, bool), (int?, ColumnInfo?)>(pc =>
             {
@@ -152,15 +135,25 @@ namespace QueryProcessing
                 {
                     Tuple<Sql.aggType, string> agg = ((Sql.columnSelect.Aggregate)column).Item;
 
-                    mdColumnsForAggs[posInAggs] = metadataColumns.First(metadataColumns => metadataColumns.ColumnName == agg.Item2);
-
-                    // Relative position.
-                    mdColumnsForAggs[posInAggs].ColumnId = posInAggs + posInGroupBy;
+                    mdColumnsForAggs[posInAggs] = QueryProcessingAccessors.GetMetadataColumn(agg.Item2, metadataColumns);
 
                     if (agg.Item1.IsCount)
                     {
-                        // For count we need to change column type to int.
-                        mdColumnsForAggs[posInAggs].ColumnType = new ColumnInfo(ColumnType.Int);
+                        // Relative position + for count change type to int.
+                        mdColumnsForAggs[posInAggs] = new MetadataColumn(
+                            posInAggs + posInGroupBy,
+                            mdColumnsForAggs[posInAggs].TableId,
+                            mdColumnsForAggs[posInAggs].ColumnName,
+                            new ColumnInfo(ColumnType.Int));
+                    }
+                    else
+                    {
+                        // Relative position.
+                        mdColumnsForAggs[posInAggs] = new MetadataColumn(
+                            posInAggs + posInGroupBy,
+                            mdColumnsForAggs[posInAggs].TableId,
+                            mdColumnsForAggs[posInAggs].ColumnName,
+                            mdColumnsForAggs[posInAggs].ColumnType);
                     }
 
                     posInAggs++;
@@ -168,10 +161,9 @@ namespace QueryProcessing
                 else if (column.IsProjection)
                 {
                     string groupby = ((Sql.columnSelect.Projection)column).Item;
-                    mdColumnsForGroupBy[posInGroupBy] = metadataColumns.First(metadataColumns => metadataColumns.ColumnName == groupby);
+                    mdColumnsForGroupBy[posInGroupBy] = QueryProcessingAccessors.GetMetadataColumn(groupby, metadataColumns);
 
                     // Group by is taking from source op. No need for relative positions.
-
                     posInGroupBy++;
                 }
                 else

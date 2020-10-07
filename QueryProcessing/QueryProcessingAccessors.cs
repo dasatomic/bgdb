@@ -1,12 +1,66 @@
 ﻿using MetadataManager;
 using PageManager;
+using QueryProcessing.Exceptions;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace QueryProcessing
 {
     static class QueryProcessingAccessors
     {
+        public static MetadataColumn GetMetadataColumn(string name, MetadataColumn[] metadataColumns)
+        {
+            if (name.Contains("."))
+            {
+                if (name.Count(c => c == '.') != 2)
+                {
+                    throw new InvalidColumnNameException();
+                }
+
+                // At this moment all columns should have full name.
+                // So just find the column.
+                foreach (MetadataColumn mc in metadataColumns)
+                {
+                    if (mc.ColumnName == name)
+                    {
+                        return mc;
+                    }
+                }
+
+                throw new InvalidColumnNameException();
+            }
+            else
+            {
+                // ignore table name.
+                // also need to insure that there is only 1 identifier with this name.
+                MetadataColumn? foundMc = null;
+                foreach (MetadataColumn mc in metadataColumns)
+                {
+                    if (mc.ColumnName.Split('.')[1] == name)
+                    {
+                        if (foundMc == null)
+                        {
+                            foundMc = mc;
+                        }
+                        else
+                        {
+                            throw new AmbiguousColumnNameException();
+                        }
+                    }
+                }
+
+                if (foundMc != null)
+                {
+                    return foundMc.Value;
+                }
+                else
+                {
+                    throw new InvalidColumnNameException();
+                }
+            }
+        }
+
         public static IComparable MetadataColumnRowsetHolderFetcher(MetadataColumn mc, RowHolder rowHolder)
         {
             // TODO: Can't use ColumnId as fetcher.

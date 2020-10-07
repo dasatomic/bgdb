@@ -79,15 +79,17 @@ namespace QueryProcessing
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
 
             // Scan Op.
-            PhyOpScan scanOp = new PhyOpScan(table.Collection, tran, table.Columns);
+            PhyOpScan scanOp = new PhyOpScan(table.Collection, tran, table.Columns, table.TableName);
 
             // Where op.
             IPhysicalOperator<RowHolder> sourceForProject = scanOp;
 
+            IPhysicalOperator<RowHolder> sourceForWhere = scanOp;
+
             if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Where))
             {
                 Sql.where whereStatement = sqlStatement.Where.Value;
-                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, table.Columns, stringNormalizer));
+                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, sourceForWhere.GetOutputColumns(), stringNormalizer));
                 sourceForProject = filterOp;
             }
 
@@ -95,7 +97,7 @@ namespace QueryProcessing
             {
                 string[] groupByColumns = sqlStatement.GroupBy.ToArray();
 
-                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, columns, table.Columns);
+                GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, columns, sourceForProject.GetOutputColumns());
                 PhyOpGroupBy phyOpGroupBy = new PhyOpGroupBy(sourceForProject, groupByFunctors);
 
                 return new RowProvider(phyOpGroupBy.Iterate(tran), groupByFunctors.ProjectColumnInfo);
@@ -113,13 +115,8 @@ namespace QueryProcessing
                     List<MetadataColumn> columnMapping = new List<MetadataColumn>();
                     foreach (string columnName in projections)
                     {
-                        if (!table.Columns.Any(tbl => tbl.ColumnName == columnName))
-                        {
-
-                            throw new KeyNotFoundException(string.Format("Invalid column name {0}", columnName));
-                        }
-
-                        columnMapping.Add(table.Columns.FirstOrDefault(c => c.ColumnName == columnName));
+                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(columnName, sourceForProject.GetOutputColumns());
+                        columnMapping.Add(mc);
                     }
 
                     PhyOpProject projectOp = new PhyOpProject(sourceForProject, columnMapping.Select(mc => mc.ColumnId).ToArray(), topRows);

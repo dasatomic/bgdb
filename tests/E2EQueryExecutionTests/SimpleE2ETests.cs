@@ -267,7 +267,7 @@ namespace E2EQueryExecutionTests
         [Test]
         public void SelectInvalidColumn()
         {
-            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            Assert.ThrowsAsync<InvalidColumnNameException>(async () =>
             {
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
                 {
@@ -389,17 +389,17 @@ namespace E2EQueryExecutionTests
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager))
             {
                 var res = await this.queryEntryGate.BuildExecutionTree("SELECT d, c, b, a FROM T1", tran);
-                Assert.AreEqual("D", res.ColumnInfo[0].ColumnName);
+                Assert.AreEqual("T1.D", res.ColumnInfo[0].ColumnName);
                 Assert.AreEqual(ColumnType.String, res.ColumnInfo[0].ColumnType.ColumnType);
                 Assert.AreEqual(20, res.ColumnInfo[0].ColumnType.RepCount);
 
-                Assert.AreEqual("C", res.ColumnInfo[1].ColumnName);
+                Assert.AreEqual("T1.C", res.ColumnInfo[1].ColumnName);
                 Assert.AreEqual(ColumnType.Double, res.ColumnInfo[1].ColumnType.ColumnType);
 
-                Assert.AreEqual("B", res.ColumnInfo[2].ColumnName);
+                Assert.AreEqual("T1.B", res.ColumnInfo[2].ColumnName);
                 Assert.AreEqual(ColumnType.Int, res.ColumnInfo[2].ColumnType.ColumnType);
 
-                Assert.AreEqual("A", res.ColumnInfo[3].ColumnName);
+                Assert.AreEqual("T1.A", res.ColumnInfo[3].ColumnName);
                 Assert.AreEqual(ColumnType.Int, res.ColumnInfo[3].ColumnType.ColumnType);
 
                 Assert.AreEqual(0, await res.Enumerator.CountAsync());

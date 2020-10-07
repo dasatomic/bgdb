@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
+using QueryProcessing.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -168,7 +169,7 @@ GROUP BY a
         [Test]
         public void GroupByInvalidColumn()
         {
-            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            Assert.ThrowsAsync<InvalidColumnNameException>(async () =>
             {
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
                 {
@@ -186,7 +187,7 @@ GROUP BY z
         [Test]
         public void AggInvalidColumn()
         {
-            Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            Assert.ThrowsAsync<InvalidColumnNameException>(async () =>
             {
                 await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
                 {

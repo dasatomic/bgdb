@@ -12,12 +12,23 @@ namespace QueryProcessing
         private readonly IPageCollection<RowHolder> source;
         private readonly ITransaction tran;
         private readonly MetadataColumn[] scanColumnInfo;
+        private readonly string collectionName;
 
-        public PhyOpScan(IPageCollection<RowHolder> collection, ITransaction tran, MetadataColumn[] scanColumnInfo)
+        public PhyOpScan(IPageCollection<RowHolder> collection, ITransaction tran, MetadataColumn[] scanColumnInfo, string collectionName)
         {
             this.source = collection;
             this.tran = tran;
-            this.scanColumnInfo = scanColumnInfo;
+            this.collectionName = collectionName;
+
+            this.scanColumnInfo = new MetadataColumn[scanColumnInfo.Length];
+            for (int i = 0; i < scanColumnInfo.Length; i++)
+            {
+                this.scanColumnInfo[i] = new MetadataColumn(
+                    scanColumnInfo[i].ColumnId,
+                    scanColumnInfo[i].TableId,
+                    collectionName + "." + scanColumnInfo[i].ColumnName,
+                    scanColumnInfo[i].ColumnType);
+            }
         }
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)

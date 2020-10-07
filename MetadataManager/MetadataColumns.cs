@@ -1,9 +1,7 @@
 ﻿using DataStructures;
 using PageManager;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MetadataManager
@@ -11,14 +9,22 @@ namespace MetadataManager
     public struct MetadataColumn
     {
         public const int ColumnIdColumnPos = 0;
-        public int ColumnId;
+        public readonly int ColumnId;
         public const int TableIdColumnPos = 1;
-        public int TableId;
+        public readonly int TableId;
         public const int ColumnNameColumnPos = 2;
-        public string ColumnName;
+        public readonly string ColumnName;
         public const int ColumnTypeColumnPos = 3;
         public const int ColumnTypeLength = 4;
-        public ColumnInfo ColumnType;
+        public readonly ColumnInfo ColumnType;
+
+        public MetadataColumn(int columnId, int tableId, string columnName, ColumnInfo columnInfo)
+        {
+            this.ColumnId = columnId;
+            this.TableId = tableId;
+            this.ColumnName = columnName;
+            this.ColumnType = columnInfo;
+        }
     }
 
     /// <summary>
@@ -91,19 +97,14 @@ namespace MetadataManager
         {
             await foreach (RowHolder rh in pageListCollection.Iterate(tran))
             {
-                var mdObj =
-                    new MetadataColumn()
-                    {
-                        ColumnId = rh.GetField<int>(MetadataColumn.ColumnIdColumnPos),
-                        TableId = rh.GetField<int>(MetadataColumn.TableIdColumnPos),
-                        ColumnType = new ColumnInfo((ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos), rh.GetField<int>(MetadataColumn.ColumnTypeLength))
-                    };
-
                 PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos);
                 char[] columnName = await this.stringHeap.Fetch(stringPointer, tran);
-                mdObj.ColumnName = new string(columnName);
 
-                yield return mdObj;
+                yield return new MetadataColumn(
+                    rh.GetField<int>(MetadataColumn.ColumnIdColumnPos),
+                        rh.GetField<int>(MetadataColumn.TableIdColumnPos),
+                        new string(columnName),
+                        new ColumnInfo((ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos), rh.GetField<int>(MetadataColumn.ColumnTypeLength)));
             }
         }
 

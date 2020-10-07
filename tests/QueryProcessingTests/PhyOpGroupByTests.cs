@@ -66,7 +66,7 @@ namespace QueryProcessingTests
 
             tran = logManager.CreateTransaction(allocator);
             PageListCollection pcl = new PageListCollection(allocator, columnInfos, table.RootPage);
-            scan = new PhyOpScan(pcl, tran, table.Columns);
+            scan = new PhyOpScan(pcl, tran, table.Columns, "Table");
         }
 
         [Test]

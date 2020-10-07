@@ -13,7 +13,7 @@ namespace QueryProcessing
             if (op.IsId)
             {
                 Sql.value.Id idVal = (Sql.value.Id)op;
-                MetadataColumn mc = metadataColumns.First(mc => mc.ColumnName == idVal.Item);
+                MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idVal.Item, metadataColumns);
                 return QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(mc, rowHolder);
             }
             else if (op.IsFloat)
