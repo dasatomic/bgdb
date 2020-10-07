@@ -254,7 +254,7 @@ GROUP BY b
         }
 
         [Test]
-        public async Task UsingFullNameIncorrect()
+        public void UsingFullNameIncorrect()
         {
             Assert.ThrowsAsync<InvalidColumnNameException>(async () =>
             {
