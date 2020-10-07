@@ -157,5 +157,56 @@ GROUP BY T1.c
                 await tran.Commit();
             }
         }
+
+        [Test]
+        public async Task JoinRegressionTest1()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "CREATE_TABLE"))
+            {
+                string createTableQuery = "CREATE TABLE TR1 (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).AllResultsAsync();
+
+                createTableQuery = "CREATE TABLE TR2 (TYPE_INT a, TYPE_STRING(10) c)";
+                await this.queryEntryGate.Execute(createTableQuery, tran).AllResultsAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "INSERT"))
+            {
+                string[] insertQuerys = new[]
+                {
+                    @"INSERT INTO TR1 VALUES (1, 1.1, 'somerandomstring1')",
+                    @"INSERT INTO TR1 VALUES (2, 2.2, 'somerandomstring1')",
+                    @"INSERT INTO TR1 VALUES (3, 2.2, 'somerandomstring2')",
+                    @"INSERT INTO TR1 VALUES (5, 14.2, 'somerandomstring2')",
+                    @"INSERT INTO TR1 VALUES (5, 14.2, 'somerandomstring2')",
+                    @"INSERT INTO TR2 VALUES (1, 'somerandomstring2')",
+                    @"INSERT INTO TR2 VALUES (100, 'somerandomstring2')",
+                };
+
+                foreach (string insertQuery in insertQuerys)
+                {
+                    await this.queryEntryGate.Execute(insertQuery, tran).AllResultsAsync();
+                }
+
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT * FROM TR1 JOIN TR2 ON TR1.c = TR2.c WHERE TR2.A = 100 AND TR1.a = 3";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+
+                // Join returns 6 rows (3 (from  TR1) X 2 (from TR2)
+                // filter removes one group from TR2 and one leaves one in TR1. We are left with 1 row.
+                Assert.AreEqual(1, result.Length);
+
+                Assert.AreEqual(3, result[0].GetField<int>(0));
+                Assert.AreEqual("somerandomstring2", result[0].GetStringField(4));
+
+                await tran.Commit();
+            }
+        }
+
     }
 }

@@ -18,9 +18,7 @@ namespace QueryProcessing
             this.sourceLeft = sourceLeft;
             this.sourceRight = sourceRight;
 
-            this.returnMdColumns = new MetadataColumn[sourceLeft.GetOutputColumns().Length + sourceRight.GetOutputColumns().Length];
-            sourceLeft.GetOutputColumns().CopyTo(returnMdColumns, 0);
-            sourceRight.GetOutputColumns().CopyTo(returnMdColumns, sourceLeft.GetOutputColumns().Length);
+            this.returnMdColumns = QueryProcessingAccessors.MergeColumns(sourceLeft.GetOutputColumns(), sourceRight.GetOutputColumns());
         }
 
         public MetadataColumn[] GetOutputColumns() => returnMdColumns;
