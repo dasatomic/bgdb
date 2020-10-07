@@ -13,7 +13,7 @@ namespace QueryProcessing
         {
             if (name.Contains("."))
             {
-                if (name.Count(c => c == '.') != 2)
+                if (name.Count(c => c == '.') != 1)
                 {
                     throw new InvalidColumnNameException();
                 }

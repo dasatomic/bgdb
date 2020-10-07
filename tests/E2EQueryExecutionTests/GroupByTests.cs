@@ -239,6 +239,39 @@ FROM MyTable
         }
 
         [Test]
+        public async Task UsingFullNameCorrect()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"
+SELECT SUM(MyTable.a), COUNT(a), COUNT(MyTable.c), MyTable.b
+FROM MyTable
+GROUP BY b
+";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task UsingFullNameIncorrect()
+        {
+            Assert.ThrowsAsync<InvalidColumnNameException>(async () =>
+            {
+                await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+                {
+                    string query = @"
+    SELECT SUM(MyTable.a), COUNT(a), COUNT(MyTable.c), NotMyTable.b
+    FROM MyTable
+    GROUP BY b
+    ";
+                    RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                    await tran.Commit();
+                }
+            });
+        }
+
+        [Test]
         public async Task AggBeforeGroupBy()
         {
 
