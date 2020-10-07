@@ -284,5 +284,31 @@ namespace PageManagerTests
             Assert.AreEqual("NEWTEST".ToCharArray(), rhfnew.GetStringField(2));
             Assert.AreEqual("TEST0".ToCharArray(), rhfnew.GetStringField(3));
         }
+
+        [Test]
+        public void Merge()
+        {
+
+            var columnTypes1 = new ColumnInfo[] { 
+                new ColumnInfo(ColumnType.String, 10), new ColumnInfo(ColumnType.String, 5), new ColumnInfo(ColumnType.Int) };
+            var rhf1 = new RowHolder(columnTypes1);
+
+            rhf1.SetField(0, "TESTTEST00".ToCharArray());
+            rhf1.SetField(1, "TEST0".ToCharArray());
+            rhf1.SetField(2, 17);
+
+            var columnTypes2 = new ColumnInfo[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 5) };
+            var rhf2 = new RowHolder(columnTypes2);
+
+            rhf2.SetField(0, 22);
+            rhf2.SetField(1, "TESTN".ToCharArray());
+
+            var rhfMerged = rhf1.Merge(rhf2);
+            Assert.AreEqual("TESTTEST00".ToCharArray(), rhfMerged.GetStringField(0));
+            Assert.AreEqual("TEST0".ToCharArray(), rhfMerged.GetStringField(1));
+            Assert.AreEqual(17, rhfMerged.GetField<int>(2));
+            Assert.AreEqual(22, rhfMerged.GetField<int>(3));
+            Assert.AreEqual("TESTN".ToCharArray(), rhfMerged.GetStringField(4));
+        }
     }
 }

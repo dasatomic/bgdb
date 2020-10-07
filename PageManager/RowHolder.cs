@@ -251,6 +251,28 @@ namespace PageManager
             return new RowHolder(newColPositions, newStorage);
         }
 
+        public RowHolder Merge(RowHolder that)
+        {
+            short[] newColPositions = new short[this.ColumnPosition.Length + that.ColumnPosition.Length];
+
+            for (int i = 0; i < this.ColumnPosition.Length; i++)
+            {
+                newColPositions[i] = this.ColumnPosition[i];
+            }
+
+            for (int i = 0; i < that.ColumnPosition.Length; i++)
+            {
+                newColPositions[this.ColumnPosition.Length + i] = (short)(that.ColumnPosition[i] + this.Storage.Length);
+            }
+
+            byte[] newStorage = new byte[this.Storage.Length + that.Storage.Length];
+
+            this.Storage.CopyTo(newStorage, 0);
+            that.Storage.CopyTo(newStorage, this.Storage.Length);
+
+            return new RowHolder(newColPositions, newStorage);
+        }
+
         public override int GetHashCode()
         {
             HashCode hash = new HashCode();

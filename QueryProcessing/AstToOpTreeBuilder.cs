@@ -81,15 +81,45 @@ namespace QueryProcessing
             // Scan Op.
             PhyOpScan scanOp = new PhyOpScan(table.Collection, tran, table.Columns, table.TableName);
 
-            // Where op.
             IPhysicalOperator<RowHolder> sourceForProject = scanOp;
 
             IPhysicalOperator<RowHolder> sourceForWhere = scanOp;
 
+            // joins.
+            if (sqlStatement.Joins.Any())
+            {
+                IPhysicalOperator<RowHolder> currJoinSource = scanOp;
+                for (int i = 0; i < sqlStatement.Joins.Length; i++)
+                {
+                    if (!sqlStatement.Joins[i].Item2.IsInner)
+                    {
+                        throw new NotSupportedException("Only inner join is supported at this point.");
+                    }
+
+                    MetadataTable joinRightTable = await tableManager.GetByName(sqlStatement.Joins[i].Item1, tran).ConfigureAwait(false);
+                    PhyOpScan scanOpRight = new PhyOpScan(joinRightTable.Collection, tran, joinRightTable.Columns, joinRightTable.TableName);
+
+                    Func<RowHolder, bool> filter = (_) => true;
+                    if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Joins[i].Item3))
+                    {
+                        filter = FilterStatementBuilder.EvalWhere(
+                            sqlStatement.Joins[i].Item3.Value,
+                            QueryProcessingAccessors.MergeColumns(currJoinSource.GetOutputColumns(), scanOpRight.GetOutputColumns()),
+                            stringNormalizer);
+                    }
+
+                    currJoinSource = new PhyOpLoopInnerJoin(currJoinSource, scanOpRight, filter);
+                }
+
+                sourceForProject = currJoinSource;
+                sourceForWhere = currJoinSource;
+            }
+
+            // Where op.
             if (FSharpOption<Sql.where>.get_IsSome(sqlStatement.Where))
             {
                 Sql.where whereStatement = sqlStatement.Where.Value;
-                PhyOpFilter filterOp = new PhyOpFilter(scanOp, FilterStatementBuilder.EvalWhere(whereStatement, sourceForWhere.GetOutputColumns(), stringNormalizer));
+                PhyOpFilter filterOp = new PhyOpFilter(sourceForWhere, FilterStatementBuilder.EvalWhere(whereStatement, sourceForWhere.GetOutputColumns(), stringNormalizer));
                 sourceForProject = filterOp;
             }
 

@@ -9,6 +9,24 @@ namespace QueryProcessing
 {
     static class QueryProcessingAccessors
     {
+        public static MetadataColumn[] MergeColumns(MetadataColumn[] left, MetadataColumn[] right)
+        {
+            MetadataColumn[] res = new MetadataColumn[left.Length + right.Length];
+            left.CopyTo(res, 0);
+
+            // Need to update offsets here.
+            for (int i = 0; i < right.Length; i++)
+            {
+                res[i + left.Length] = new MetadataColumn(
+                    right[i].ColumnId + left.Length, // aligning the offset to match new position.
+                    right[i].TableId,
+                    right[i].ColumnName,
+                    right[i].ColumnType);
+            }
+
+            return res;
+        }
+
         public static MetadataColumn GetMetadataColumn(string name, MetadataColumn[] metadataColumns)
         {
             if (name.Contains("."))
