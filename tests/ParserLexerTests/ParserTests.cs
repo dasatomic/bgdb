@@ -213,5 +213,33 @@ namespace ParserLexerTests
             Assert.IsTrue(FSharpOption<int>.get_IsSome(selectStatement.Top));
             Assert.AreEqual(10, selectStatement.Top.Value);
         }
+
+        [Test]
+        public void DotInNameTest()
+        {
+            string query =
+                @"SELECT MAX(t1.x), MIN(t1.y), t1.z   
+                FROM t1
+                GROUP BY t1.z";
+
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
+
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+
+            var columns = (((Sql.selectType.ColumnList)selectStatement.Columns).Item);
+
+            Assert.AreEqual("t1.x", ((Sql.columnSelect.Aggregate)columns[0]).Item.Item2);
+            Assert.AreEqual(Sql.aggType.Max ,((Sql.columnSelect.Aggregate)columns[0]).Item.Item1);
+
+            Assert.AreEqual("t1.y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
+            Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
+
+            Assert.AreEqual("t1.z", ((Sql.columnSelect.Projection)columns[2]).Item);
+        }
     }
 }
