@@ -66,6 +66,30 @@ SELECT MAX(a), MIN(b), c FROM T1 WHERE a > 1 GROUP BY c
 Total rows returned 2
 ```
 
+Or let us create one more table and test out joins.
+
+```
+CREATE TABLE T2 (TYPE_INT a, TYPE_STRING(10) c)
+INSERT INTO T2 VALUES (1, 'somerandomstring2')
+INSERT INTO T2 VALUES (100, 'somerandomstring2')
+```
+
+Needlessly complex query that illustrates data flow:
+
+```
+SELECT MAX(T1.a), MIN(T1.b), T2.c 
+FROM T1 JOIN T2 ON T1.c = T2.c
+WHERE T2.a = 100
+GROUP BY T2.c
+
+| TR1.A_Max | TR1.B_Min |             TR2.C |
+---------------------------------------------
+|         5 |       2.2 | somerandomstring2 |
+---------------------------------------------
+
+Total rows returned 1
+```
+
 To experiment with slightly larger datasets you can also load titanic dataset by passing set_load_path argument
 
 ```
@@ -172,6 +196,7 @@ At this point list of features is rather limited but, hopefully, the list will k
 5) Aggregates (`MAX`, `MIN`, `SUM`, `COUNT`)
 6) Support for wildcard select (`SELECT * FROM`)
 7) Support for TOP clause (`SELECT TOP N * FROM`)
+8) Support for JOIN clause (only `INNER JOIN` for now)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)

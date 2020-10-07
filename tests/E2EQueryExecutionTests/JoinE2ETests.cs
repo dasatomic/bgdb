@@ -179,7 +179,6 @@ GROUP BY T1.c
                     @"INSERT INTO TR1 VALUES (2, 2.2, 'somerandomstring1')",
                     @"INSERT INTO TR1 VALUES (3, 2.2, 'somerandomstring2')",
                     @"INSERT INTO TR1 VALUES (5, 14.2, 'somerandomstring2')",
-                    @"INSERT INTO TR1 VALUES (5, 14.2, 'somerandomstring2')",
                     @"INSERT INTO TR2 VALUES (1, 'somerandomstring2')",
                     @"INSERT INTO TR2 VALUES (100, 'somerandomstring2')",
                 };
