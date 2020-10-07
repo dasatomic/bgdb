@@ -241,5 +241,40 @@ namespace ParserLexerTests
 
             Assert.AreEqual("t1.z", ((Sql.columnSelect.Projection)columns[2]).Item);
         }
+
+        [Test]
+        public void JoinTest()
+        {
+            string query = @"
+SELECT t1.a, t2.b, t3.c
+FROM t1
+JOIN t2 ON t1.a = t2.b
+JOIN t3
+WHERE t1.a > 20
+";
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+            
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            Assert.IsTrue(statement.IsSelect);
+
+            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+
+            Assert.AreEqual(2, selectStatement.Joins.Length);
+
+            Assert.AreEqual("t2", selectStatement.Joins[0].Item1);
+            Assert.AreEqual(Sql.joinType.Inner, selectStatement.Joins[0].Item2);
+            Assert.IsTrue(FSharpOption<Sql.where>.get_IsSome(selectStatement.Joins[0].Item3));
+            Sql.where whereStatement = selectStatement.Joins[0].Item3.Value;
+            Assert.IsTrue(whereStatement.IsCond);
+            Sql.where.Cond whereCond = (Sql.where.Cond)whereStatement;
+            Assert.IsTrue(whereCond.Item.Item1.IsId);
+            Assert.IsTrue(whereCond.Item.Item3.IsId);
+
+            Assert.AreEqual("t3", selectStatement.Joins[1].Item1);
+            Assert.AreEqual(Sql.joinType.Inner, selectStatement.Joins[1].Item2);
+            Assert.IsFalse(FSharpOption<Sql.where>.get_IsSome(selectStatement.Joins[1].Item3));
+        }
     }
 }

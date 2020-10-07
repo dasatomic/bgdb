@@ -125,6 +125,7 @@ joinClause:
     | INNER JOIN ID joinOnClause    { $3, Inner, $4 }
     | LEFT JOIN ID joinOnClause     { $3, Left, $4 }
     | RIGHT JOIN ID joinOnClause    { $3, Right, $4 }
+    | JOIN ID joinOnClause          { $2, Inner, $3 }
  
 joinOnClause:   
     |                               { None }
