@@ -78,7 +78,8 @@ Needlessly complex query that illustrates data flow:
 
 ```
 SELECT MAX(T1.a), MIN(T1.b), T2.c 
-FROM T1 JOIN T2 ON T1.c = T2.c
+FROM T1
+JOIN T2 ON T1.c = T2.c
 WHERE T2.a = 100
 GROUP BY T2.c
 
