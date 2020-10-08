@@ -1,12 +1,13 @@
 ﻿using MetadataManager;
+using Microsoft.FSharp.Core;
 using PageManager;
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    static class FilterStatementBuilder
+    class FilterStatementBuilder : IStatementTreeBuilder
     {
         private static IComparable ValToIComp(Sql.value op, ref MetadataColumn[] metadataColumns, ref RowHolder rowHolder)
         {
@@ -102,6 +103,20 @@ namespace QueryProcessing
             };
 
             return returnFilterFunc;
+        }
+
+        public Task<IPhysicalOperator<RowHolder>> BuildStatement(Sql.sqlStatement statement, ITransaction tran, IPhysicalOperator<RowHolder> source, InputStringNormalizer inputStringNormalizer)
+        {
+            if (FSharpOption<Sql.where>.get_IsSome(statement.Where))
+            {
+                Sql.where whereStatement = statement.Where.Value;
+                IPhysicalOperator<RowHolder> filterOp = new PhyOpFilter(source, FilterStatementBuilder.EvalWhere(whereStatement, source.GetOutputColumns(), inputStringNormalizer));
+                return Task.FromResult(filterOp);
+            }
+            else
+            {
+                return Task.FromResult(source);
+            }
         }
     }
 }
