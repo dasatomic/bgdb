@@ -19,14 +19,7 @@ namespace ParserLexerTests
                 WHERE x = 50 AND y = 20   
                 ORDER BY x ASC, y DESC, z";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
                 new string[] { "x", "y", "z" },
@@ -41,14 +34,7 @@ namespace ParserLexerTests
                 FROM t1   
                 WHERE x = 50 AND y = 20";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
                 new string[] { "x", "y", "z" },
@@ -83,15 +69,7 @@ namespace ParserLexerTests
         {
             string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING(10) C)";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-
-            Assert.IsTrue(statement.IsCreate);
-
-            var createStatement = ((Sql.DmlDdlSqlStatement.Create)statement).Item;
+            var createStatement = GetCreateTableStatement(query);
 
             Assert.AreEqual("mytable", createStatement.Table);
             Assert.IsTrue(createStatement.ColumnList[0].Item1.IsIntCType);
@@ -106,15 +84,7 @@ namespace ParserLexerTests
         {
             string query = "INSERT INTO mytable VALUES (17,'11','TST')";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-
-            Assert.IsTrue(statement.IsInsert);
-
-            var insertStatement = ((Sql.DmlDdlSqlStatement.Insert)statement).Item;
+            var insertStatement = GetInsertStatement(query);
 
             Assert.AreEqual("mytable", insertStatement.Table);
             Assert.IsTrue(insertStatement.Values[0].IsInt);
@@ -134,14 +104,7 @@ namespace ParserLexerTests
                 FROM t1   
                 GROUP BY z, y, x";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(new string[] { "x", "y", "z" },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
@@ -159,14 +122,7 @@ namespace ParserLexerTests
                 FROM t1   
                 GROUP BY z";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             var columns = (((Sql.selectType.ColumnList)selectStatement.Columns).Item);
 
@@ -184,14 +140,7 @@ namespace ParserLexerTests
         {
             string query = "SELECT * FROM t1";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
             Assert.IsTrue(selectStatement.Columns.IsStar);
         }
 
@@ -200,14 +149,7 @@ namespace ParserLexerTests
         {
             string query = "SELECT TOP 10 * FROM t1";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
             Assert.IsTrue(selectStatement.Columns.IsStar);
 
             Assert.IsTrue(FSharpOption<int>.get_IsSome(selectStatement.Top));
@@ -218,18 +160,11 @@ namespace ParserLexerTests
         public void DotInNameTest()
         {
             string query =
-                @"SELECT MAX(t1.x), MIN(t1.y), t1.z   
+                @"SELECT MAX(t1.x), MIN(t1.y), t1.z
                 FROM t1
                 GROUP BY t1.z";
 
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             var columns = (((Sql.selectType.ColumnList)selectStatement.Columns).Item);
 
@@ -252,14 +187,7 @@ JOIN t2 ON t1.a = t2.b
 JOIN t3
 WHERE t1.a > 20
 ";
-            var lexbuf = LexBuffer<char>.FromString(query);
-            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
-            
-            var f = FuncConvert.FromFunc(func);
-            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
-            Assert.IsTrue(statement.IsSelect);
-
-            var selectStatement = ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+            var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(2, selectStatement.Joins.Length);
 
@@ -276,5 +204,54 @@ WHERE t1.a > 20
             Assert.AreEqual(Sql.joinType.Inner, selectStatement.Joins[1].Item2);
             Assert.IsFalse(FSharpOption<Sql.where>.get_IsSome(selectStatement.Joins[1].Item3));
         }
+
+        [Test]
+        public void OrderByTest()
+        {
+            string query = "SELECT a, b, c FROM t ORDER BY a";
+            var statement = GetSelectStatement(query);
+
+            Tuple<string, Sql.dir>[] values = statement.OrderBy.ToArray();
+
+            Assert.AreEqual(1, values.Length);
+            Assert.AreEqual("a", values[0].Item1);
+            Assert.AreEqual(Sql.dir.Asc, values[0].Item2);
+        }
+
+        #region Helper
+        private Sql.sqlStatement GetSelectStatement(string query)
+        {
+            Sql.DmlDdlSqlStatement statement = GetSqlStatement(query);
+            Assert.IsTrue(statement.IsSelect);
+
+            return ((Sql.DmlDdlSqlStatement.Select)statement).Item;
+        }
+
+        private Sql.insertStatement GetInsertStatement(string query)
+        {
+            Sql.DmlDdlSqlStatement statement = GetSqlStatement(query);
+            Assert.IsTrue(statement.IsInsert);
+
+            return ((Sql.DmlDdlSqlStatement.Insert)statement).Item;
+        }
+
+        private Sql.createTableStatement GetCreateTableStatement(string query)
+        {
+            Sql.DmlDdlSqlStatement statement = GetSqlStatement(query);
+            Assert.IsTrue(statement.IsCreate);
+
+            return ((Sql.DmlDdlSqlStatement.Create)statement).Item;
+        }
+
+        private static Sql.DmlDdlSqlStatement GetSqlStatement(string query)
+        {
+            var lexbuf = LexBuffer<char>.FromString(query);
+            Func<LexBuffer<char>, SqlParser.token> func = (x) => SqlLexer.tokenize(x);
+
+            var f = FuncConvert.FromFunc(func);
+            Sql.DmlDdlSqlStatement statement = SqlParser.startCT(FuncConvert.FromFunc(func), lexbuf);
+            return statement;
+        }
+        #endregion Helper
     }
 }
