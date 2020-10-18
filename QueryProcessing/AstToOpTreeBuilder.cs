@@ -36,13 +36,14 @@ namespace QueryProcessing
             statementBuildersList.Add(new JoinOpBuilder(metadataManager));
             statementBuildersList.Add(new FilterStatementBuilder());
             statementBuildersList.Add(new AggGroupOpBuilder());
+            statementBuildersList.Add(new OrderByOpBuilder());
             statementBuildersList.Add(new ProjectOpBuilder());
         }
 
 
         public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {
-            // TODO: query builder is currently manual. i.e. SCAN -> optional(JOINS) -> optional(FILTER) -> GROUP BY/PROJECT.
+            // TODO: query builder is currently manual. i.e. SCAN -> optional(JOINS) -> optional(FILTER) -> GROUP BY -> ORDER BY/PROJECT.
             // In future we need to build proper algebrizer, relational algebra rules and work on QO.
 
             IPhysicalOperator<RowHolder> source = null;
