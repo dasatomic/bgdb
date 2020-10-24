@@ -2,7 +2,7 @@
 
 namespace QueryProcessing
 {
-    internal class OrderByColumn
+    public class OrderByColumn
     {
         public enum Direction : int { Asc = 1, Desc = -1}
 

@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace QueryProcessing
 {
-    internal class RowHolderOrderByComparer : IComparer<RowHolder>
+    public class RowHolderOrderByComparer : IComparer<RowHolder>
     {
         private readonly OrderByColumn[] columns;
 
@@ -14,7 +14,7 @@ namespace QueryProcessing
             this.columns = columns;
         }
 
-        public int Compare([AllowNull] RowHolder x, [AllowNull] RowHolder y)
+        public int Compare(RowHolder x, RowHolder y)
         {
             foreach (OrderByColumn c in columns)
             {
@@ -29,9 +29,7 @@ namespace QueryProcessing
         {
             IComparable left = QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(c.column, x);
             IComparable right = QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(c.column, y);
-
-            int result = left.CompareTo(right);
-            return (c.direction == OrderByColumn.Direction.Asc) ? result : -result;
+            return (c.direction == OrderByColumn.Direction.Asc) ? left.CompareTo(right) : right.CompareTo(left);
         }
     }
 }

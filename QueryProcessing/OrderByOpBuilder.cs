@@ -17,16 +17,16 @@ namespace QueryProcessing
 
             OrderByColumn[] orderByColumns = GetOrderByColumns(source.GetOutputColumns(), statement.OrderBy);
 
-            IPhysicalOperator<RowHolder> phyOpOrderBy = new PhyOpOrderBy(source, orderByColumns);
+            IPhysicalOperator<RowHolder> phyOpOrderBy = new PhyOpOrderBy(source, new RowHolderOrderByComparer(orderByColumns));
             return Task.FromResult(phyOpOrderBy);
         }
 
         private OrderByColumn[] GetOrderByColumns(MetadataColumn[] columns, FSharpList<Tuple<string, Sql.dir>> orderBy)
         {
             OrderByColumn[] orderByColumns = new OrderByColumn[orderBy.Length];
-            for(int i = 0; i < orderBy.Length; ++i)
+            for (int i = 0; i < orderBy.Length; ++i)
             {
-                var column = QueryProcessingAccessors.GetMetadataColumn(orderBy[i].Item1, columns);
+                MetadataColumn column = QueryProcessingAccessors.GetMetadataColumn(orderBy[i].Item1, columns);
                 OrderByColumn.Direction direction = orderBy[i].Item2 == Sql.dir.Asc ? OrderByColumn.Direction.Asc : OrderByColumn.Direction.Desc;
 
                 orderByColumns[i] = new OrderByColumn(column, direction);

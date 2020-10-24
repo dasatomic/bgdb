@@ -4,15 +4,15 @@ using System.Collections.Generic;
 
 namespace QueryProcessing
 {
-    internal class PhyOpOrderBy : IPhysicalOperator<RowHolder>
+    public class PhyOpOrderBy : IPhysicalOperator<RowHolder>
     {
         private readonly IPhysicalOperator<RowHolder> source;
-        private readonly OrderByColumn[] orderByColumns;
+        private readonly IComparer<RowHolder> comparer;
 
-        public PhyOpOrderBy(IPhysicalOperator<RowHolder> source, OrderByColumn[] orderByColumns)
+        public PhyOpOrderBy(IPhysicalOperator<RowHolder> source, IComparer<RowHolder> comparer)
         {
             this.source = source;
-            this.orderByColumns = orderByColumns;
+            this.comparer = comparer;
         }
 
         public MetadataColumn[] GetOutputColumns()
@@ -29,7 +29,7 @@ namespace QueryProcessing
                 list.Add(row);
             }
 
-            list.Sort(new RowHolderOrderByComparer(this.orderByColumns));
+            list.Sort(comparer);
 
             foreach (RowHolder row in list)
             {
