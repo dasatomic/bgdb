@@ -22,6 +22,9 @@ namespace QueryProcessing
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
+            // TODO: Temporary solution with in-memory sort operation.
+            //       This will have to change when we add spill operations.
+            //
             List<RowHolder> list = new List<RowHolder>();
 
             await foreach (RowHolder row in this.source.Iterate(tran))

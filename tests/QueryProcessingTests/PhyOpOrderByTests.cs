@@ -16,8 +16,8 @@ namespace QueryProcessingTests
 {
     public class PhyOpOrderByTests
     {
-        private static readonly int Asc = 0;
-        private static readonly int Desc = 1;
+        private const int Asc = 0;
+        private const int Desc = 1;
         private PhyOpScan scan;
         private ITransaction tran;
 
@@ -76,52 +76,34 @@ namespace QueryProcessingTests
             scan = new PhyOpScan(pcl, tran, table.Columns, "Table");
         }
 
-        [Test]
-        public async Task ValidateOrderByOneRow()
+        [Test, Pairwise]
+        public async Task ValidateOrderByOneRow(
+            [Values(Asc, Desc)] int column1Dir,
+            [Range(0, 2)] int column1Id)
         {
-            for (int ColumnDir = Asc; ColumnDir <= Desc; ColumnDir++)
-            {
-                int[] direction = new int[] { ColumnDir };
-
-                await ValidateOrderBy(scan, tran, new int[] { 0 }, direction);
-                await ValidateOrderBy(scan, tran, new int[] { 1 }, direction);
-                await ValidateOrderBy(scan, tran, new int[] { 2 }, direction);
-            }
+            await ValidateOrderBy(scan, tran, new int[] { column1Id }, new int[] { column1Dir });
         }
 
-        [Test]
-        public async Task ValidateOrderByTwoRows()
+        [Test, Pairwise]
+        public async Task ValidateOrderByTwoRows(
+            [Values(Asc, Desc)] int column1Dir,
+            [Values(Asc, Desc)] int column2Dir,
+            [Range(0, 2)] int column1Id,
+            [Range(0, 2)] int column2Id)
         {
-            for (int ColumnDir1 = Asc; ColumnDir1 <= Desc; ColumnDir1++)
-                for (int ColumnDir2 = Asc; ColumnDir2 <= Desc; ColumnDir2++)
-                {
-                    int[] direction = new int[] { ColumnDir1, ColumnDir2 };
-
-                    await ValidateOrderBy(scan, tran, new int[] { 0, 1 }, direction);
-                    await ValidateOrderBy(scan, tran, new int[] { 0, 2 }, direction);
-                    await ValidateOrderBy(scan, tran, new int[] { 1, 0 }, direction);
-                    await ValidateOrderBy(scan, tran, new int[] { 1, 2 }, direction);
-                    await ValidateOrderBy(scan, tran, new int[] { 2, 0 }, direction);
-                    await ValidateOrderBy(scan, tran, new int[] { 2, 1 }, direction);
-                }
+            await ValidateOrderBy(scan, tran, new int[] { column1Id, column2Id }, new int[] { column1Dir, column2Dir });
         }
 
-        [Test]
-        public async Task ValidateOrderByThreeRows()
+        [Test, Pairwise]
+        public async Task ValidateOrderByThreeRows(
+            [Values(Asc, Desc)] int column1Dir,
+            [Values(Asc, Desc)] int column2Dir,
+            [Values(Asc, Desc)] int column3Dir,
+            [Range(0, 2)] int column1Id,
+            [Range(0, 2)] int column2Id,
+            [Range(0, 2)] int column3Id)
         {
-            for (int ColumnDir1 = Asc; ColumnDir1 <= Desc; ColumnDir1++)
-                for (int ColumnDir2 = Asc; ColumnDir2 <= Desc; ColumnDir2++)
-                    for (int ColumnDir3 = Asc; ColumnDir3 <= Desc; ColumnDir3++)
-                    {
-                        int[] direction = new int[] { ColumnDir1, ColumnDir2, ColumnDir3 };
-
-                        await ValidateOrderBy(scan, tran, new int[] { 0, 1, 2 }, direction);
-                        await ValidateOrderBy(scan, tran, new int[] { 0, 2, 1 }, direction);
-                        await ValidateOrderBy(scan, tran, new int[] { 1, 0, 2 }, direction);
-                        await ValidateOrderBy(scan, tran, new int[] { 1, 2, 0 }, direction);
-                        await ValidateOrderBy(scan, tran, new int[] { 2, 0, 1 }, direction);
-                        await ValidateOrderBy(scan, tran, new int[] { 2, 1, 0 }, direction);
-                    }
+            await ValidateOrderBy(scan, tran, new int[] { column1Id, column2Id, column3Id }, new int[] { column1Dir, column2Dir, column3Dir });
         }
 
         #region Helper
