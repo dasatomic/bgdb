@@ -282,5 +282,51 @@ namespace LogManagerTests
                 Assert.IsTrue(p2.Equals(np2, TestGlobals.DummyTran));
             }
         }
+
+        [Test]
+        public async Task PageAllocUndo()
+        {
+            using (Stream stream = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                IPageManager pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                ILogManager manager = new LogManager.LogManager(writer);
+
+                await using ITransaction tranToCommmit = manager.CreateTransaction(pageManager);
+                await using ITransaction tranToUndo = manager.CreateTransaction(pageManager);
+
+                GenerateDataUtils.GenerateSampleData(out ColumnInfo[] types1, out int[][] intColumns1, out double[][] doubleColumns1, out long[][] pagePointerColumns1, out PagePointerOffsetPair[][] pagePointerOffsetColumns1);
+                const int pageCount = 1;
+
+                var p1 = await pageManager.AllocateMixedPage(types1, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tranToCommmit);
+                var p2 = await pageManager.AllocatePageStr(PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tranToUndo);
+
+                var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] columnType);
+                {
+                    using var rs = await tranToCommmit.AcquireLock(p1.PageId(), LockTypeEnum.Exclusive);
+                    rows.ForEach(r => p1.Insert(r, tranToCommmit));
+                }
+
+                await tranToCommmit.Commit();
+
+                // Restart page manager.
+                stream.Seek(0, SeekOrigin.Begin);
+                pageManager =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+                Assert.AreEqual(0, pageManager.PageCount());
+
+                using (BinaryReader br = new BinaryReader(stream))
+                {
+                    await using ITransaction recTran = new DummyTran();
+                    await manager.Recovery(br, pageManager, recTran);
+                }
+
+                Assert.AreEqual(pageCount, pageManager.PageCount());
+
+                var np1 = await pageManager.GetMixedPage(p1.PageId(), new DummyTran(), types1);
+                Assert.AreEqual(rows.Count(), np1.RowCount());
+
+                Assert.IsTrue(p1.Equals(np1, TestGlobals.DummyTran));
+            }
+        }
     }
 }

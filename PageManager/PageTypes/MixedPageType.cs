@@ -141,6 +141,7 @@ namespace PageManager
             else if (record.GetRecordType() == LogRecordType.RowInsert)
             {
                 int ret = this.items.InsertRow(rs);
+                this.rowCount++;
                 Debug.Assert(ret != -1);
             }
             else
