@@ -308,7 +308,10 @@ namespace PageManager
 
             foreach (BitTrackingPage page in this.AllocatationMapPages)
             {
-                await FlushPage(page.GetStoragePage()).ConfigureAwait(false);
+                if (page.GetStoragePage().IsDirty())
+                {
+                    await FlushPage(page.GetStoragePage()).ConfigureAwait(false);
+                }
             }
         }
 

@@ -11,6 +11,8 @@ namespace PageManager
         Rollback,
         AllocatePage,
         RowInsert,
+        CheckpointStart,
+        CheckpointEnd,
     }
 
     public struct RedoContent

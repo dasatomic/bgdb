@@ -71,5 +71,42 @@ namespace PageManagerTests
             readPage = await pageManager2.GetMixedPage(p3.PageId(), tran, types);
             Assert.IsTrue(p3.Equals(readPage, TestGlobals.DummyTran));
         }
+
+        [Test]
+        public async Task CheckShadowPageValidity()
+        {
+            PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
+            IBufferPool bp = new BufferPool(TestGlobals.DefaultEviction, TestGlobals.DefaultPageSize);
+            ILockManager lm = new LockManager.LockManager();
+            var rows = GenerateDataUtils.GenerateRowsWithSampleData(out ColumnInfo[] types);
+            MixedPage p1, p2, p3;
+            IPage shadowPage;
+
+            using (var pageManager = new PageManager.PageManager(DefaultSize, persistedStream, bp, lm, TestGlobals.TestFileLogger))
+            {
+                // TODO: With buffer pool logging we will need to check that the transaction remains open.
+                p1 = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
+                p2 = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
+                p3 = await pageManager.AllocateMixedPage(types, DefaultPrevPage, DefaultNextPage, tran);
+
+                // Checkpoint to flush allocation map.
+                await pageManager.Checkpoint();
+
+                rows.ForEach(r => p1.Insert(r, tran));
+                rows.ForEach(r => p2.Insert(r, tran));
+                rows.ForEach(r => p3.Insert(r, tran));
+
+                await pageManager.Checkpoint();
+                shadowPage = await persistedStream.GetShadowPage(PageType.MixedPage, DefaultSize, types);
+            }
+
+            // p3 is the last one.
+            Assert.IsTrue(p3.Equals((MixedPage)shadowPage, tran));
+
+            PersistedStream persistedStream2 = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: false);
+
+            IPage shadowPage2 = await persistedStream2.GetShadowPage(PageType.MixedPage, DefaultSize, types);
+            Assert.IsTrue(((MixedPage)shadowPage).Equals((MixedPage)shadowPage2, tran));
+        }
     }
 }
