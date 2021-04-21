@@ -1,6 +1,7 @@
 # bgDB
 
 [![.NET](https://github.com/dasatomic/bgdb/actions/workflows/dotnet.yml/badge.svg)](https://github.com/dasatomic/bgdb/actions/workflows/dotnet.yml)
+[![Coverage Status](https://coveralls.io/repos/github/dasatomic/bgdb/badge.svg?branch=master)](https://coveralls.io/github/dasatomic/bgdb?branch=master)
 
 `bgDB` is a tiny relational database that aims to make end to end database development more approachable.
 The starting point is that database development is fun and that it can help us learn many fundamental computer science concepts. To name a few:
