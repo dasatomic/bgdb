@@ -15,6 +15,7 @@ namespace PageManagerTests
         private DummyTran tran = new DummyTran();
 
         [Test]
+        [MaxTime(10000)]
         public async Task CheckpointFlush()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
@@ -39,6 +40,7 @@ namespace PageManagerTests
         }
 
         [Test]
+        [MaxTime(10000)]
         public async Task AttachAfterCheckpoint()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
@@ -73,6 +75,7 @@ namespace PageManagerTests
         }
 
         [Test]
+        [MaxTime(10000)]
         public async Task CheckShadowPageValidity()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: true);
