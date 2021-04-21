@@ -14,6 +14,7 @@ namespace PageManagerTests
         private DummyTran tran = new DummyTran();
 
         [Test]
+        [MaxTime(10000)]
         public async Task BufferPoolCheck()
         {
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
@@ -30,6 +31,7 @@ namespace PageManagerTests
         }
 
         [Test]
+        [MaxTime(10000)]
         public async Task BufferPoolAfterEviction()
         {
             IPageEvictionPolicy pageEvictionPolicy = new FifoEvictionPolicy(10, 5);
