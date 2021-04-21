@@ -21,6 +21,8 @@ namespace PageManager
         public bool IsDirty();
         public void ResetDirty();
         public ulong GetBufferPoolToken();
+        public void TakeLatch();
+        public void ReleaseLatch();
 
         internal const uint PageIdPosition = 0;
         internal const uint PageSizePosition = 8;

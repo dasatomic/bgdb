@@ -113,7 +113,15 @@ namespace PageManager
 
             try
             {
+                // Page write/flush is possible with open transactions on the page.
+                // We just take a latch to insure physical correctness.
+                page.TakeLatch();
                 // First push to the shadow stream to insure validity in case of failure.
+                // TODO: This should be an optional feature.
+                // Some rdbms completely ignore page corruptions due to crash
+                // in the middle of write.
+                // TODO: Investigate FileSystemEffectivePhysicalBytesPerSectorForAtomicity
+                // TODO: Seems like nvme standards has higher guarantees for atomic writes. Investigate.
                 this.fileStreamShadow.Seek(0, SeekOrigin.Begin);
                 page.Persist(this.binaryWriterShadow);
                 this.binaryWriterShadow.Flush();
@@ -129,12 +137,15 @@ namespace PageManager
             }
             finally
             {
+                page.ReleaseLatch();
                 semaphore.Release();
             }
         }
 
         public async Task<IPage> SeekAndRead(ulong position, PageType pageType, IBufferPool bufferPool, ColumnInfo[] columnInfos)
         {
+            // TODO: this level of serialization is super slow...
+            // this should require page latch not a global lock...
             await semaphore.WaitAsync().ConfigureAwait(false);
 
             try

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -23,6 +24,9 @@ namespace PageManager
         protected bool isDirty = false;
         protected S items;
         protected ulong bufferPoolToken;
+
+        // TODO: not really optimal to do heap alloc anywhere in page.
+        protected object lockObject = new object();
 
         public ulong NextPageId() => this.nextPageId;
         public ulong PageId() => this.pageId;
@@ -65,5 +69,21 @@ namespace PageManager
         public abstract void At(ushort position, ITransaction tran, ref ST item);
 
         public ulong GetBufferPoolToken() => this.bufferPoolToken;
+
+        public void TakeLatch()
+        {
+            bool lockTaken = false;
+            System.Threading.Monitor.Enter(this.lockObject, ref lockTaken);
+
+            if (!lockTaken)
+            {
+                throw new Exceptions.UnableToAcquireLatch();
+            }
+        }
+
+        public void ReleaseLatch()
+        {
+            System.Threading.Monitor.Exit(this.lockObject);
+        }
     }
 }

@@ -82,28 +82,35 @@ namespace PageManager
         public override IEnumerable<RowHolder> Fetch(ITransaction tran)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.items.Iterate(this.columnTypes);
+
+            lock (this.lockObject)
+            {
+                return  this.items.Iterate(this.columnTypes);
+            }
         }
 
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
-            int position = this.items.InsertRow(item);
-
-            if (position == -1)
+            lock (this.lockObject)
             {
+                int position = this.items.InsertRow(item);
+
+                if (position == -1)
+                {
+                    return position;
+                }
+
+                this.rowCount++;
+
+                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+                transaction.AddRecord(rc);
+
+                this.isDirty = true;
+
                 return position;
             }
-
-            this.rowCount++;
-
-            ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
-            transaction.AddRecord(rc);
-
-            this.isDirty = true;
-
-            return position;
         }
 
         public override uint MaxRowCount() => this.items.MaxRowCount();
@@ -111,62 +118,74 @@ namespace PageManager
         public override bool CanFit(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            return this.items.FreeSpaceForItems() > 0;
+            lock (this.lockObject)
+            {
+                return this.items.FreeSpaceForItems() > 0;
+            }
         }
 
         public override void Persist(BinaryWriter destination)
         {
-            Debug.Assert(this.PageType() == global::PageManager.PageType.MixedPage);
-            Debug.Assert(this.rowCount == this.items.GetRowCount());
+            lock (this.lockObject)
+            {
+                Debug.Assert(this.PageType() == global::PageManager.PageType.MixedPage);
+                Debug.Assert(this.rowCount == this.items.GetRowCount());
 
-            destination.Write(this.pageId);
-            destination.Write(this.pageSize);
-            destination.Write((int)this.PageType());
-            destination.Write(this.rowCount);
-            destination.Write(this.prevPageId);
-            destination.Write(this.nextPageId);
+                destination.Write(this.pageId);
+                destination.Write(this.pageSize);
+                destination.Write((int)this.PageType());
+                destination.Write(this.rowCount);
+                destination.Write(this.prevPageId);
+                destination.Write(this.nextPageId);
 
-            destination.Write(this.inMemoryStorage.Span);
+                destination.Write(this.inMemoryStorage.Span);
+            }
         }
 
         public override void RedoLog(ILogRecord record, ITransaction tran)
         {
-            var redoContent = record.GetRedoContent();
-            RowHolder rs = new RowHolder(this.columnTypes, redoContent.DataToApply);
+            lock (this.lockObject)
+            {
+                var redoContent = record.GetRedoContent();
+                RowHolder rs = new RowHolder(this.columnTypes, redoContent.DataToApply);
 
-            if (record.GetRecordType() == LogRecordType.RowModify)
-            {
-                this.items.SetRow(redoContent.RowPosition, rs);
-            }
-            else if (record.GetRecordType() == LogRecordType.RowInsert)
-            {
-                int ret = this.items.InsertRow(rs);
-                this.rowCount++;
-                Debug.Assert(ret != -1);
-            }
-            else
-            {
-                throw new NotImplementedException();
+                if (record.GetRecordType() == LogRecordType.RowModify)
+                {
+                    this.items.SetRow(redoContent.RowPosition, rs);
+                }
+                else if (record.GetRecordType() == LogRecordType.RowInsert)
+                {
+                    int ret = this.items.InsertRow(rs);
+                    this.rowCount++;
+                    Debug.Assert(ret != -1);
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
         public override void UndoLog(ILogRecord record, ITransaction tran)
         {
-            var undoContent = record.GetUndoContent();
-            RowHolder rs = new RowHolder(this.columnTypes, undoContent.DataToUndo);
+            lock (this.lockObject)
+            {
+                var undoContent = record.GetUndoContent();
+                RowHolder rs = new RowHolder(this.columnTypes, undoContent.DataToUndo);
 
-            if (record.GetRecordType() == LogRecordType.RowModify)
-            {
-                this.items.SetRow(undoContent.RowPosition, rs);
-            }
-            else if (record.GetRecordType() == LogRecordType.RowInsert)
-            {
-                this.items.DeleteRow(undoContent.RowPosition);
-                this.rowCount--;
-            }
-            else
-            {
-                throw new NotImplementedException();
+                if (record.GetRecordType() == LogRecordType.RowModify)
+                {
+                    this.items.SetRow(undoContent.RowPosition, rs);
+                }
+                else if (record.GetRecordType() == LogRecordType.RowInsert)
+                {
+                    this.items.DeleteRow(undoContent.RowPosition);
+                    this.rowCount--;
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
@@ -203,22 +222,28 @@ namespace PageManager
         public override void Update(RowHolder item, ushort position, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+            lock (this.lockObject)
+            {
 
-            RowHolder oldVal = new RowHolder(this.columnTypes);
-            this.items.GetRow(position, ref oldVal);
+                RowHolder oldVal = new RowHolder(this.columnTypes);
+                this.items.GetRow(position, ref oldVal);
 
-            this.items.SetRow(position, item);
+                this.items.SetRow(position, item);
 
-            ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
-            transaction.AddRecord(rc);
+                ILogRecord rc = new UpdateRowRecord(this.pageId, (ushort)(position), diffOldValue: oldVal.Storage, diffNewValue: item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+                transaction.AddRecord(rc);
 
-            this.isDirty = true;
+                this.isDirty = true;
+            }
         }
 
         public override void At(ushort position, ITransaction tran, ref RowHolder item)
         {
             tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
-            this.items.GetRow(position, ref item);
+            lock (this.lockObject)
+            {
+                this.items.GetRow(position, ref item);
+            }
         }
     }
 }
