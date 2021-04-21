@@ -2,3 +2,4 @@
 *.swp
 .vs
 /packages-microsoft-prod.deb
+CoverageResults/
