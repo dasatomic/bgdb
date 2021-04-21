@@ -19,7 +19,7 @@ The starting point is that database development is fun and that it can help us l
 ## Dependencies
 After cloning the enlistment you will need `dotnet core 3.1` or above. It can be found [here](https://dotnet.microsoft.com/download/dotnet-core/3.1).
 
-The engine it self doesn't have any dependencies, besides .net core. Tests and perf benchmarks will pull additional nugets. For running perf tests and updating plots you will need to install R. Instaructions are in perf [readme.md](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/UnitBenchmark/readme.md).
+The engine it self doesn't have any dependencies, besides .net core. Tests and perf benchmarks will pull additional nugets. For running perf tests and updating plots you will need to install R. Instaructions are in perf [readme.md](https://github.com/dasatomic/bgdb/tree/master/UnitBenchmark/readme.md).
 
 ## Read eval print loop
 
@@ -187,7 +187,7 @@ public async Task MultiTableGroupBy()
 }
 ```
 
-E2E tests can be found [here](https://gitlab.com/aleksandartomic88/bgdb/-/tree/master/tests/E2EQueryExecutionTests).
+E2E tests can be found [here](https://github.com/dasatomic/bgdb/tree/master/tests/E2EQueryExecutionTests).
 
 # Supported features and project ramp-up
 At this point list of features is rather limited but, hopefully, the list will keep growing.
@@ -211,7 +211,7 @@ At this point list of features is rather limited but, hopefully, the list will k
 ## Transactions and locking
 Engine currently supports page level locking and read committed isolation. On startup a pool of locks is created and page id maps to lock id through simple modular arithmetic. Lock Manager does deadlock detection and rollbacks deadlock victims.
 
-Logging is traditional [Write Ahead Logging](https://en.wikipedia.org/wiki/Write-ahead_logging). To ramp-up, recommendation is to take a look at `PageManager` [constructor](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/PageManager/PageManager.cs).
+Logging is traditional [Write Ahead Logging](https://en.wikipedia.org/wiki/Write-ahead_logging). To ramp-up, recommendation is to take a look at `PageManager` [constructor](https://github.com/dasatomic/bgdb/tree/master/PageManager/PageManager.cs).
 
 ```cs
 public PageManager(uint defaultPageSize, IPersistedStream persistedStream, IBufferPool bufferPool, ILockManager lockManager, InstrumentationInterface logger)
@@ -222,13 +222,13 @@ Log Manager only sits on top of .NET stream that is used for logging.
 public LogManager(BinaryWriter storage)
 ```
 
-[Lock Manager](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/LockManager/LockImplementation/AsyncReadWriterLock.cs) currently supports only Read and Write locks that prioritize Writers.
+[Lock Manager](https://github.com/dasatomic/bgdb/tree/master/LockManager/LockImplementation/AsyncReadWriterLock.cs) currently supports only Read and Write locks that prioritize Writers.
 
 ## Data Structures
-There is still no support for indexes so tables are currently organized as simple [linked list](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/DataStructures/PageListCollection.cs) of pages. This is hopefully going to change soon.
+There is still no support for indexes so tables are currently organized as simple [linked list](https://github.com/dasatomic/bgdb/tree/master/DataStructures/PageListCollection.cs) of pages. This is hopefully going to change soon.
 
 ## Query Processing
-Query tree is currently assembled through a set of rules that can be found [here](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/QueryProcessing/AstToOpTreeBuilder.cs). When work on Query Optimizer starts this will have to change.
+Query tree is currently assembled through a set of rules that can be found [here](https://github.com/dasatomic/bgdb/tree/master/QueryProcessing/AstToOpTreeBuilder.cs). When work on Query Optimizer starts this will have to change.
 
 Operators follow this simple interface:
 ```cs
@@ -239,18 +239,18 @@ public interface IPhysicalOperator<T>
 ```
 
 Caller gets root operator and keeps draining iterators that are placed deeper in the tree. On the leaf nodes there is `Scan` operator (or, in future, `Seek`, when support for indexes comes).
-Operators work on [RowHolder](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/PageManager/RowHolder.cs) instances which represent single `Row` fetched from Storage Engine.
+Operators work on [RowHolder](https://github.com/dasatomic/bgdb/tree/master/PageManager/RowHolder.cs) instances which represent single `Row` fetched from Storage Engine.
 
 ## Parser/Lexer
-Currently we use F# and `FsLexYacc` [library](https://github.com/fsprojects/FsLexYacc). Grammar can be easily understood by looking at [type definitions](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/ParserLexerFSharp/Sql.fs) and [Parser](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/ParserLexerFSharp/SqlParser.fsp).
+Currently we use F# and `FsLexYacc` [library](https://github.com/fsprojects/FsLexYacc). Grammar can be easily understood by looking at [type definitions](https://github.com/dasatomic/bgdb/tree/master/ParserLexerFSharp/Sql.fs) and [Parser](https://github.com/dasatomic/bgdb/tree/master/ParserLexerFSharp/SqlParser.fsp).
 
 # Testing and Benchmarks
 Tests are written using `NUNIT` framework. You can run them either through Visual Studio or simply running `dotnet test` from root folder.
 
-For Benchmarking we use excellent [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet). Benchmarks and results can be found [here](https://gitlab.com/aleksandartomic88/bgdb/-/tree/master/UnitBenchmark).
+For Benchmarking we use excellent [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet). Benchmarks and results can be found [here](https://github.com/dasatomic/bgdb/tree/master/UnitBenchmark).
 
-There are also simple [stress tests](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/tests/E2EQueryExecutionTests/ConcurrentInsertWithEviction.cs) in E2E folder.
+There are also simple [stress tests](https://github.com/dasatomic/bgdb/tree/master/tests/E2EQueryExecutionTests/ConcurrentInsertWithEviction.cs) in E2E folder.
 
-Project also has set up Continuous Integration [pipeline](https://gitlab.com/aleksandartomic88/bgdb/-/pipelines) on GitLab that is running unit tests on every push.
+Project also has set up Continuous Integration [pipeline](https://github.com/dasatomic/bgdb/actions) on GitHub that is running unit tests on every push.
 
-You can build docker container by using provided docker [file](https://gitlab.com/aleksandartomic88/bgdb/-/blob/master/Dockerfile).
+You can build docker container by using provided docker [file](https://github.com/dasatomic/bgdb/tree/master/Dockerfile).
