@@ -115,7 +115,7 @@ namespace PageManager
             {
                 // Page write/flush is possible with open transactions on the page.
                 // We just take a latch to insure physical correctness.
-                page.TakeLatch();
+                //page.TakeLatch();
                 // First push to the shadow stream to insure validity in case of failure.
                 // TODO: This should be an optional feature.
                 // Some rdbms completely ignore page corruptions due to crash
@@ -137,7 +137,7 @@ namespace PageManager
             }
             finally
             {
-                page.ReleaseLatch();
+                // page.ReleaseLatch();
                 semaphore.Release();
             }
         }
