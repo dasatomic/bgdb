@@ -218,6 +218,26 @@ WHERE t1.a > 20
             Assert.AreEqual(Sql.dir.Asc, values[0].Item2);
         }
 
+        [Test]
+        public void OrderByDescTest()
+        {
+            string query = "SELECT a, b, c FROM t ORDER BY a DESC";
+            var statement = GetSelectStatement(query);
+
+            Tuple<string, Sql.dir>[] values = statement.OrderBy.ToArray();
+
+            Assert.AreEqual(1, values.Length);
+            Assert.AreEqual("a", values[0].Item1);
+            Assert.AreEqual(Sql.dir.Desc, values[0].Item2);
+        }
+
+        [Test]
+        public void InvalidInputTest()
+        {
+            string query = "INVALID INPUT STRING";
+            Assert.Throws<Exception>(() => GetSqlStatement(query), "parse error");
+        }
+
         #region Helper
         private Sql.sqlStatement GetSelectStatement(string query)
         {
