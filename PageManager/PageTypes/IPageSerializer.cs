@@ -73,11 +73,13 @@ namespace PageManager
         public void TakeLatch()
         {
             bool lockTaken = false;
-            System.Threading.Monitor.Enter(this.lockObject, ref lockTaken);
+            // TODO: Better strategy for timeouts.
+            TimeSpan defaultTimeout = TimeSpan.FromSeconds(5);
+            System.Threading.Monitor.TryEnter(this.lockObject, defaultTimeout, ref lockTaken);
 
             if (!lockTaken)
             {
-                throw new Exceptions.UnableToAcquireLatch();
+                throw new Exceptions.UnableToAcquireLatchException();
             }
         }
 

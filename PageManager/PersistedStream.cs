@@ -109,13 +109,14 @@ namespace PageManager
 
         public async Task SeekAndWrite(ulong position, IPage page)
         {
+            // TODO: this level of serialization is super slow...
             await semaphore.WaitAsync().ConfigureAwait(false);
 
             try
             {
                 // Page write/flush is possible with open transactions on the page.
                 // We just take a latch to insure physical correctness.
-                //page.TakeLatch();
+                page.TakeLatch();
                 // First push to the shadow stream to insure validity in case of failure.
                 // TODO: This should be an optional feature.
                 // Some rdbms completely ignore page corruptions due to crash
@@ -125,19 +126,26 @@ namespace PageManager
                 this.fileStreamShadow.Seek(0, SeekOrigin.Begin);
                 page.Persist(this.binaryWriterShadow);
                 this.binaryWriterShadow.Flush();
-                await this.fileStreamShadow.FlushAsync().ConfigureAwait(false);
 
                 this.fileStream.Seek((long)position, SeekOrigin.Begin);
                 page.Persist(this.binaryWriter);
-
                 this.binaryWriter.Flush();
 
+                page.ReleaseLatch();
+
+                // Flush to filestream without latch. Content of the stream should be stable now
+                // from page change perspective.
+                // The problem is if someone tries to flush the stream in parallel.
+                // For now global semaphore takes care of this but this is just a temp solution.
+                await this.fileStreamShadow.FlushAsync().ConfigureAwait(false);
                 await this.fileStream.FlushAsync().ConfigureAwait(false);
+
+                // TODO: I am not sure in correctness of page flush.
+                // This needs to be revisited.
                 this.logger.LogDebug($"Flushed at location {position} to disk.");
             }
             finally
             {
-                // page.ReleaseLatch();
                 semaphore.Release();
             }
         }
@@ -145,7 +153,6 @@ namespace PageManager
         public async Task<IPage> SeekAndRead(ulong position, PageType pageType, IBufferPool bufferPool, ColumnInfo[] columnInfos)
         {
             // TODO: this level of serialization is super slow...
-            // this should require page latch not a global lock...
             await semaphore.WaitAsync().ConfigureAwait(false);
 
             try
