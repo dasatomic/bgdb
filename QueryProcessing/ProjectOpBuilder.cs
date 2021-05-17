@@ -5,7 +5,6 @@ using QueryProcessing.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
@@ -16,7 +15,6 @@ namespace QueryProcessing
         {
             Sql.columnSelect[] columns = new Sql.columnSelect[0];
             bool isStar = false;
-            string[] projections = new string[0];
 
             if (statement.GroupBy.Any())
             {
@@ -33,10 +31,6 @@ namespace QueryProcessing
                     // No job for me, this is aggregation.
                     return Task.FromResult(source);
                 }
-
-                projections = columns
-                    .Where(c => c.IsProjection == true)
-                    .Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray();
             }
             else
             {
@@ -64,10 +58,22 @@ namespace QueryProcessing
             {
                 // Project Op.
                 List<MetadataColumn> columnMapping = new List<MetadataColumn>();
-                foreach (string columnName in projections)
+
+                foreach (Sql.columnSelect selectColumn in columns)
                 {
-                    MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(columnName, source.GetOutputColumns());
-                    columnMapping.Add(mc);
+                    if (selectColumn.IsProjection)
+                    {
+                        // TODO: What about func here?
+                        var projection = ((Sql.columnSelect.Projection)selectColumn);
+                        if (!projection.Item.IsId)
+                        {
+                            throw new Exception("Projection on non id is not supported");
+                        }
+
+                        string projectionId = ((Sql.value.Id)projection.Item).Item;
+                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projectionId, source.GetOutputColumns());
+                        columnMapping.Add(mc);
+                    }
                 }
 
                 IPhysicalOperator<RowHolder> projectOp = new PhyOpProject(source, columnMapping.Select(mc => mc.ColumnId).ToArray(), topRows);

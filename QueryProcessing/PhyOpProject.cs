@@ -30,11 +30,9 @@ namespace QueryProcessing
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
-            int breakAfter = topRows ?? int.MaxValue;
-
             await foreach (RowHolder row in this.source.Iterate(tran))
             {
-                if (isStar)
+                if (this.isStar)
                 {
                     yield return row;
                 }
@@ -43,7 +41,7 @@ namespace QueryProcessing
                     yield return row.Project(this.columnChooser);
                 }
 
-                if (--topRows == 0)
+                if (--this.topRows == 0)
                 {
                     yield break;
                 }

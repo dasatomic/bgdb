@@ -22,7 +22,7 @@ namespace ParserLexerTests
             var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
-                new string[] { "x", "y", "z" },
+                new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
         }
 
@@ -37,7 +37,7 @@ namespace ParserLexerTests
             var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
-                new string[] { "x", "y", "z" },
+                new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
             Assert.AreEqual("t1", selectStatement.Table);
 
@@ -106,7 +106,7 @@ namespace ParserLexerTests
 
             var selectStatement = GetSelectStatement(query);
 
-            Assert.AreEqual(new string[] { "x", "y", "z" },
+            Assert.AreEqual(new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
             Assert.AreEqual("t1", selectStatement.Table);
 
@@ -132,7 +132,7 @@ namespace ParserLexerTests
             Assert.AreEqual("y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
             Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
 
-            Assert.AreEqual("z", ((Sql.columnSelect.Projection)columns[2]).Item);
+            Assert.AreEqual(Sql.value.NewId("z"), ((Sql.columnSelect.Projection)columns[2]).Item);
         }
 
         [Test]
@@ -174,7 +174,8 @@ namespace ParserLexerTests
             Assert.AreEqual("t1.y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
             Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
 
-            Assert.AreEqual("t1.z", ((Sql.columnSelect.Projection)columns[2]).Item);
+            Assert.IsTrue(((Sql.columnSelect.Projection)columns[2]).Item.IsId);
+            Assert.AreEqual("t1.z", ((Sql.value.Id)(((Sql.columnSelect.Projection)columns[2]).Item)).Item);
         }
 
         [Test]

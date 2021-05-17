@@ -84,7 +84,14 @@ namespace QueryProcessing
                     }
                     else if (c.IsProjection)
                     {
-                        string projection = ((Sql.columnSelect.Projection)c).Item;
+                        Sql.value projectionValue = ((Sql.columnSelect.Projection)c).Item;
+
+                        if (!projectionValue.IsId)
+                        {
+                            throw new Exception("Projection on non id is not supported");
+                        }
+
+                        string projection = ((Sql.value.Id)projectionValue).Item;
                         MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projection, metadataColumns);
                         return (mc, false);
                     }
@@ -160,7 +167,14 @@ namespace QueryProcessing
                 }
                 else if (column.IsProjection)
                 {
-                    string groupby = ((Sql.columnSelect.Projection)column).Item;
+                    Sql.value groupbyVal = ((Sql.columnSelect.Projection)column).Item;
+
+                    if (!groupbyVal.IsId)
+                    {
+                        throw new Exception("Group by on non id values is not supported");
+                    }
+
+                    string groupby = ((Sql.value.Id)groupbyVal).Item;
                     mdColumnsForGroupBy[posInGroupBy] = QueryProcessingAccessors.GetMetadataColumn(groupby, metadataColumns);
 
                     // Group by is taking from source op. No need for relative positions.

@@ -36,6 +36,8 @@ let keywords =
         "COUNT", COUNT;
         "SUM", SUM;
         "TOP", TOP;
+        "ADD", ADD;
+        "SUB", SUB;
     ] |> Map.ofList   
 
 let ops =   
@@ -47,7 +49,7 @@ let ops =
         ">=",   GE;   
     ] |> Map.ofList   
 
-# 50 "SqlLexer.fs"
+# 52 "SqlLexer.fs"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -100,66 +102,66 @@ let rec _fslex_dummy () = _fslex_dummy()
 and tokenize  lexbuf =
   match _fslex_tables.Interpret(0,lexbuf) with
   | 0 -> ( 
-# 64 "SqlLexer.fsl"
+# 66 "SqlLexer.fsl"
                                  tokenize lexbuf 
-# 105 "SqlLexer.fs"
+# 107 "SqlLexer.fs"
           )
   | 1 -> ( 
-# 65 "SqlLexer.fsl"
+# 67 "SqlLexer.fsl"
                                  lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf; 
-# 110 "SqlLexer.fs"
+# 112 "SqlLexer.fs"
           )
   | 2 -> ( 
-# 66 "SqlLexer.fsl"
+# 68 "SqlLexer.fsl"
                                  INT(Int32.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 115 "SqlLexer.fs"
+# 117 "SqlLexer.fs"
           )
   | 3 -> ( 
-# 67 "SqlLexer.fsl"
+# 69 "SqlLexer.fsl"
                                  FLOAT(Double.Parse(LexBuffer<_>.LexemeString lexbuf)) 
-# 120 "SqlLexer.fs"
+# 122 "SqlLexer.fs"
           )
   | 4 -> ( 
-# 68 "SqlLexer.fsl"
+# 70 "SqlLexer.fsl"
                                  ops.[LexBuffer<_>.LexemeString lexbuf] 
-# 125 "SqlLexer.fs"
+# 127 "SqlLexer.fs"
           )
   | 5 -> ( 
-# 69 "SqlLexer.fsl"
+# 71 "SqlLexer.fsl"
                                  match keywords.TryFind(LexBuffer<_>.LexemeString lexbuf) with   
                                  | Some(token) -> token   
                                  | None -> ID(LexBuffer<_>.LexemeString lexbuf) 
-# 132 "SqlLexer.fs"
+# 134 "SqlLexer.fs"
           )
   | 6 -> ( 
-# 72 "SqlLexer.fsl"
+# 74 "SqlLexer.fsl"
                                  COMMA 
-# 137 "SqlLexer.fs"
+# 139 "SqlLexer.fs"
           )
   | 7 -> ( 
-# 73 "SqlLexer.fsl"
+# 75 "SqlLexer.fsl"
                                  EOF 
-# 142 "SqlLexer.fs"
+# 144 "SqlLexer.fs"
           )
   | 8 -> ( 
-# 74 "SqlLexer.fsl"
+# 76 "SqlLexer.fsl"
                                  OBRCK 
-# 147 "SqlLexer.fs"
+# 149 "SqlLexer.fs"
           )
   | 9 -> ( 
-# 75 "SqlLexer.fsl"
+# 77 "SqlLexer.fsl"
                                  CBRCK 
-# 152 "SqlLexer.fs"
+# 154 "SqlLexer.fs"
           )
   | 10 -> ( 
-# 76 "SqlLexer.fsl"
+# 78 "SqlLexer.fsl"
                                  QUOT 
-# 157 "SqlLexer.fs"
+# 159 "SqlLexer.fs"
           )
   | 11 -> ( 
-# 77 "SqlLexer.fsl"
+# 79 "SqlLexer.fsl"
                                  STAR 
-# 162 "SqlLexer.fs"
+# 164 "SqlLexer.fs"
           )
   | _ -> failwith "tokenize"
 

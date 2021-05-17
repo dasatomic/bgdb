@@ -1,4 +1,4 @@
-﻿%{   
+﻿%{
 open Sql   
 %}   
  
@@ -13,6 +13,7 @@ open Sql
 %token JOIN INNER LEFT RIGHT ON   
 %token SELECT FROM WHERE ORDER BY GROUP
 %token MAX MIN COUNT SUM
+%token ADD SUB
 %token CREATE_TABLE
 %token ASC DESC   
 %token CREATE
@@ -104,16 +105,22 @@ columnSelect:
     | columnList { ColumnList(List.rev $1) }
 
 columnList:
-    | ID                        { [Projection($1)] }
-    | columnList COMMA ID       { Projection($3) :: $1 }
-    | aggregate        { [$1] }
+    | value { [Projection($1)] }
+    | columnList COMMA value { Projection($3) :: $1 }
+    | aggregate                  { [$1] }
     | columnList COMMA aggregate { $3 :: $1 }
+    | func                       { [$1] }
+    | columnList COMMA func      { $3 :: $1 }
 
 aggregate:
     | MAX OBRCK ID CBRCK { Aggregate(Max, $3) }
     | MIN OBRCK ID CBRCK { Aggregate(Min, $3) }
     | COUNT OBRCK ID CBRCK { Aggregate(Count, $3) }
     | SUM OBRCK ID CBRCK { Aggregate(Sum, $3) }
+
+func:
+    | ADD OBRCK value COMMA value CBRCK { Func(Add, Args2($3, $5)) }
+    | SUB OBRCK value COMMA value CBRCK { Func(Sub, Args2($3, $5)) }
 
 // join clause
 joinList:   

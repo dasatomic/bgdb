@@ -35,6 +35,8 @@ let keywords =
         "COUNT", COUNT;
         "SUM", SUM;
         "TOP", TOP;
+        "ADD", ADD;
+        "SUB", SUB;
     ] |> Map.ofList   
 
 let ops =   

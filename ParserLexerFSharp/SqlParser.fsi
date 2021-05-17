@@ -19,6 +19,8 @@ type token =
   | ASC
   | DESC
   | CREATE_TABLE
+  | ADD
+  | SUB
   | MAX
   | MIN
   | COUNT
@@ -65,6 +67,8 @@ type tokenId =
     | TOKEN_ASC
     | TOKEN_DESC
     | TOKEN_CREATE_TABLE
+    | TOKEN_ADD
+    | TOKEN_SUB
     | TOKEN_MAX
     | TOKEN_MIN
     | TOKEN_COUNT
@@ -109,6 +113,7 @@ type nonTerminalId =
     | NONTERM_columnSelect
     | NONTERM_columnList
     | NONTERM_aggregate
+    | NONTERM_func
     | NONTERM_joinList
     | NONTERM_joinClause
     | NONTERM_joinOnClause
