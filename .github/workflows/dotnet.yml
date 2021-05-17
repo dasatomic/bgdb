@@ -2,9 +2,9 @@ name: .NET
 
 on:
   push:
-    branches: [ master, image_processing_proto ]
+    branches: [ master, image_processing_proto, functions_support ]
   pull_request:
-    branches: [ master, image_processing_proto ]
+    branches: [ master, image_processing_proto, functions_support ]
 
 jobs:
   build:
