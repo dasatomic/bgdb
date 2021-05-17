@@ -10,11 +10,9 @@ namespace ImageProcessingTests
     {
         private static string GetImageInputPath()
         {
-            const string assetsRelativePath = @"assets\images";
             FileInfo dataRoot = new FileInfo(typeof(LabelExtractionTests).Assembly.Location);
             string assemblyFolderPath = dataRoot.Directory.FullName;
-            string fullPath = Path.Combine(assemblyFolderPath, assetsRelativePath);
-            return fullPath;
+            return Path.Combine(assemblyFolderPath, "assets", "images");
         }
 
         [Test]
