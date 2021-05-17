@@ -18,4 +18,9 @@
     <ProjectReference Include="..\..\ImageProcessing\ImageProcessing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="assets\images\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>  
+  </ItemGroup>
 </Project>

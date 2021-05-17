@@ -8,11 +8,11 @@ namespace ImageProcessingTests
 {
     public class LabelExtractionTests
     {
-        private static string GetAssetsPath()
+        private static string GetImageInputPath()
         {
-            const string assetsRelativePath = @"..\..\..\assets";
-            FileInfo _dataRoot = new FileInfo(typeof(LabelExtractionTests).Assembly.Location);
-            string assemblyFolderPath = _dataRoot.Directory.FullName;
+            const string assetsRelativePath = @"assets\images";
+            FileInfo dataRoot = new FileInfo(typeof(LabelExtractionTests).Assembly.Location);
+            string assemblyFolderPath = dataRoot.Directory.FullName;
             string fullPath = Path.Combine(assemblyFolderPath, assetsRelativePath);
             return fullPath;
         }
@@ -20,9 +20,7 @@ namespace ImageProcessingTests
         [Test]
         public void ExtractLabelsE2EWithImageNetModel()
         {
-            string assetsPath = GetAssetsPath();
-
-            var imagesFolder = Path.Combine(assetsPath, "images");
+            var imagesFolder = GetImageInputPath();
             var inceptionPb = "tensorflow_inception_graph.pb";
             var labelsTxt = "imagenet_comp_graph_label_strings.txt";
 
@@ -44,7 +42,7 @@ namespace ImageProcessingTests
 
             foreach (var label in scores)
             {
-                string fileName = System.IO.Path.GetFileName(label.ImagePath);
+                string fileName = Path.GetFileName(label.ImagePath);
                 string correctLabel = mappings[fileName];
 
                 Assert.AreEqual(correctLabel, label.PredictedLabels[0]);
