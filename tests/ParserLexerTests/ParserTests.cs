@@ -12,11 +12,11 @@ namespace ParserLexerTests
         public void ParsingExtractTest()
         {
             string query =
-                @"SELECT x, y, z   
-                FROM t1   
-                LEFT JOIN t2   
-                INNER JOIN t3 ON t3.ID = t2.ID   
-                WHERE x = 50 AND y = 20   
+                @"SELECT x, y, z
+                FROM t1
+                LEFT JOIN t2
+                INNER JOIN t3 ON t3.ID = t2.ID
+                WHERE x = 50 AND y = 20
                 ORDER BY x ASC, y DESC, z";
 
             var selectStatement = GetSelectStatement(query);
@@ -30,8 +30,8 @@ namespace ParserLexerTests
         public void ParsingWhereClause()
         {
             string query =
-                @"SELECT x, y, z   
-                FROM t1   
+                @"SELECT x, y, z
+                FROM t1
                 WHERE x = 50 AND y = 20";
 
             var selectStatement = GetSelectStatement(query);
@@ -237,6 +237,31 @@ WHERE t1.a > 20
         {
             string query = "INVALID INPUT STRING";
             Assert.Throws<Exception>(() => GetSqlStatement(query), "parse error");
+        }
+
+        [Test]
+        public void FunctionCallInProjectTest()
+        {
+            string query = "SELECT ADD(a, b), a FROM t";
+            var statement = GetSelectStatement(query);
+            var selects = ((Sql.selectType.ColumnList)statement.Columns).Item.ToArray();
+
+            Assert.IsTrue(selects[0].IsFunc);
+            var func = ((Sql.columnSelect.Func)selects[0]).Item;
+            Assert.AreEqual(func.Item1, Sql.FuncType.Add);
+            Assert.IsTrue(func.Item2.IsArgs2);
+
+            var funcItems = ((Sql.scalarArgs.Args2)func.Item2).Item;
+            Assert.IsTrue(funcItems.Item1.IsId);
+            Assert.IsTrue(funcItems.Item2.IsId);
+
+            Assert.AreEqual(funcItems.Item1, Sql.value.NewId("a"));
+            Assert.AreEqual(funcItems.Item2, Sql.value.NewId("b"));
+
+            Assert.IsTrue(selects[1].IsProjection);
+            var projection = ((Sql.columnSelect.Projection)selects[1]).Item;
+            Assert.IsTrue(projection.IsId);
+            Assert.AreEqual(projection, Sql.value.NewId("a"));
         }
 
         #region Helper
