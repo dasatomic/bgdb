@@ -224,6 +224,38 @@ namespace E2EQueryExecutionTests
 
             await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
             {
+                string query = @"SELECT ADD(a, b) FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                int i = 0;
+                foreach (var row in result)
+                {
+                    Assert.AreEqual(i + 1.1, row.GetField<double>(0));
+                    i++;
+                }
+
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT ADD(b, a) FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                int i = 0;
+                foreach (var row in result)
+                {
+                    Assert.AreEqual(i + 1.1, row.GetField<double>(0));
+                    i++;
+                }
+
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
                 string query = @"SELECT TOP 5 ADD(a, a) FROM T1";
                 RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 Assert.AreEqual(5, result.Length);

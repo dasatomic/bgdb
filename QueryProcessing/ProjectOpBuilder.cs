@@ -60,32 +60,8 @@ namespace QueryProcessing
                 }
                 else if (column.IsFunc)
                 {
-                    var func = ((Sql.columnSelect.Func)column).Item;
-                    Sql.FuncType funcType = func.Item1;
-                    // TODO: Map func type to the right function.
-                    // This should go to new class.
-                    Sql.scalarArgs args = func.Item2;
-
-                    if (funcType.IsAdd)
-                    {
-                        if (!args.IsArgs2)
-                        {
-                            throw new Exception("Sum requires 2 arguments");
-                        }
-
-                        var args2 = ((Sql.scalarArgs.Args2)args).Item;
-                        Sql.value argOne = args2.Item1;
-                        Sql.value argTwo = args2.Item2;
-                        // TODO: Some rules should be applied here to determine output type.
-                        // TODO: For now always return int.
-                        // TODO is keeping 0, 0 here ok?
-                        result[pos] = new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Int));
-                    }
-                    else
-                    {
-                        // TODO:
-                        throw new NotImplementedException();
-                    }
+                    var func = ((Sql.columnSelect.Func)column);
+                    result[pos] = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns());
                 }
 
                 pos++;
@@ -112,32 +88,8 @@ namespace QueryProcessing
                 }
                 else if (c.IsFunc)
                 {
-                    var func = ((Sql.columnSelect.Func)c).Item;
-
-                    Sql.FuncType funcType = func.Item1;
-                    // TODO: Map func type to the right function.
-                    // This should go to new class.
-                    Sql.scalarArgs args = func.Item2;
-
-                    if (funcType.IsAdd)
-                    {
-                        if (!args.IsArgs2)
-                        {
-                            throw new Exception("Sum requires 2 arguments");
-                        }
-
-                        var args2 = ((Sql.scalarArgs.Args2)args).Item;
-                        Sql.value argOne = args2.Item1;
-                        Sql.value argTwo = args2.Item2;
-                        // TODO: Some rules should be applied here to determine output type.
-                        // TODO: For now always return int.
-                        return (null, new ColumnInfo(ColumnType.Int));
-                    }
-                    else
-                    {
-                        // TODO:
-                        throw new NotImplementedException();
-                    }
+                    var func = ((Sql.columnSelect.Func)c);
+                    return (null, FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns()).ColumnType);
                 }
                 else
                 {
@@ -161,41 +113,8 @@ namespace QueryProcessing
                     continue;
                 }
 
-                var func = ((Sql.columnSelect.Func)select).Item;
-                Sql.FuncType funcType = func.Item1;
-                // TODO: Map func type to the right function.
-                // This should go to new class.
-                Sql.scalarArgs args = func.Item2;
-
-                if (funcType.IsAdd)
-                {
-                    Sql.scalarArgs.Args2 argsExtracted = (Sql.scalarArgs.Args2)args;
-                    Sql.value arg1 = argsExtracted.Item.Item1;
-                    Sql.value arg2 = argsExtracted.Item.Item2;
-
-                    if (!arg1.IsId || !arg2.IsId)
-                    {
-                        // TODO:
-                        throw new Exception("Only support for ids as function arguments");
-                    }
-
-                    Sql.value.Id arg1Id = (Sql.value.Id)(arg1);
-                    Sql.value.Id arg2Id = (Sql.value.Id)(arg2);
-
-                    MetadataColumn mc1 = QueryProcessingAccessors.GetMetadataColumn(arg1Id.Item, sourceColumns);
-                    MetadataColumn mc2 = QueryProcessingAccessors.GetMetadataColumn(arg2Id.Item, sourceColumns);
-
-                    listOfActions.Add((RowHolder inputRh, RowHolder outputRh) =>
-                    {
-                        QueryProcessingAccessors.ApplyFuncInPlace(
-                            new MetadataColumn[] { mc1, mc2 },
-                            outputPosition,
-                            inputRh,
-                            outputRh,
-                            funcType
-                        );
-                    });
-                }
+                var func = ((Sql.columnSelect.Func)select);
+                listOfActions.Add(FuncCallMapper.BuildFunctor(func, outputPosition, sourceColumns));
             }
 
             // Execute all the actions.

@@ -104,40 +104,6 @@ namespace QueryProcessing
             }
         }
 
-        /// <summary>
-        /// Applies given function to given row holder.
-        /// </summary>
-        /// <param name="sourcesMds">List of source metadata columns, ordered by scalar args. First arg maps to sourcesMds[0] and so on. Null if arg is not an id.</param>
-        /// <param name="outputPosition">Target positions in output rowholder.</param>
-        /// <param name="inputRowHolder">Input rowholder</param>
-        /// <param name="funcType">Func type.</param>
-        /// <param name="args">Arguments</param>
-        /// <param name="outputRowHolder">Output rowholder.</param>
-        public static void ApplyFuncInPlace(MetadataColumn[] sourcesMds, int outputPosition, RowHolder inputRowHolder, RowHolder outputRowHolder, Sql.FuncType funcType)
-        {
-            if (funcType.IsAdd)
-            {
-                MetadataColumn columnOneMd = sourcesMds[0];
-                MetadataColumn columnTwoMd = sourcesMds[1];
-
-                if (columnOneMd.ColumnType.ColumnType != ColumnType.Int || columnTwoMd.ColumnType.ColumnType != ColumnType.Int)
-                {
-                    // TODO:
-                    throw new Exception("Only support for ints in sum");
-                }
-
-                int argOneExtracted = inputRowHolder.GetField<int>(columnOneMd.ColumnId);
-                int argTwoExtracted = inputRowHolder.GetField<int>(columnTwoMd.ColumnId);
-
-                int res = argOneExtracted + argTwoExtracted;
-                outputRowHolder.SetField<int>(outputPosition, res);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         // TODO: This is just bad.
         // It is very hard to keep all type -> agg mappings.
         // Needs refactoring.
