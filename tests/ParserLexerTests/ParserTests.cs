@@ -238,6 +238,19 @@ WHERE t1.a > 20
             Assert.Throws<Exception>(() => GetSqlStatement(query), "parse error");
         }
 
+        [Test]
+        [Ignore("")]
+        public void CreateTableRandomInput()
+        {
+            string query = "CREATE STORE myTable (TYPE_STRING(20) mycolumn)";
+
+            var createStatement = GetCreateTableStatement(query);
+
+            Assert.AreEqual("myTable", createStatement.Table);
+            Assert.IsTrue(createStatement.ColumnList[0].Item1.IsStringCType);
+            Assert.AreEqual(20, createStatement.ColumnList[0].Item2);
+        }
+
         #region Helper
         private Sql.sqlStatement GetSelectStatement(string query)
         {
