@@ -4,6 +4,43 @@ using System.Linq;
 
 namespace PageManager
 {
+    /// <summary>
+    /// Arguments of project/extend request against row holder.
+    /// Specifies columns that are to be copied from source row holder
+    /// and ones that are to be initialized with default values.
+    /// </summary>
+    public struct ProjectExtendInfo
+    {
+        /// <summary>
+        /// True if item on given position is to be projected. False otherwise.
+        /// </summary>
+        public bool[] IsProjection;
+
+        /// <summary>
+        /// Position in source rowholder for projection.
+        /// To be applied only if isProjection[currPos] == true.
+        /// </summary>
+        public int[] ProjectSourcePositions;
+
+        /// <summary>
+        /// Extension info.
+        /// To be applied only if isProjection[currPos] == false.
+        /// </summary>
+        public ColumnInfo[] ExtendColumnInfo;
+
+        public ProjectExtendInfo(bool[] isProjection, int[] projectSourcePositions, ColumnInfo[] extendColumnInfo)
+        {
+            if (isProjection.Length != projectSourcePositions.Length + extendColumnInfo.Length)
+            {
+                throw new ArgumentException("All elements in is projection array need to be covered by either project source pos or extend column info.");
+            }
+
+            IsProjection = isProjection;
+            ProjectSourcePositions = projectSourcePositions;
+            ExtendColumnInfo = extendColumnInfo;
+        }
+    }
+
     public unsafe struct RowHolder
     {
         public readonly byte[] Storage;
@@ -179,6 +216,11 @@ namespace PageManager
             }
 
             return new RowHolder(newColPositions, newStorage);
+        }
+
+        public RowHolder ProjectAndExtend(ProjectExtendInfo projectExtendInfo)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
