@@ -109,6 +109,7 @@ type nonTerminalId =
     | NONTERM_columnSelect
     | NONTERM_columnList
     | NONTERM_aggregate
+    | NONTERM_func
     | NONTERM_joinList
     | NONTERM_joinClause
     | NONTERM_joinOnClause

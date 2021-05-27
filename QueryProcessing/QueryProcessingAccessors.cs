@@ -103,6 +103,25 @@ namespace QueryProcessing
                 throw new InvalidProgramException("Invalid state.");
             }
         }
+        public static ColumnType ValueToType(Sql.value val)
+        {
+            if (val.IsFloat)
+            {
+                return ColumnType.Double;
+            }
+            else if (val.IsInt)
+            {
+                return ColumnType.Int;
+            }
+            else if (val.IsString)
+            {
+                return ColumnType.String;
+            }
+            else
+            {
+                throw new NotImplementedException("No support for this value type");
+            }
+        }
 
         // TODO: This is just bad.
         // It is very hard to keep all type -> agg mappings.
