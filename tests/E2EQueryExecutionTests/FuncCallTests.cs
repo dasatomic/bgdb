@@ -213,5 +213,80 @@ namespace E2EQueryExecutionTests
                 Assert.ThrowsAsync<InvalidFunctionNameException>(async () => await this.queryEntryGate.Execute(query, tran).ToArrayAsync());
             }
         }
+
+        [Test]
+        public async Task StringConcatScalars()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT CONCAT('one', 'two'), a FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                foreach (var row in result)
+                {
+                    Assert.AreEqual("onetwo", row.GetStringField(0));
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task StringConcatColumnScalar()
+        {
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT CONCAT(c, 'two'), a FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                foreach (var row in result)
+                {
+                    Assert.AreEqual("mystringtwo", row.GetStringField(0));
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task StringConcatTwoColumns()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT CONCAT(c, c), a FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                foreach (var row in result)
+                {
+                    Assert.AreEqual("mystringmystring", row.GetStringField(0));
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        [Ignore("Currently we don't support long strings as function output.")]
+        public async Task StringConcatLongStrings()
+        {
+            string longString = new string(Enumerable.Repeat('T', 10000).ToArray());
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = $"SELECT CONCAT('{longString}', 'T'), a FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                foreach (var row in result)
+                {
+                    Assert.AreEqual("mystringmystring", row.GetStringField(0));
+                }
+
+                await tran.Commit();
+            }
+        }
     }
 }

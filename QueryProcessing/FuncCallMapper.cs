@@ -4,6 +4,7 @@ using System;
 using QueryProcessing.Utilities;
 using QueryProcessing.Exceptions;
 using System.Collections.Generic;
+using QueryProcessing.Functions;
 
 namespace QueryProcessing
 {
@@ -19,11 +20,12 @@ namespace QueryProcessing
         }
 
         private static AddFunctorOutputMappingHandler addMappingHandler = new AddFunctorOutputMappingHandler();
+        private static StringConcatOutputMappingHandler concatMappingHandler = new StringConcatOutputMappingHandler();
 
         private static Action<RowHolder, RowHolder> FunctionBuilder(Sql.columnSelect.Func func, int output, MetadataColumn[] sourceColumns, IFunctionMappingHandler mappingHandler)
         {
             ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
-            var functor = addMappingHandler.MapToFunctor(funcCallTypes);
+            var functor = mappingHandler.MapToFunctor(funcCallTypes);
             Union2Type<MetadataColumn, Sql.value>[] fetchers = BuildFunctionArgumentFetchers(func, sourceColumns);
 
             return (RowHolder inputRh, RowHolder outputRh) =>
@@ -39,12 +41,20 @@ namespace QueryProcessing
 
         private static Dictionary<string, MetadataOutputFunctorBuilderPair> FuncDictionary = new Dictionary<string, MetadataOutputFunctorBuilderPair>()
         {
-            {  "ADD", new MetadataOutputFunctorBuilderPair()
+            {
+                "ADD", new MetadataOutputFunctorBuilderPair()
                 {
                     GetMetadataInfoForOutput = (func, mds) => addMappingHandler.GetMetadataInfoForOutput(func, mds),
                     FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, addMappingHandler),
                 }
             },
+            {
+                "CONCAT", new MetadataOutputFunctorBuilderPair()
+                {
+                    GetMetadataInfoForOutput = (func, mds) => concatMappingHandler.GetMetadataInfoForOutput(func, mds),
+                    FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, concatMappingHandler),
+                }
+            }
         };
 
         public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] sourceInput)

@@ -146,6 +146,11 @@ namespace PageManager
             short colPos = this.ColumnPosition[col];
             byte[] length = BitConverter.GetBytes((ushort)val.Length);
 
+            if (this.Storage.Length < colPos + val.Length + sizeof(short))
+            {
+                throw new ArgumentException("This val can't fit in this rowholder");
+            }
+
             this.Storage[colPos] = length[0];
             this.Storage[colPos + 1] = length[1];
 
