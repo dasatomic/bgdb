@@ -1,24 +1,27 @@
 ﻿using MetadataManager;
 using PageManager;
+using QueryProcessing.Utilities;
+using QueryProcessing.Exceptions;
 using System;
-using System.Linq;
 
 namespace QueryProcessing
 {
     static class FunctorArgChecks
     {
-        public static void CheckInputArguments(MetadataColumn[] sourceArguments, ColumnType[] acceptedColumnTypes)
+        public static void CheckInputArguments(Union2Type<MetadataColumn, Sql.value>[] sourceArguments, ColumnType[] acceptedColumnTypes)
         {
             if (sourceArguments.Length != acceptedColumnTypes.Length)
             {
-                throw new ArgumentException("Invalid number of arguments");
+                throw new InvalidFunctionArgument("Invalid number of arguments");
             }
 
-            foreach (MetadataColumn md in sourceArguments)
+            for (int i = 0; i < sourceArguments.Length; i++)
             {
-                if (!acceptedColumnTypes.Any(acc => md.ColumnType.ColumnType == acc))
+                if (!sourceArguments[i].Match<bool>(
+                    (md) => md.ColumnType.ColumnType == acceptedColumnTypes[i],
+                    (val) => QueryProcessingAccessors.ValueToType(val) == acceptedColumnTypes[i]))
                 {
-                    throw new ArgumentException($"Type {md.ColumnType.ColumnType} is not accepted by Add functor");
+                    throw new InvalidFunctionArgument($"This type is not accepted by this function.");
                 }
             }
         }
@@ -28,67 +31,41 @@ namespace QueryProcessing
     {
         public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
         {
-            Sql.scalarArgs args = func.Item.Item2;
+            ColumnType[] columnTypes = FuncCallMapper.ExtractCallTypes(func, metadataColumns);
 
-            if (!args.IsArgs2)
+            return (columnTypes[0], columnTypes[1]) switch
             {
-                throw new ArgumentException("Add accepts two args");
-            }
-
-            var args2 = ((Sql.scalarArgs.Args2)args).Item;
-            Sql.value argOne = args2.Item1;
-            Sql.value argTwo = args2.Item2;
-
-            if (!argOne.IsId || !argTwo.IsId)
-            {
-                throw new NotImplementedException("Currently we only support ids in as arguments");
-            }
-
-            Sql.value.Id idOne = (Sql.value.Id)argOne;
-            Sql.value.Id idTwo = (Sql.value.Id)argTwo;
-
-            ColumnInfo argOneMd = QueryProcessingAccessors.GetMetadataColumn(idOne.Item, metadataColumns).ColumnType;
-            ColumnInfo argTwoMd = QueryProcessingAccessors.GetMetadataColumn(idTwo.Item, metadataColumns).ColumnType;
-
-            // both need to be double or int.
-            // TODO: Need generic way to express this.
-            if (!((argOneMd.ColumnType == ColumnType.Double || argOneMd.ColumnType == ColumnType.Int) &&
-                argTwoMd.ColumnType == ColumnType.Double || argTwoMd.ColumnType == ColumnType.Int))
-            {
-                throw new ArgumentException("Invalid argument type for add");
-            }
-
-            if (argOneMd.ColumnType == ColumnType.Double || argTwoMd.ColumnType == ColumnType.Double)
-            {
-                // If one of them is double map result to double.
-                return new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Double));
-            }
-            else
-            {
-                return new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Int));
-            }
+                (ColumnType.Double, ColumnType.Double) => new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Double)),
+                (ColumnType.Double, ColumnType.Int) => new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Double)),
+                (ColumnType.Int, ColumnType.Double) => new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Double)),
+                (ColumnType.Int, ColumnType.Int) => new MetadataColumn(0, 0, "ADD_Result", new ColumnInfo(ColumnType.Int)),
+                _ => throw new InvalidFunctionArgument("invalid argument type for add")
+            };
         }
 
-        public static IFunctionCall MapToFunctor(MetadataColumn arg1, MetadataColumn arg2)
+        public static IFunctionCall MapToFunctor(ColumnType arg1, ColumnType arg2)
         {
-            return ((arg1.ColumnType.ColumnType, arg2.ColumnType.ColumnType)) switch
+            return (arg1, arg2) switch
             {
                 (ColumnType.Int, ColumnType.Int) => new AddFunctorInt(),
                 (ColumnType.Int, ColumnType.Double) => new AddFunctorIntDouble(),
                 (ColumnType.Double, ColumnType.Int) => new AddFunctorDoubleInt(),
                 (ColumnType.Double, ColumnType.Double) => new AddFunctorDouble(),
-                _ => throw new ArgumentException("Invalid type"),
+                _ => throw new InvalidFunctionArgument("Invalid type"),
             };
         }
     }
 
     public class AddFunctorInt : IFunctionCall
     {
-        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, MetadataColumn[] sourceArguments, int outputPosition)
+        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments, int outputPosition)
         {
-            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Int });
-            int argOneExtracted = inputRowHolder.GetField<int>(sourceArguments[0].ColumnId);
-            int argTwoExtracted = inputRowHolder.GetField<int>(sourceArguments[1].ColumnId);
+            int argOneExtracted = sourceArguments[0].Match<int>(
+                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Int)val).Item);
+            int argTwoExtracted = sourceArguments[1].Match<int>(
+                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Int)val).Item);
 
             int res = argOneExtracted + argTwoExtracted;
 
@@ -98,12 +75,17 @@ namespace QueryProcessing
 
     public class AddFunctorDouble : IFunctionCall
     {
-        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, MetadataColumn[] sourceArguments, int outputPosition)
+        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments, int outputPosition)
         {
             FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Double});
 
-            double argOneExtracted = inputRowHolder.GetField<double>(sourceArguments[0].ColumnId);
-            double argTwoExtracted = inputRowHolder.GetField<double>(sourceArguments[1].ColumnId);
+            double argOneExtracted = sourceArguments[0].Match<double>(
+                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Float)val).Item);
+
+            double argTwoExtracted = sourceArguments[1].Match<double>(
+                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Float)val).Item);
 
             double res = argOneExtracted + argTwoExtracted;
 
@@ -113,12 +95,17 @@ namespace QueryProcessing
 
     public class AddFunctorDoubleInt : IFunctionCall
     {
-        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, MetadataColumn[] sourceArguments, int outputPosition)
+        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments, int outputPosition)
         {
             FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Int});
 
-            double argOneExtracted = inputRowHolder.GetField<double>(sourceArguments[0].ColumnId);
-            double argTwoExtracted = inputRowHolder.GetField<int>(sourceArguments[1].ColumnId);
+            double argOneExtracted = sourceArguments[0].Match<double>(
+                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Float)val).Item);
+
+            int argTwoExtracted = sourceArguments[1].Match<int>(
+                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Int)val).Item);
 
             double res = argOneExtracted + argTwoExtracted;
 
@@ -128,12 +115,18 @@ namespace QueryProcessing
 
     public class AddFunctorIntDouble : IFunctionCall
     {
-        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, MetadataColumn[] sourceArguments, int outputPosition)
+        public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments, int outputPosition)
         {
-            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Int});
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Double});
 
-            double argOneExtracted = inputRowHolder.GetField<int>(sourceArguments[0].ColumnId);
-            double argTwoExtracted = inputRowHolder.GetField<double>(sourceArguments[1].ColumnId);
+            int argOneExtracted = sourceArguments[0].Match<int>(
+                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Int)val).Item);
+
+            double argTwoExtracted = sourceArguments[1].Match<double>(
+                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
+                (Sql.value val) => ((Sql.value.Float)val).Item);
+
 
             double res = argOneExtracted + argTwoExtracted;
 

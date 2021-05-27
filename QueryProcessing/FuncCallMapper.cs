@@ -1,8 +1,7 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using QueryProcessing.Utilities;
 
 namespace QueryProcessing
 {
@@ -23,6 +22,103 @@ namespace QueryProcessing
             throw new NotImplementedException();
         }
 
+        private static int GetNumOfArguments(Sql.columnSelect.Func func)
+        {
+            if (func.Item.Item2.IsArgs1)
+            {
+                return 1;
+            }
+            else if (func.Item.Item2.IsArgs2)
+            {
+                return 2;
+            }
+            else if (func.Item.Item2.IsArgs3)
+            {
+                return 3;
+            }
+            else
+            {
+                throw new NotImplementedException("No support for 3+ arguments");
+            }
+        }
+
+        private static Sql.value GetArgNum(int argNum, Sql.scalarArgs args)
+        {
+            if (args.IsArgs1)
+            {
+                if (argNum == 0)
+                {
+                    return ((Sql.scalarArgs.Args1)args).Item;
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid argument requested");
+                }
+            }
+            else if (args.IsArgs2)
+            {
+                if (argNum == 0)
+                {
+                    return ((Sql.scalarArgs.Args2)args).Item.Item1;
+                }
+                else if (argNum == 1)
+                {
+                    return ((Sql.scalarArgs.Args2)args).Item.Item2;
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid argument requested");
+                }
+            }
+            else if (args.IsArgs3)
+            {
+                if (argNum == 0)
+                {
+                    return ((Sql.scalarArgs.Args3)args).Item.Item1;
+                }
+                else if (argNum == 1)
+                {
+                    return ((Sql.scalarArgs.Args3)args).Item.Item2;
+                }
+                else if (argNum == 2)
+                {
+                    return ((Sql.scalarArgs.Args3)args).Item.Item3;
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid argument requested");
+                }
+            }
+            else
+            {
+                throw new NotImplementedException("Only up to 3 args supported");
+            }
+        }
+
+        public static ColumnType[] ExtractCallTypes(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        {
+            int numOfArguments = GetNumOfArguments(func);
+            ColumnType[] result = new ColumnType[numOfArguments];
+
+            for (int i = 0; i < numOfArguments; i++)
+            {
+                Sql.value value = GetArgNum(i, func.Item.Item2);
+
+                if (value.IsId)
+                {
+                    string columnName = ((Sql.value.Id)value).Item;
+                    MetadataColumn md = QueryProcessingAccessors.GetMetadataColumn(columnName, metadataColumns);
+                    result[i] = md.ColumnType.ColumnType;
+                }
+                else
+                {
+                    result[i] = QueryProcessingAccessors.ValueToType(value);
+                }
+            }
+
+            return result;
+        }
+
         public static Action<RowHolder, RowHolder> BuildFunctor(Sql.columnSelect.Func func, int outputPosition, MetadataColumn[] sourceColumns)
         {
             Sql.FuncType funcType = func.Item.Item1;
@@ -30,29 +126,40 @@ namespace QueryProcessing
 
             if (funcType.IsAdd)
             {
-                Sql.scalarArgs.Args2 argsExtracted = (Sql.scalarArgs.Args2)args;
-                Sql.value arg1 = argsExtracted.Item.Item1;
-                Sql.value arg2 = argsExtracted.Item.Item2;
-
-                if (!arg1.IsId || !arg2.IsId)
+                if (!args.IsArgs2)
                 {
-                    // TODO:
-                    throw new Exception("Only support for ids as function arguments");
+                    throw new ArgumentException("Invalid number of arguments for Add");
                 }
 
-                Sql.value.Id arg1Id = (Sql.value.Id)(arg1);
-                Sql.value.Id arg2Id = (Sql.value.Id)(arg2);
+                // TODO: This needs more refactoring. This shouldn't be part of Add call...
+                int numOfArgumnets = GetNumOfArguments(func);
+                Union2Type<MetadataColumn, Sql.value>[] fetchers = new Union2Type<MetadataColumn, Sql.value>[numOfArgumnets];
+                ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
+                var functor = AddFunctorOutputMappingHandler.MapToFunctor(funcCallTypes[0], funcCallTypes[1]);
 
-                MetadataColumn mc1 = QueryProcessingAccessors.GetMetadataColumn(arg1Id.Item, sourceColumns);
-                MetadataColumn mc2 = QueryProcessingAccessors.GetMetadataColumn(arg2Id.Item, sourceColumns);
-                var functor = AddFunctorOutputMappingHandler.MapToFunctor(mc1, mc2);
+                for (int argNum = 0; argNum < numOfArgumnets; argNum++)
+                {
+                    Sql.value arg = GetArgNum(argNum, args);
+                    ColumnType argType = funcCallTypes[argNum];
+
+                    if (arg.IsId)
+                    {
+                        Sql.value.Id idArg = (Sql.value.Id)(arg);
+                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idArg.Item, sourceColumns);
+                        fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case1(mc);
+                    }
+                    else
+                    {
+                        fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case2(arg);
+                    }
+                }
 
                 return (RowHolder inputRh, RowHolder outputRh) =>
                 {
                     functor.ExecCompute(
                         inputRh,
                         outputRh,
-                        new MetadataColumn[] { mc1, mc2 },
+                        fetchers,
                         outputPosition
                     );
                 };
