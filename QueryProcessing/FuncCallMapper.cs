@@ -3,6 +3,7 @@ using PageManager;
 using System;
 using QueryProcessing.Utilities;
 using QueryProcessing.Exceptions;
+using System.Collections.Generic;
 
 namespace QueryProcessing
 {
@@ -11,13 +12,45 @@ namespace QueryProcessing
     /// </summary>
     public static class FuncCallMapper
     {
+        private struct MetadataOutputFunctorBuilderPair
+        {
+            public Func<Sql.columnSelect.Func, MetadataColumn[] /* source columns */, MetadataColumn /* ret - output type */> GetMetadataInfoForOutput;
+            public Func<Sql.columnSelect.Func, int /* output position */, MetadataColumn[] /* source columns */, Action<RowHolder, RowHolder> /* ret - Action mapper */> FunctorBuilder;
+        }
+
+        private static Dictionary<string, MetadataOutputFunctorBuilderPair> FuncDictionary = new Dictionary<string, MetadataOutputFunctorBuilderPair>()
+        {
+            {  "ADD", new MetadataOutputFunctorBuilderPair()
+                {
+                    GetMetadataInfoForOutput = (func, mds) => AddFunctorOutputMappingHandler.GetMetadataInfoForOutput(func, mds),
+                    FunctorBuilder = (func, output, mds) =>
+                    {
+                        // TODO: Function should be responsible for this. Refactor.
+                        ColumnType[] funcCallTypes = ExtractCallTypes(func, mds);
+                        var functor = AddFunctorOutputMappingHandler.MapToFunctor(funcCallTypes[0], funcCallTypes[1]);
+                        Union2Type<MetadataColumn, Sql.value>[] fetchers = BuildFunctionArgumentFetchers(func, mds);
+
+                        return (RowHolder inputRh, RowHolder outputRh) =>
+                        {
+                            functor.ExecCompute(
+                                inputRh,
+                                outputRh,
+                                fetchers,
+                                output
+                            );
+                        };
+                    },
+                }
+            },
+        };
+
         public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] sourceInput)
         {
-            string funcType = func.Item.Item1;
+            string funcName = func.Item.Item1;
 
-            if (funcType == "ADD")
+            if (FuncDictionary.TryGetValue(funcName, out MetadataOutputFunctorBuilderPair metadataOutFetcher))
             {
-                return AddFunctorOutputMappingHandler.GetMetadataInfoForOutput(func, sourceInput);
+                return metadataOutFetcher.GetMetadataInfoForOutput(func, sourceInput);
             }
 
             throw new InvalidFunctionNameException();
@@ -120,50 +153,38 @@ namespace QueryProcessing
             return result;
         }
 
+        private static Union2Type<MetadataColumn, Sql.value>[] BuildFunctionArgumentFetchers(Sql.columnSelect.Func func, MetadataColumn[] sourceColumns)
+        {
+            Sql.scalarArgs args = func.Item.Item2;
+            int numOfArgumnets = GetNumOfArguments(func);
+            Union2Type<MetadataColumn, Sql.value>[] fetchers = new Union2Type<MetadataColumn, Sql.value>[numOfArgumnets];
+
+            for (int argNum = 0; argNum < numOfArgumnets; argNum++)
+            {
+                Sql.value arg = GetArgNum(argNum, args);
+
+                if (arg.IsId)
+                {
+                    Sql.value.Id idArg = (Sql.value.Id)(arg);
+                    MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idArg.Item, sourceColumns);
+                    fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case1(mc);
+                }
+                else
+                {
+                    fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case2(arg);
+                }
+            }
+
+            return fetchers;
+        }
+
         public static Action<RowHolder, RowHolder> BuildFunctor(Sql.columnSelect.Func func, int outputPosition, MetadataColumn[] sourceColumns)
         {
-            string funcType = func.Item.Item1;
-            Sql.scalarArgs args = func.Item.Item2;
+            string funcName = func.Item.Item1;
 
-            if (funcType == "ADD")
+            if (FuncDictionary.TryGetValue(funcName, out MetadataOutputFunctorBuilderPair metadataOutFetcher))
             {
-                if (!args.IsArgs2)
-                {
-                    throw new ArgumentException("Invalid number of arguments for Add");
-                }
-
-                // TODO: This needs more refactoring. This shouldn't be part of Add call...
-                int numOfArgumnets = GetNumOfArguments(func);
-                Union2Type<MetadataColumn, Sql.value>[] fetchers = new Union2Type<MetadataColumn, Sql.value>[numOfArgumnets];
-                ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
-                var functor = AddFunctorOutputMappingHandler.MapToFunctor(funcCallTypes[0], funcCallTypes[1]);
-
-                for (int argNum = 0; argNum < numOfArgumnets; argNum++)
-                {
-                    Sql.value arg = GetArgNum(argNum, args);
-                    ColumnType argType = funcCallTypes[argNum];
-
-                    if (arg.IsId)
-                    {
-                        Sql.value.Id idArg = (Sql.value.Id)(arg);
-                        MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idArg.Item, sourceColumns);
-                        fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case1(mc);
-                    }
-                    else
-                    {
-                        fetchers[argNum] = new Union2Type<MetadataColumn, Sql.value>.Case2(arg);
-                    }
-                }
-
-                return (RowHolder inputRh, RowHolder outputRh) =>
-                {
-                    functor.ExecCompute(
-                        inputRh,
-                        outputRh,
-                        fetchers,
-                        outputPosition
-                    );
-                };
+                return metadataOutFetcher.FunctorBuilder(func, outputPosition, sourceColumns);
             }
 
             throw new InvalidFunctionNameException();
