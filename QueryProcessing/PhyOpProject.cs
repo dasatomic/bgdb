@@ -1,24 +1,41 @@
 ﻿using MetadataManager;
 using PageManager;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
+    public class PhyOpProjectComputeFunctors
+    {
+        public Func<RowHolder, RowHolder> Projector { get; }
+        public Action<RowHolder, RowHolder> Computer { get; }
+
+        public PhyOpProjectComputeFunctors(
+            Func<RowHolder, RowHolder> projector,
+            Action<RowHolder, RowHolder> computer)
+        {
+            this.Projector = projector;
+            this.Computer = computer;
+        }
+    }
+
     public class PhyOpProject : IPhysicalOperator<RowHolder>
     {
         private IPhysicalOperator<RowHolder> source;
-        private int[] columnChooser;
+        private PhyOpProjectComputeFunctors functors;
+        private MetadataColumn[] outputMd;
         bool isStar = false;
         int? topRows;
 
-        public PhyOpProject(IPhysicalOperator<RowHolder> source, int[] columnChooser, int? topRows)
+        public PhyOpProject(IPhysicalOperator<RowHolder> source, PhyOpProjectComputeFunctors functors, MetadataColumn[] outputMd, int? topRows)
         {
             this.source = source;
-            this.columnChooser = columnChooser;
+            this.functors = functors;
             this.topRows = topRows;
             this.isStar = false;
+            this.outputMd = outputMd;
         }
 
         public PhyOpProject(IPhysicalOperator<RowHolder> source, int? topRows)
@@ -26,24 +43,25 @@ namespace QueryProcessing
             this.source = source;
             this.topRows = topRows;
             this.isStar = true;
+            this.outputMd = source.GetOutputColumns();
         }
 
         public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
         {
-            int breakAfter = topRows ?? int.MaxValue;
-
             await foreach (RowHolder row in this.source.Iterate(tran))
             {
-                if (isStar)
+                if (this.isStar)
                 {
                     yield return row;
                 }
                 else
                 {
-                    yield return row.Project(this.columnChooser);
+                    RowHolder project = this.functors.Projector(row);
+                    this.functors.Computer(row, project);
+                    yield return project;
                 }
 
-                if (--topRows == 0)
+                if (--this.topRows == 0)
                 {
                     yield break;
                 }
@@ -55,17 +73,6 @@ namespace QueryProcessing
             await Task.FromResult(0);
         }
 
-        public MetadataColumn[] GetOutputColumns()
-        {
-            if (isStar)
-            {
-                return source.GetOutputColumns();
-            }
-            else
-            {
-                MetadataColumn[] sourceColumns = source.GetOutputColumns();
-                return columnChooser.Select(cc => sourceColumns[cc]).ToArray();
-            }
-        }
+        public MetadataColumn[] GetOutputColumns() => outputMd;
     }
 }
