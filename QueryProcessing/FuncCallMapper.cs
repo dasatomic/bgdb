@@ -18,28 +18,31 @@ namespace QueryProcessing
             public Func<Sql.columnSelect.Func, int /* output position */, MetadataColumn[] /* source columns */, Action<RowHolder, RowHolder> /* ret - Action mapper */> FunctorBuilder;
         }
 
+        private static AddFunctorOutputMappingHandler addMappingHandler = new AddFunctorOutputMappingHandler();
+
+        private static Action<RowHolder, RowHolder> FunctionBuilder(Sql.columnSelect.Func func, int output, MetadataColumn[] sourceColumns, IFunctionMappingHandler mappingHandler)
+        {
+            ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
+            var functor = addMappingHandler.MapToFunctor(funcCallTypes);
+            Union2Type<MetadataColumn, Sql.value>[] fetchers = BuildFunctionArgumentFetchers(func, sourceColumns);
+
+            return (RowHolder inputRh, RowHolder outputRh) =>
+            {
+                functor.ExecCompute(
+                    inputRh,
+                    outputRh,
+                    fetchers,
+                    output
+                );
+            };
+        }
+
         private static Dictionary<string, MetadataOutputFunctorBuilderPair> FuncDictionary = new Dictionary<string, MetadataOutputFunctorBuilderPair>()
         {
             {  "ADD", new MetadataOutputFunctorBuilderPair()
                 {
-                    GetMetadataInfoForOutput = (func, mds) => AddFunctorOutputMappingHandler.GetMetadataInfoForOutput(func, mds),
-                    FunctorBuilder = (func, output, mds) =>
-                    {
-                        // TODO: Function should be responsible for this. Refactor.
-                        ColumnType[] funcCallTypes = ExtractCallTypes(func, mds);
-                        var functor = AddFunctorOutputMappingHandler.MapToFunctor(funcCallTypes[0], funcCallTypes[1]);
-                        Union2Type<MetadataColumn, Sql.value>[] fetchers = BuildFunctionArgumentFetchers(func, mds);
-
-                        return (RowHolder inputRh, RowHolder outputRh) =>
-                        {
-                            functor.ExecCompute(
-                                inputRh,
-                                outputRh,
-                                fetchers,
-                                output
-                            );
-                        };
-                    },
+                    GetMetadataInfoForOutput = (func, mds) => addMappingHandler.GetMetadataInfoForOutput(func, mds),
+                    FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, addMappingHandler),
                 }
             },
         };

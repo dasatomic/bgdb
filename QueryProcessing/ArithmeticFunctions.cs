@@ -27,9 +27,9 @@ namespace QueryProcessing
         }
     }
 
-    public static class AddFunctorOutputMappingHandler
+    public class AddFunctorOutputMappingHandler : IFunctionMappingHandler
     {
-        public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        public MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
         {
             ColumnType[] columnTypes = FuncCallMapper.ExtractCallTypes(func, metadataColumns);
 
@@ -43,9 +43,14 @@ namespace QueryProcessing
             };
         }
 
-        public static IFunctionCall MapToFunctor(ColumnType arg1, ColumnType arg2)
+        public IFunctionCall MapToFunctor(ColumnType[] args)
         {
-            return (arg1, arg2) switch
+            if (args.Length != 2)
+            {
+                throw new InvalidFunctionArgument("Add requires 2 arguments");
+            }
+
+            return (args[0], args[1]) switch
             {
                 (ColumnType.Int, ColumnType.Int) => new AddFunctorInt(),
                 (ColumnType.Int, ColumnType.Double) => new AddFunctorIntDouble(),
