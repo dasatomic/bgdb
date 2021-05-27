@@ -13,7 +13,6 @@ open Sql
 %token JOIN INNER LEFT RIGHT ON   
 %token SELECT FROM WHERE ORDER BY GROUP
 %token MAX MIN COUNT SUM
-%token ADD SUB
 %token CREATE_TABLE
 %token ASC DESC   
 %token CREATE
@@ -119,8 +118,9 @@ aggregate:
     | SUM OBRCK ID CBRCK { Aggregate(Sum, $3) }
 
 func:
-    | ADD OBRCK value COMMA value CBRCK { Func(Add, Args2($3, $5)) }
-    | SUB OBRCK value COMMA value CBRCK { Func(Sub, Args2($3, $5)) }
+    | ID OBRCK value CBRCK { Func($1, Args1($3)) }
+    | ID OBRCK value COMMA value CBRCK { Func($1, Args2($3, $5)) }
+    | ID OBRCK value COMMA value COMMA value CBRCK { Func($1, Args3($3, $5, $7)) }
 
 // join clause
 joinList:   

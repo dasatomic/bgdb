@@ -2,6 +2,7 @@
 using PageManager;
 using System;
 using QueryProcessing.Utilities;
+using QueryProcessing.Exceptions;
 
 namespace QueryProcessing
 {
@@ -12,14 +13,14 @@ namespace QueryProcessing
     {
         public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] sourceInput)
         {
-            Sql.FuncType funcType = func.Item.Item1;
+            string funcType = func.Item.Item1;
 
-            if (funcType.IsAdd)
+            if (funcType == "ADD")
             {
                 return AddFunctorOutputMappingHandler.GetMetadataInfoForOutput(func, sourceInput);
             }
 
-            throw new NotImplementedException();
+            throw new InvalidFunctionNameException();
         }
 
         private static int GetNumOfArguments(Sql.columnSelect.Func func)
@@ -121,10 +122,10 @@ namespace QueryProcessing
 
         public static Action<RowHolder, RowHolder> BuildFunctor(Sql.columnSelect.Func func, int outputPosition, MetadataColumn[] sourceColumns)
         {
-            Sql.FuncType funcType = func.Item.Item1;
+            string funcType = func.Item.Item1;
             Sql.scalarArgs args = func.Item.Item2;
 
-            if (funcType.IsAdd)
+            if (funcType == "ADD")
             {
                 if (!args.IsArgs2)
                 {
@@ -165,7 +166,7 @@ namespace QueryProcessing
                 };
             }
 
-            throw new NotImplementedException();
+            throw new InvalidFunctionNameException();
         }
     }
 }

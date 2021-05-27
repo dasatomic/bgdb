@@ -248,7 +248,7 @@ WHERE t1.a > 20
 
             Assert.IsTrue(selects[0].IsFunc);
             var func = ((Sql.columnSelect.Func)selects[0]).Item;
-            Assert.AreEqual(func.Item1, Sql.FuncType.Add);
+            Assert.AreEqual(func.Item1, "ADD");
             Assert.IsTrue(func.Item2.IsArgs2);
 
             var funcItems = ((Sql.scalarArgs.Args2)func.Item2).Item;

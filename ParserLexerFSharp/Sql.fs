@@ -7,16 +7,11 @@ type value =
     | Id        of string
 
 type aggType = Min | Max | Count | Sum
-type FuncType = Add | Div | Mul | Sub
 
 type scalarArgs =
     | Args1 of value 
     | Args2 of (value * value)
     | Args3 of (value * value * value)
-
-type valueOrFunc =
-    | Value of value
-    | Func of (FuncType * scalarArgs)
 
 type dir = Asc | Desc
 type op = Eq | Gt | Ge | Lt | Le
@@ -31,7 +26,7 @@ type where =
 type columnSelect =
     | Aggregate of (aggType * string)
     | Projection of value
-    | Func of (FuncType * scalarArgs)
+    | Func of (string * scalarArgs)
 
 type selectType =
     | ColumnList of columnSelect list

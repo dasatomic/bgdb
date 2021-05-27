@@ -182,5 +182,36 @@ namespace E2EQueryExecutionTests
                 Assert.ThrowsAsync<InvalidFunctionArgument>(async () => await this.queryEntryGate.Execute(query, tran).ToArrayAsync());
             }
         }
+
+        [Test]
+        public async Task AddAndColumn()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT ADD(a, 11), a FROM T1";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                Assert.AreEqual(20, result.Length);
+
+                int i = 0;
+                foreach (var row in result)
+                {
+                    Assert.AreEqual(i + 11, row.GetField<int>(0));
+                    Assert.AreEqual(i, row.GetField<int>(1));
+                    i++;
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task InvalidFunctionName()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT INVALIDFUNCTIONANME(11) FROM T1";
+                Assert.ThrowsAsync<InvalidFunctionNameException>(async () => await this.queryEntryGate.Execute(query, tran).ToArrayAsync());
+            }
+        }
     }
 }

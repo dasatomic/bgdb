@@ -19,8 +19,6 @@ type token =
   | ASC
   | DESC
   | CREATE_TABLE
-  | ADD
-  | SUB
   | MAX
   | MIN
   | COUNT
@@ -67,8 +65,6 @@ type tokenId =
     | TOKEN_ASC
     | TOKEN_DESC
     | TOKEN_CREATE_TABLE
-    | TOKEN_ADD
-    | TOKEN_SUB
     | TOKEN_MAX
     | TOKEN_MIN
     | TOKEN_COUNT
