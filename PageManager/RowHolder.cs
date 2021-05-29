@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 
 namespace PageManager
@@ -11,31 +10,37 @@ namespace PageManager
     /// </summary>
     public struct ProjectExtendInfo
     {
+        public enum MappingType
+        {
+            Projection,
+            Extension,
+        }
+
         /// <summary>
-        /// True if item on given position is to be projected. False otherwise.
+        /// Mapping type.
         /// </summary>
-        public bool[] IsProjection;
+        public MappingType[] MappingTypes;
 
         /// <summary>
         /// Position in source rowholder for projection.
-        /// To be applied only if isProjection[currPos] == true.
+        /// To be applied only if mappingType[currPos] == Projection.
         /// </summary>
         public int[] ProjectSourcePositions;
 
         /// <summary>
         /// Extension info.
-        /// To be applied only if isProjection[currPos] == false.
+        /// To be applied only if mappingTypes[currPos] == Extension.
         /// </summary>
         public ColumnInfo[] ExtendColumnInfo;
 
-        public ProjectExtendInfo(bool[] isProjection, int[] projectSourcePositions, ColumnInfo[] extendColumnInfo)
+        public ProjectExtendInfo(MappingType[] mappingTypes, int[] projectSourcePositions, ColumnInfo[] extendColumnInfo)
         {
-            if (isProjection.Length != projectSourcePositions.Length + extendColumnInfo.Length)
+            if (mappingTypes.Length != projectSourcePositions.Length + extendColumnInfo.Length)
             {
                 throw new ArgumentException("All elements in is projection array need to be covered by either project source pos or extend column info.");
             }
 
-            IsProjection = isProjection;
+            MappingTypes = mappingTypes;
             ProjectSourcePositions = projectSourcePositions;
             ExtendColumnInfo = extendColumnInfo;
         }
@@ -225,73 +230,71 @@ namespace PageManager
 
         public RowHolder ProjectAndExtend(ProjectExtendInfo projectExtendInfo)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Each column in new RowHolder will be either projected from source RowHolder
-        /// by using first element of tuple, or extended with new type by using given type and filled with default value.
-        /// </summary>
-        /// <param name="projectExtendInfo"></param>
-        /// <returns></returns>
-        public RowHolder ProjectAndExtend((int?, ColumnInfo?)[] projectExtendInfo)
-        {
-            short[] newColPositions = new short[projectExtendInfo.Length];
+            short[] newColPositions = new short[projectExtendInfo.MappingTypes.Length];
             short totalSize = 0;
-            newColPositions[0] = 0;
 
-            for (int i = 0; i < projectExtendInfo.Length; i++)
+            int posInProjections = 0;
+            int posInExtensions = 0;
+            for (int i = 0; i < projectExtendInfo.MappingTypes.Length; i++)
             {
                 short diff;
 
-                if (projectExtendInfo[i].Item1 != null)
+                if (projectExtendInfo.MappingTypes[i] == ProjectExtendInfo.MappingType.Projection)
                 {
-                    if (projectExtendInfo[i].Item1.Value == this.ColumnPosition.Length - 1)
+                    // Projection.
+                    int projection = projectExtendInfo.ProjectSourcePositions[posInProjections];
+
+                    if (projection == this.ColumnPosition.Length - 1)
                     {
-                        diff = (short)(this.Storage.Length - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                        diff = (short)(this.Storage.Length - this.ColumnPosition[projection]);
                     }
                     else
                     {
-                        diff = (short)(this.ColumnPosition[projectExtendInfo[i].Item1.Value + 1] - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                        diff = (short)(this.ColumnPosition[projection + 1] - this.ColumnPosition[projection]);
                     }
+
+                    posInProjections++;
                 }
                 else
                 {
-                    Debug.Assert(projectExtendInfo[i].Item2 != null);
-
-                    diff = (short)projectExtendInfo[i].Item2.Value.GetSize();
+                    diff = (short)projectExtendInfo.ExtendColumnInfo[posInExtensions].GetSize();
+                    posInExtensions++;
                 }
 
                 totalSize += diff;
 
-                if (i != projectExtendInfo.Length - 1)
+                if (i != projectExtendInfo.MappingTypes.Length - 1)
                 {
                     newColPositions[i + 1] = (short)(newColPositions[i] + diff);
                 }
             }
 
             byte[] newStorage = new byte[totalSize];
-            for (int i = 0; i < projectExtendInfo.Length; i++)
+            posInProjections = 0;
+            for (int i = 0; i < projectExtendInfo.MappingTypes.Length; i++)
             {
-                if (projectExtendInfo[i].Item1 != null)
+                if (projectExtendInfo.MappingTypes[i] == ProjectExtendInfo.MappingType.Projection)
                 {
                     // This is project operation. For extend we don't want to do anything.
-                    short sourceIndex = this.ColumnPosition[projectExtendInfo[i].Item1.Value];
+                    int projection = projectExtendInfo.ProjectSourcePositions[posInProjections];
+                    short sourceIndex = this.ColumnPosition[projection];
                     short sourceLength;
 
-                    if (projectExtendInfo[i].Item1.Value == this.ColumnPosition.Length - 1)
+                    if (projection == this.ColumnPosition.Length - 1)
                     {
-                        sourceLength = (short)(this.Storage.Length - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                        sourceLength = (short)(this.Storage.Length - this.ColumnPosition[projection]);
                     }
                     else
                     {
-                        sourceLength = (short)(this.ColumnPosition[projectExtendInfo[i].Item1.Value + 1] - this.ColumnPosition[projectExtendInfo[i].Item1.Value]);
+                        sourceLength = (short)(this.ColumnPosition[projection + 1] - this.ColumnPosition[projection]);
                     }
 
                     for (int j = 0; j < sourceLength; j++)
                     {
                         newStorage[newColPositions[i] + j] = this.Storage[sourceIndex + j];
                     }
+
+                    posInProjections++;
                 }
             }
 

@@ -268,13 +268,10 @@ namespace PageManagerTests
             rhf.SetField(1, "TEST0".ToCharArray());
             rhf.SetField(2, 17);
 
-            var rhfnew = rhf.ProjectAndExtend(new (int?, ColumnInfo?)[]
-            {
-                (2, null),
-                (null, new ColumnInfo(ColumnType.Int)),
-                (null, new ColumnInfo(ColumnType.String, 10)),
-                (1, null)
-            });
+            var rhfnew = rhf.ProjectAndExtend(new ProjectExtendInfo(
+                new[] { ProjectExtendInfo.MappingType.Projection, ProjectExtendInfo.MappingType.Extension, ProjectExtendInfo.MappingType.Extension, ProjectExtendInfo.MappingType.Projection },
+                new[] { 2, 1 },
+                new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 10) }));
 
             rhfnew.SetField<int>(1, 42);
             rhfnew.SetField(2, "NEWTEST".ToCharArray());

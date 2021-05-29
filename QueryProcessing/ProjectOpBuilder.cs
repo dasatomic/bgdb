@@ -70,34 +70,42 @@ namespace QueryProcessing
             return result;
         }
 
-        private (int?, ColumnInfo?)[] BuildProjectExtendInfo(Sql.columnSelect[] columns, IPhysicalOperator<RowHolder> source)
+        private ProjectExtendInfo BuildProjectExtendInfo(Sql.columnSelect[] columns, IPhysicalOperator<RowHolder> source)
         {
-            (int?, ColumnInfo?)[] extendInfo = columns.Select<Sql.columnSelect, (int?, ColumnInfo?)>(c =>
+            List<int> projectPositions = new List<int>();
+            List<ColumnInfo> extendPositions = new List<ColumnInfo>();
+            List<ProjectExtendInfo.MappingType> mappingTypes = new List<ProjectExtendInfo.MappingType>();
+
+            foreach (Sql.columnSelect column in columns)
             {
-                if (c.IsProjection)
+                if (column.IsProjection)
                 {
-                    var projection = ((Sql.columnSelect.Projection)c);
+                    mappingTypes.Add(ProjectExtendInfo.MappingType.Projection);
+                    var projection = ((Sql.columnSelect.Projection)column);
+
                     if (!projection.Item.IsId)
                     {
-                        throw new Exception("Projection on non id is not supported");
+                        throw new NotImplementedException("Projection on non id is not supported");
                     }
 
                     string projectionId = ((Sql.value.Id)projection.Item).Item;
                     MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projectionId, source.GetOutputColumns());
-                    return (mc.ColumnId, null);
+                    projectPositions.Add(mc.ColumnId);
                 }
-                else if (c.IsFunc)
+                else if (column.IsFunc)
                 {
-                    var func = ((Sql.columnSelect.Func)c);
-                    return (null, FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns()).ColumnType);
+                    mappingTypes.Add(ProjectExtendInfo.MappingType.Extension);
+                    var func = ((Sql.columnSelect.Func)column);
+                    ColumnInfo ci = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns()).ColumnType;
+                    extendPositions.Add(ci);
                 }
                 else
                 {
-                    throw new Exception("Invalid type in select");
+                    throw new NotImplementedException("Invalid type in select");
                 }
-            }).ToArray();
+            }
 
-            return extendInfo;
+            return new ProjectExtendInfo(mappingTypes.ToArray(), projectPositions.ToArray(), extendPositions.ToArray());
         }
 
         private Action<RowHolder, RowHolder> ExecuteComputeOnRowHolder(IEnumerable<Sql.columnSelect> selects, MetadataColumn[] sourceColumns)
@@ -169,7 +177,7 @@ namespace QueryProcessing
                 // Project Op.
                 List<MetadataColumn> columnMapping = new List<MetadataColumn>();
 
-                (int?, ColumnInfo?)[] extendInfo = this.BuildProjectExtendInfo(columns, source);
+                ProjectExtendInfo extendInfo = this.BuildProjectExtendInfo(columns, source);
                 Func<RowHolder, RowHolder> projector = (rowHolder) => rowHolder.ProjectAndExtend(extendInfo);
                 Action<RowHolder, RowHolder> computes = ExecuteComputeOnRowHolder(columns, source.GetOutputColumns());
                 MetadataColumn[] outputSchema = this.GetOutputSchema(columns, source);

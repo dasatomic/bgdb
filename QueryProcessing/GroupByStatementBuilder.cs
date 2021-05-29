@@ -52,9 +52,9 @@ namespace QueryProcessing
                 var _ = QueryProcessingAccessors.GetMetadataColumn(groupByColumn, metadataColumns);
             }
 
-            // metadata column, is extended.
-            (MetadataColumn, bool)[] projectColumns = selectColumns
-                .Select(c =>
+            // metadata column.
+            (MetadataColumn, ProjectExtendInfo.MappingType)[] projectColumns = selectColumns
+                .Select<Sql.columnSelect, (MetadataColumn, ProjectExtendInfo.MappingType)>(c =>
                 {
                     if (c.IsAggregate)
                     {
@@ -65,7 +65,7 @@ namespace QueryProcessing
                         {
                             // For count we need to update return type to int.
                             mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Count", new ColumnInfo(ColumnType.Int));
-                            return (mc, true);
+                            return (mc, ProjectExtendInfo.MappingType.Extension);
                         }
                         else if (agg.Item1.IsMax)
                         {
@@ -80,7 +80,10 @@ namespace QueryProcessing
                             mc = new MetadataColumn(mc.ColumnId, mc.TableId, mc.ColumnName + "_Sum", mc.ColumnType);
                         }
 
-                        return (mc, false);
+                        // We deal with this as projection because the type remains the same.
+                        // It is ok to init to value of first row for max/min/sum.
+                        // But be careful for other aggs.
+                        return (mc, ProjectExtendInfo.MappingType.Projection);
                     }
                     else if (c.IsProjection)
                     {
@@ -93,7 +96,7 @@ namespace QueryProcessing
 
                         string projection = ((Sql.value.Id)projectionValue).Item;
                         MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projection, metadataColumns);
-                        return (mc, false);
+                        return (mc, ProjectExtendInfo.MappingType.Projection);
                     }
                     else
                     {
@@ -118,17 +121,11 @@ namespace QueryProcessing
                 .Where(c => c.IsAggregate == true)
                 .Select(c => ((Sql.columnSelect.Aggregate)c).Item).ToArray();
 
-            (int?, ColumnInfo?)[] projectExtendInfo = projectColumns.Select<(MetadataColumn, bool), (int?, ColumnInfo?)>(pc =>
-            {
-                if (pc.Item2 == false)
-                {
-                    return (pc.Item1.ColumnId, null);
-                }
-                else
-                {
-                    return (null, pc.Item1.ColumnType);
-                }
-            }).ToArray();
+            // TODO: Simplify.
+            ProjectExtendInfo.MappingType[] mappingTypes = projectColumns.Select(pc => pc.Item2).ToArray();
+            int[] projectPositions = projectColumns.Where(pc => pc.Item2 == ProjectExtendInfo.MappingType.Projection).Select(pc => pc.Item1.ColumnId).ToArray();
+            ColumnInfo[] extensionPositions = projectColumns.Where(pc => pc.Item2 == ProjectExtendInfo.MappingType.Extension).Select(pc => pc.Item1.ColumnType).ToArray();
+            ProjectExtendInfo projectExtendInfo = new ProjectExtendInfo(mappingTypes, projectPositions, extensionPositions);
 
             MetadataColumn[] mdColumnsForAggs = new MetadataColumn[aggregators.Length];
             MetadataColumn[] mdColumnsForGroupBy = new MetadataColumn[groupByColumns.Length];
