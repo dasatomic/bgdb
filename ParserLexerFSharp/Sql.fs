@@ -17,16 +17,21 @@ type dir = Asc | Desc
 type op = Eq | Gt | Ge | Lt | Le
 
 type order = string * dir
+type func = string * scalarArgs
+
+type valueOrFunc =
+    | Value of value
+    | FuncCall of func
 
 type where =
-    | Cond of (value * op * value)
+    | Cond of (valueOrFunc * op * valueOrFunc)
     | And of where * where
     | Or of where * where
 
 type columnSelect =
     | Aggregate of (aggType * string)
     | Projection of value
-    | Func of (string * scalarArgs)
+    | Func of func
 
 type selectType =
     | ColumnList of columnSelect list

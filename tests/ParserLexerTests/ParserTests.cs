@@ -51,17 +51,23 @@ namespace ParserLexerTests
             Sql.where.Cond leftCond = (Sql.where.Cond)andStatement.Item1;
             Sql.where.Cond rightCond = (Sql.where.Cond)andStatement.Item2;
 
-            Assert.IsTrue(leftCond.Item.Item1.IsId);
-            Assert.IsTrue(((Sql.value.Id)leftCond.Item.Item1).Item == "x");
+            Assert.IsTrue(leftCond.Item.Item1.IsValue);
+            Sql.value val = ((Sql.valueOrFunc.Value)leftCond.Item.Item1).Item;
+            Assert.IsTrue(val.IsId);
+            Assert.IsTrue(((Sql.value.Id)val).Item == "x");
             Assert.IsTrue(leftCond.Item.Item2.IsEq);
-            Assert.IsTrue(leftCond.Item.Item3.IsInt);
-            Assert.IsTrue(((Sql.value.Int)leftCond.Item.Item3).Item == 50);
 
-            Assert.IsTrue(rightCond.Item.Item1.IsId);
-            Assert.IsTrue(((Sql.value.Id)rightCond.Item.Item1).Item == "y");
+            val = ((Sql.valueOrFunc.Value)leftCond.Item.Item3).Item;
+            Assert.IsTrue(val.IsInt);
+            Assert.IsTrue(((Sql.value.Int)val).Item == 50);
+
+            val = ((Sql.valueOrFunc.Value)rightCond.Item.Item1).Item;
+            Assert.IsTrue(val.IsId);
+            Assert.IsTrue(((Sql.value.Id)val).Item == "y");
             Assert.IsTrue(rightCond.Item.Item2.IsEq);
-            Assert.IsTrue(rightCond.Item.Item3.IsInt);
-            Assert.IsTrue(((Sql.value.Int)rightCond.Item.Item3).Item == 20);
+            val = ((Sql.valueOrFunc.Value)rightCond.Item.Item3).Item;
+            Assert.IsTrue(val.IsInt);
+            Assert.IsTrue(((Sql.value.Int)val).Item == 20);
         }
 
         [Test]
@@ -198,8 +204,12 @@ WHERE t1.a > 20
             Sql.where whereStatement = selectStatement.Joins[0].Item3.Value;
             Assert.IsTrue(whereStatement.IsCond);
             Sql.where.Cond whereCond = (Sql.where.Cond)whereStatement;
-            Assert.IsTrue(whereCond.Item.Item1.IsId);
-            Assert.IsTrue(whereCond.Item.Item3.IsId);
+
+
+            Sql.value leftItem = ((Sql.valueOrFunc.Value)whereCond.Item.Item1).Item;
+            Sql.value rightItem = ((Sql.valueOrFunc.Value)whereCond.Item.Item1).Item;
+            Assert.IsTrue(leftItem.IsId);
+            Assert.IsTrue(rightItem.IsId);
 
             Assert.AreEqual("t3", selectStatement.Joins[1].Item1);
             Assert.AreEqual(Sql.joinType.Inner, selectStatement.Joins[1].Item2);
@@ -262,6 +272,39 @@ WHERE t1.a > 20
             var projection = ((Sql.columnSelect.Projection)selects[1]).Item;
             Assert.IsTrue(projection.IsId);
             Assert.AreEqual(projection, Sql.value.NewId("a"));
+        }
+
+        [Test]
+        public void FunctionCallInWhereTest()
+        {
+            string query =
+                @"SELECT x, y, z
+                FROM t1
+                WHERE ADD(x, y) > 50 OR 'trtmrt' = CONCAT(z, z)";
+
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.AreEqual(
+                new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
+            Assert.AreEqual("t1", selectStatement.Table);
+
+            Sql.where whereStatement = selectStatement.Where.Value;
+            Assert.IsTrue(whereStatement.IsOr);
+            Sql.where.Or orStatement = (Sql.where.Or)whereStatement;
+            var leftItem = orStatement.Item1;
+            var rightItem = orStatement.Item2;
+
+            Assert.IsTrue(leftItem.IsCond);
+            Assert.IsTrue(rightItem.IsCond);
+            Sql.where.Cond leftCond = (Sql.where.Cond)leftItem;
+            Sql.where.Cond rightCond = (Sql.where.Cond)rightItem;
+
+            Assert.IsTrue(leftCond.Item.Item1.IsFuncCall);
+            Assert.IsTrue(leftCond.Item.Item3.IsValue);
+
+            Assert.IsTrue(rightCond.Item.Item1.IsValue);
+            Assert.IsTrue(rightCond.Item.Item3.IsFuncCall);
         }
 
         #region Helper

@@ -114,7 +114,7 @@ namespace QueryProcessing
                 }
 
                 var func = ((Sql.columnSelect.Func)select);
-                listOfActions.Add(FuncCallMapper.BuildFunctor(func, outputPosition, sourceColumns));
+                listOfActions.Add(FuncCallMapper.BuildRowHolderMapperFunctor(func, outputPosition, sourceColumns));
             }
 
             // Execute all the actions.

@@ -9,29 +9,49 @@ namespace QueryProcessing
 {
     class FilterStatementBuilder : IStatementTreeBuilder
     {
-        private static IComparable ValToIComp(Sql.value op, ref MetadataColumn[] metadataColumns, ref RowHolder rowHolder)
+        private static IComparable ValToIComp(Sql.valueOrFunc op, ref MetadataColumn[] metadataColumns, ref RowHolder rowHolder, InputStringNormalizer stringNormalizer)
         {
-            if (op.IsId)
+            if (op.IsValue)
             {
-                Sql.value.Id idVal = (Sql.value.Id)op;
-                MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idVal.Item, metadataColumns);
-                return QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(mc, rowHolder);
+                Sql.value val = ((Sql.valueOrFunc.Value)op).Item;
+                if (val.IsId)
+                {
+                    Sql.value.Id idVal = (Sql.value.Id)val;
+                    // TODO: Metadata search shouldn't happen here.
+                    MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(idVal.Item, metadataColumns);
+                    return QueryProcessingAccessors.MetadataColumnRowsetHolderFetcher(mc, rowHolder);
+                }
+                else if (val.IsFloat)
+                {
+                    return ((Sql.value.Float)val).Item;
+                }
+                else if (val.IsInt)
+                {
+                    return ((Sql.value.Int)val).Item;
+                }
+                else if (val.IsString)
+                {
+                    // TODO: This shouldn't happen here.
+                    Sql.value normalizedString = stringNormalizer.ApplyReplacementTokens(val);
+                    return ((Sql.value.String)normalizedString).Item;
+                }
+                else
+                {
+                    throw new InvalidProgramException("Invalid type.");
+                }
             }
-            else if (op.IsFloat)
+            else if (op.IsFuncCall)
             {
-                return ((Sql.value.Float)op).Item;
-            }
-            else if (op.IsInt)
-            {
-                return ((Sql.value.Int)op).Item;
-            }
-            else if (op.IsString)
-            {
-                return ((Sql.value.String)op).Item;
-            }
-            else
-            {
-                Debug.Fail("Invalid type");
+                var func = ((Sql.valueOrFunc.FuncCall)op).Item;
+                string funcName = func.Item1;
+                Sql.scalarArgs args = func.Item2;
+
+                // TODO: There should be only one Func. Not one under project and one under valueOrFunc...
+                Sql.columnSelect.Func columnSelectFunc = (Sql.columnSelect.Func)Sql.columnSelect.Func.NewFunc(func);
+
+                // TODO: Again, this shouldn't happen for individual rows.
+                // Instead function should be returned.
+                return FuncCallMapper.BuildResultFunctor(columnSelectFunc, metadataColumns)(rowHolder);
             }
 
             throw new InvalidProgramException("Invalid state.");
@@ -45,6 +65,7 @@ namespace QueryProcessing
 
             Func<RowHolder, bool> returnFilterFunc = null;
 
+            // TODO: Replacement Token and ValToIComp should go outside of the builder.
             returnFilterFunc = (rowHolder) =>
             {
                 if (where.IsAnd)
@@ -68,14 +89,14 @@ namespace QueryProcessing
                 else if (where.IsCond)
                 {
                     Sql.where.Cond condStmt = (Sql.where.Cond)where;
-                    Sql.value leftOp = stringNormalizer.ApplyReplacementTokens(condStmt.Item.Item1);
+
                     Sql.op op = condStmt.Item.Item2;
-                    Sql.value rightOp = stringNormalizer.ApplyReplacementTokens(condStmt.Item.Item3);
 
-                    IComparable leftOpComp, rightOpComp;
+                    Sql.valueOrFunc leftOpValueOrFunc = condStmt.Item.Item1;
+                    Sql.valueOrFunc rightOpValueOrFunc = condStmt.Item.Item3;
 
-                    leftOpComp = ValToIComp(leftOp, ref metadataColumns, ref rowHolder);
-                    rightOpComp = ValToIComp(rightOp, ref metadataColumns, ref rowHolder);
+                    IComparable leftOpComp = ValToIComp(leftOpValueOrFunc, ref metadataColumns, ref rowHolder, stringNormalizer);
+                    IComparable rightOpComp = ValToIComp(rightOpValueOrFunc, ref metadataColumns, ref rowHolder, stringNormalizer);
 
                     if (op.IsEq)
                     {
