@@ -30,8 +30,7 @@ type where =
 
 type columnSelect =
     | Aggregate of (aggType * string)
-    | Projection of value
-    | Func of func
+    | ValueOrFunc of valueOrFunc
 
 type selectType =
     | ColumnList of columnSelect list

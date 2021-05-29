@@ -42,16 +42,11 @@ namespace QueryProcessing
             }
             else if (op.IsFuncCall)
             {
-                var func = ((Sql.valueOrFunc.FuncCall)op).Item;
-                string funcName = func.Item1;
-                Sql.scalarArgs args = func.Item2;
-
-                // TODO: There should be only one Func. Not one under project and one under valueOrFunc...
-                Sql.columnSelect.Func columnSelectFunc = (Sql.columnSelect.Func)Sql.columnSelect.Func.NewFunc(func);
+                var func = (Sql.valueOrFunc.FuncCall)op;
 
                 // TODO: Again, this shouldn't happen for individual rows.
-                // Instead function should be returned.
-                return FuncCallMapper.BuildResultFunctor(columnSelectFunc, metadataColumns)(rowHolder);
+                // Instead function should be returned prior to per row functor.
+                return FuncCallMapper.BuildResultFunctor(func, metadataColumns)(rowHolder);
             }
 
             throw new InvalidProgramException("Invalid state.");

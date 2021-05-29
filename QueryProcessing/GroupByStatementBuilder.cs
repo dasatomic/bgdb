@@ -85,9 +85,16 @@ namespace QueryProcessing
                         // But be careful for other aggs.
                         return (mc, ProjectExtendInfo.MappingType.Projection);
                     }
-                    else if (c.IsProjection)
+                    else if (c.IsValueOrFunc)
                     {
-                        Sql.value projectionValue = ((Sql.columnSelect.Projection)c).Item;
+                        Sql.columnSelect.ValueOrFunc valueOrFunc = (Sql.columnSelect.ValueOrFunc)c;
+
+                        if (!valueOrFunc.Item.IsValue)
+                        {
+                            throw new NotImplementedException("Only value projections are supported");
+                        }
+
+                        Sql.value projectionValue = ((Sql.valueOrFunc.Value)valueOrFunc.Item).Item;
 
                         if (!projectionValue.IsId)
                         {
@@ -162,9 +169,16 @@ namespace QueryProcessing
 
                     posInAggs++;
                 }
-                else if (column.IsProjection)
+                else if (column.IsValueOrFunc)
                 {
-                    Sql.value groupbyVal = ((Sql.columnSelect.Projection)column).Item;
+                    Sql.columnSelect.ValueOrFunc valueOrFunc = (Sql.columnSelect.ValueOrFunc)column;
+
+                    if (!valueOrFunc.Item.IsValue)
+                    {
+                        throw new NotImplementedException("Only group by with value projection is supported");
+                    }
+
+                    Sql.value groupbyVal = ((Sql.valueOrFunc.Value)valueOrFunc.Item).Item;
 
                     if (!groupbyVal.IsId)
                     {

@@ -47,9 +47,16 @@ namespace QueryProcessing
             int pos = 0;
             foreach (Sql.columnSelect column in columns)
             {
-                if (column.IsProjection)
+                if (column.IsAggregate)
                 {
-                    var projection = ((Sql.columnSelect.Projection)column);
+                    throw new ArgumentException("Aggregate shouldn't be handled here");
+                }
+
+                Sql.columnSelect.ValueOrFunc valueOrFunc = (Sql.columnSelect.ValueOrFunc)column;
+
+                if (valueOrFunc.Item.IsValue)
+                {
+                    var projection = ((Sql.valueOrFunc.Value)valueOrFunc.Item);
                     if (!projection.Item.IsId)
                     {
                         throw new Exception("Projection on non id is not supported");
@@ -58,9 +65,9 @@ namespace QueryProcessing
                     string projectionId = ((Sql.value.Id)projection.Item).Item;
                     result[pos] = QueryProcessingAccessors.GetMetadataColumn(projectionId, source.GetOutputColumns());
                 }
-                else if (column.IsFunc)
+                else if (valueOrFunc.Item.IsFuncCall)
                 {
-                    var func = ((Sql.columnSelect.Func)column);
+                    var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc.Item);
                     result[pos] = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns());
                 }
 
@@ -78,10 +85,18 @@ namespace QueryProcessing
 
             foreach (Sql.columnSelect column in columns)
             {
-                if (column.IsProjection)
+                if (column.IsAggregate)
                 {
+                    throw new ArgumentException("Aggregate shouldn't be handled here");
+                }
+
+                Sql.columnSelect.ValueOrFunc valueOrFunc = (Sql.columnSelect.ValueOrFunc)column;
+
+                if (valueOrFunc.Item.IsValue)
+                {
+                    // Just projection.
                     mappingTypes.Add(ProjectExtendInfo.MappingType.Projection);
-                    var projection = ((Sql.columnSelect.Projection)column);
+                    var projection = ((Sql.valueOrFunc.Value)valueOrFunc.Item);
 
                     if (!projection.Item.IsId)
                     {
@@ -92,10 +107,10 @@ namespace QueryProcessing
                     MetadataColumn mc = QueryProcessingAccessors.GetMetadataColumn(projectionId, source.GetOutputColumns());
                     projectPositions.Add(mc.ColumnId);
                 }
-                else if (column.IsFunc)
+                else if (valueOrFunc.Item.IsFuncCall)
                 {
                     mappingTypes.Add(ProjectExtendInfo.MappingType.Extension);
-                    var func = ((Sql.columnSelect.Func)column);
+                    var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc.Item);
                     ColumnInfo ci = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns()).ColumnType;
                     extendPositions.Add(ci);
                 }
@@ -115,13 +130,14 @@ namespace QueryProcessing
 
             foreach (var select in selects)
             {
-                if (!select.IsFunc)
+                Sql.columnSelect.ValueOrFunc valueOrFunc = (Sql.columnSelect.ValueOrFunc)select;
+                if (!valueOrFunc.Item.IsFuncCall)
                 {
                     outputPosition++;
                     continue;
                 }
 
-                var func = ((Sql.columnSelect.Func)select);
+                var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc.Item);
                 listOfActions.Add(FuncCallMapper.BuildRowHolderMapperFunctor(func, outputPosition, sourceColumns));
             }
 

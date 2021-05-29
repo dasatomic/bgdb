@@ -8,7 +8,7 @@ namespace QueryProcessing.Functions
 {
     public class StringConcatOutputMappingHandler : IFunctionMappingHandler
     {
-        public MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        public MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] metadataColumns)
         {
             ColumnType[] columnTypes = FuncCallMapper.ExtractCallTypes(func, metadataColumns);
 

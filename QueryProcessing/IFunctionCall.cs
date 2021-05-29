@@ -13,7 +13,7 @@ namespace QueryProcessing
 
     public interface IFunctionMappingHandler
     {
-        MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns);
+        MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] metadataColumns);
         public IFunctionCall MapToFunctor(ColumnType[] args);
     }
 }

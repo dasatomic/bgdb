@@ -104,12 +104,12 @@ columnSelect:
     | columnList { ColumnList(List.rev $1) }
 
 columnList:
-    | value { [Projection($1)] }
-    | columnList COMMA value { Projection($3) :: $1 }
+    | value { [ValueOrFunc(Value($1))] }
+    | columnList COMMA value { ValueOrFunc(Value($3)) :: $1 }
     | aggregate                  { [$1] }
     | columnList COMMA aggregate { $3 :: $1 }
-    | func                       { [$1] }
-    | columnList COMMA func      { $3 :: $1 }
+    | funcCall                       { [ValueOrFunc(FuncCall($1))] }
+    | columnList COMMA funcCall      { ValueOrFunc(FuncCall($3)) :: $1 }
 
 aggregate:
     | MAX OBRCK ID CBRCK { Aggregate(Max, $3) }
@@ -137,10 +137,10 @@ conditionList:
     | value op value                    { Cond(Value($1), $2, Value($3)) }
     | value op value AND conditionList  { And(Cond(Value($1), $2, Value($3)), $5) }
     | value op value OR conditionList   { Or(Cond(Value($1), $2, Value($3)), $5) }
-    | value op funcCall                 { Cond(Value($1), $2, $3) }
-    | funcCall op value                 { Cond($1, $2, Value($3)) }
-    | value op funcCall AND conditionList                 { And(Cond(Value($1), $2, $3), $5) }
-    | funcCall op value OR conditionList                  { Or(Cond($1, $2, Value($3)), $5) }
+    | value op funcCall                 { Cond(Value($1), $2, FuncCall($3)) }
+    | funcCall op value                 { Cond(FuncCall($1), $2, Value($3)) }
+    | value op funcCall AND conditionList                 { And(Cond(Value($1), $2, FuncCall($3)), $5) }
+    | funcCall op value OR conditionList                  { Or(Cond(FuncCall($1), $2, Value($3)), $5) }
  
 // where clause   
 whereClause:
@@ -181,13 +181,8 @@ orderBy:
     | ID DESC                       { $1, Desc}   
 
 funcCall:
-    | ID OBRCK value CBRCK { FuncCall($1, Args1($3)) }
-    | ID OBRCK value COMMA value CBRCK { FuncCall($1, Args2($3, $5)) }
-    | ID OBRCK value COMMA value COMMA value CBRCK { FuncCall($1, Args3($3, $5, $7)) }
-
-func:
-    | ID OBRCK value CBRCK { Func($1, Args1($3)) }
-    | ID OBRCK value COMMA value CBRCK { Func($1, Args2($3, $5)) }
-    | ID OBRCK value COMMA value COMMA value CBRCK { Func($1, Args3($3, $5, $7)) }
+    | ID OBRCK value CBRCK { ($1, Args1($3)) }
+    | ID OBRCK value COMMA value CBRCK { ($1, Args2($3, $5)) }
+    | ID OBRCK value COMMA value COMMA value CBRCK { ($1, Args3($3, $5, $7)) }
 
 %%
