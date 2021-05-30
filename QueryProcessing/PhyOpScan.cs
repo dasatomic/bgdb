@@ -7,6 +7,23 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
+    /// <summary>
+    /// Static row provider used to fetch results from subquery or different source that exposes rowProvider.
+    /// </summary>
+    public class PhyOpRowForwarder : IPhysicalOperator<RowHolder>
+    {
+        private RowProvider rowProvider;
+
+        public PhyOpRowForwarder(RowProvider rowProvider)
+        {
+            this.rowProvider = rowProvider;
+        }
+
+        public MetadataColumn[] GetOutputColumns() => rowProvider.ColumnInfo;
+
+        public IAsyncEnumerable<RowHolder> Iterate(ITransaction tran) => rowProvider.Enumerator;
+    }
+
     public class PhyOpScan : IPhysicalOperator<RowHolder>
     {
         private readonly IPageCollection<RowHolder> source;

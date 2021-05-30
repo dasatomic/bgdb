@@ -7,11 +7,13 @@ namespace QueryProcessing
 {
     class SourceOpBuilder : IStatementTreeBuilder
     {
-        MetadataManager.MetadataManager metadataManager;
+        private MetadataManager.MetadataManager metadataManager;
+        private AstToOpTreeBuilder nestedStatementBuilder;
 
-        public SourceOpBuilder(MetadataManager.MetadataManager metadataManager)
+        public SourceOpBuilder(MetadataManager.MetadataManager metadataManager, AstToOpTreeBuilder nestedStatementBuilder)
         {
             this.metadataManager = metadataManager;
+            this.nestedStatementBuilder = nestedStatementBuilder;
         }
 
         public async Task<IPhysicalOperator<RowHolder>> BuildStatement(Sql.sqlStatement statement, ITransaction tran, IPhysicalOperator<RowHolder> source, InputStringNormalizer stringNormalizer)
@@ -23,18 +25,25 @@ namespace QueryProcessing
                 throw new ArgumentException();
             }
 
-            if (!statement.From.IsFromTable)
+            if (statement.From.IsFromSubquery)
             {
-                throw new NotImplementedException("Only from table is currently supported");
+                Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.FromSubquery)statement.From).Item;
+                RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
+
+                return new PhyOpRowForwarder(rowProvider);
+            }
+            else if (statement.From.IsFromTable)
+            {
+                string tableName = ((Sql.sqlStatementOrId.FromTable)statement.From).Item;
+
+                MetadataTablesManager tableManager = metadataManager.GetTableManager();
+                MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
+
+                // Since we currently don't support indexes we can only build scan operation.
+                return new PhyOpScan(table.Collection, tran, table.Columns, table.TableName);
             }
 
-            string tableName = ((Sql.sqlStatementOrId.FromTable)statement.From).Item;
-
-            MetadataTablesManager tableManager = metadataManager.GetTableManager();
-            MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);
-
-            // Since we currently don't support indexes we can only build scan operation.
-            return new PhyOpScan(table.Collection, tran, table.Columns, table.TableName);
+            throw new ArgumentException("Scan can only be done from Table or from Subquery");
         }
     }
 }
