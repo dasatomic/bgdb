@@ -43,13 +43,16 @@ type join = string * joinType * where option // table name, join, optional on cl
 type sqlStatement =
     { 
         Top : int option
-        Table : string;
+        From : sqlStatementOrId;
         Columns : selectType;
         Joins : join list;
         Where : where option
         GroupBy : string list;
         OrderBy : order list
     }
+and sqlStatementOrId =
+    | FromTable of string
+    | FromSubquery of sqlStatement
 
 type columntype = IntCType | StringCType | DoubleCType
 // columntype + rep count + name.

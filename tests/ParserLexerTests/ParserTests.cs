@@ -39,7 +39,9 @@ namespace ParserLexerTests
             Assert.AreEqual(
                 new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
-            Assert.AreEqual("t1", selectStatement.Table);
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
 
             Sql.where whereStatement = selectStatement.Where.Value;
             Assert.IsTrue(whereStatement.IsAnd);
@@ -114,7 +116,9 @@ namespace ParserLexerTests
 
             Assert.AreEqual(new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
-            Assert.AreEqual("t1", selectStatement.Table);
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
 
             string[] groupBys = selectStatement.GroupBy.ToArray();
             Assert.AreEqual(new[] { "z", "y", "x" }, groupBys);
@@ -297,7 +301,9 @@ WHERE t1.a > 20
             Assert.AreEqual(
                 new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
                 (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
-            Assert.AreEqual("t1", selectStatement.Table);
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
 
             Sql.where whereStatement = selectStatement.Where.Value;
             Assert.IsTrue(whereStatement.IsOr);
@@ -315,6 +321,22 @@ WHERE t1.a > 20
 
             Assert.IsTrue(rightCond.Item.Item1.IsValue);
             Assert.IsTrue(rightCond.Item.Item3.IsFuncCall);
+        }
+
+        [Test]
+        public void SubqueryTest()
+        {
+            string query = @"SELECT * FROM (SELECT * FROM (SELECT * FROM T))";
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.IsTrue(selectStatement.From.IsFromSubquery);
+            selectStatement = ((Sql.sqlStatementOrId.FromSubquery)selectStatement.From).Item;
+
+            Assert.IsTrue(selectStatement.From.IsFromSubquery);
+            selectStatement = ((Sql.sqlStatementOrId.FromSubquery)selectStatement.From).Item;
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
         }
 
         #region Helper

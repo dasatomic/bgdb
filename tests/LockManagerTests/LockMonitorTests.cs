@@ -26,7 +26,7 @@ namespace LockManagerTests
             Assert.AreEqual(new ulong[] { 3 }, lockSnapshot3.Select(x => x.Item1).OrderBy(x => x));
         }
 
-        [Test]
+        [Test, Timeout(5000)]
         public async Task DeadLockDetection()
         {
             LockMonitor lckMonitor = new LockMonitor();
@@ -64,7 +64,7 @@ namespace LockManagerTests
             evt.Set();
         }
 
-        [Test]
+        [Test, Timeout(5000)]
         public async Task DeadLockDetectionCircle()
         {
             LockMonitor lckMonitor = new LockMonitor();

@@ -23,7 +23,12 @@ namespace QueryProcessing
                 throw new ArgumentException();
             }
 
-            string tableName = statement.Table;
+            if (!statement.From.IsFromTable)
+            {
+                throw new NotImplementedException("Only from table is currently supported");
+            }
+
+            string tableName = ((Sql.sqlStatementOrId.FromTable)statement.From).Item;
 
             MetadataTablesManager tableManager = metadataManager.GetTableManager();
             MetadataTable table = await tableManager.GetByName(tableName, tran).ConfigureAwait(false);

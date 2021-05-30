@@ -77,23 +77,27 @@ columnType:
     | TYPE_DOUBLE ID { DoubleCType, 0, $2 }
     | TYPE_STRING OBRCK INT CBRCK ID { StringCType, $3, $5 }
 
-// Select statement
 SelectStatement: topClause columnSelect
-        FROM ID
+        fromStatement
         joinList
         whereClause
         groupByClause
         orderByClause
-        EOF                 {
-                                { 
+                            {
+                                {
                                   Top = $1
-                                  Table = $4;
+                                  From = $3;
                                   Columns = $2;
-                                  Joins = $5;
-                                  Where = $6;
-                                  GroupBy = $7;
-                                  OrderBy = $8 }
+                                  Joins = $4;
+                                  Where = $5;
+                                  GroupBy = $6;
+                                  OrderBy = $7
+                                }
                             }
+
+fromStatement:
+    | FROM ID { FromTable($2) }
+    | FROM OBRCK SELECT SelectStatement CBRCK { FromSubquery($4) }
 
 topClause:
     | TOP INT { Some($2) }

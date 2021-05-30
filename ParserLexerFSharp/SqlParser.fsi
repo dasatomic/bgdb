@@ -105,6 +105,7 @@ type nonTerminalId =
     | NONTERM_columnTypeList
     | NONTERM_columnType
     | NONTERM_SelectStatement
+    | NONTERM_fromStatement
     | NONTERM_topClause
     | NONTERM_columnSelect
     | NONTERM_columnList
