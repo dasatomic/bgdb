@@ -2,12 +2,13 @@
 using PageManager;
 using QueryProcessing.Exceptions;
 using QueryProcessing.Utilities;
+using System;
 
 namespace QueryProcessing.Functions
 {
     public class StringConcatOutputMappingHandler : IFunctionMappingHandler
     {
-        public MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        public MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] metadataColumns)
         {
             ColumnType[] columnTypes = FuncCallMapper.ExtractCallTypes(func, metadataColumns);
 
@@ -59,6 +60,18 @@ namespace QueryProcessing.Functions
                 string res = new string(argOneExtracted) + new string(argTwoExtracted);
 
                 outputRowHolder.SetField(outputPosition, res.ToCharArray());
+            }
+
+            public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)
+            {
+                char[] argOneExtracted = sourceArguments[0].Match<char[]>(
+                    (MetadataColumn md) => inputRowHolder.GetStringField(md.ColumnId),
+                    (Sql.value val) => ((Sql.value.String)val).Item.ToCharArray());
+                char[] argTwoExtracted = sourceArguments[1].Match<char[]>(
+                    (MetadataColumn md) => inputRowHolder.GetStringField(md.ColumnId),
+                    (Sql.value val) => ((Sql.value.String)val).Item.ToCharArray());
+
+                return new string(argOneExtracted) + new string(argTwoExtracted);
             }
         }
     }

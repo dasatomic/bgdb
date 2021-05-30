@@ -22,8 +22,8 @@ namespace ParserLexerTests
             var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
-                new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
-                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
+                new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
         }
 
         [Test]
@@ -37,9 +37,11 @@ namespace ParserLexerTests
             var selectStatement = GetSelectStatement(query);
 
             Assert.AreEqual(
-                new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
-                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
-            Assert.AreEqual("t1", selectStatement.Table);
+                new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
 
             Sql.where whereStatement = selectStatement.Where.Value;
             Assert.IsTrue(whereStatement.IsAnd);
@@ -51,17 +53,23 @@ namespace ParserLexerTests
             Sql.where.Cond leftCond = (Sql.where.Cond)andStatement.Item1;
             Sql.where.Cond rightCond = (Sql.where.Cond)andStatement.Item2;
 
-            Assert.IsTrue(leftCond.Item.Item1.IsId);
-            Assert.IsTrue(((Sql.value.Id)leftCond.Item.Item1).Item == "x");
+            Assert.IsTrue(leftCond.Item.Item1.IsValue);
+            Sql.value val = ((Sql.valueOrFunc.Value)leftCond.Item.Item1).Item;
+            Assert.IsTrue(val.IsId);
+            Assert.IsTrue(((Sql.value.Id)val).Item == "x");
             Assert.IsTrue(leftCond.Item.Item2.IsEq);
-            Assert.IsTrue(leftCond.Item.Item3.IsInt);
-            Assert.IsTrue(((Sql.value.Int)leftCond.Item.Item3).Item == 50);
 
-            Assert.IsTrue(rightCond.Item.Item1.IsId);
-            Assert.IsTrue(((Sql.value.Id)rightCond.Item.Item1).Item == "y");
+            val = ((Sql.valueOrFunc.Value)leftCond.Item.Item3).Item;
+            Assert.IsTrue(val.IsInt);
+            Assert.IsTrue(((Sql.value.Int)val).Item == 50);
+
+            val = ((Sql.valueOrFunc.Value)rightCond.Item.Item1).Item;
+            Assert.IsTrue(val.IsId);
+            Assert.IsTrue(((Sql.value.Id)val).Item == "y");
             Assert.IsTrue(rightCond.Item.Item2.IsEq);
-            Assert.IsTrue(rightCond.Item.Item3.IsInt);
-            Assert.IsTrue(((Sql.value.Int)rightCond.Item.Item3).Item == 20);
+            val = ((Sql.valueOrFunc.Value)rightCond.Item.Item3).Item;
+            Assert.IsTrue(val.IsInt);
+            Assert.IsTrue(((Sql.value.Int)val).Item == 20);
         }
 
         [Test]
@@ -106,9 +114,11 @@ namespace ParserLexerTests
 
             var selectStatement = GetSelectStatement(query);
 
-            Assert.AreEqual(new Sql.value[] { Sql.value.NewId("x"), Sql.value.NewId("y"), Sql.value.NewId("z") },
-                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.Projection)c).Item).ToArray());
-            Assert.AreEqual("t1", selectStatement.Table);
+            Assert.AreEqual(new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
 
             string[] groupBys = selectStatement.GroupBy.ToArray();
             Assert.AreEqual(new[] { "z", "y", "x" }, groupBys);
@@ -132,7 +142,7 @@ namespace ParserLexerTests
             Assert.AreEqual("y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
             Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
 
-            Assert.AreEqual(Sql.value.NewId("z"), ((Sql.columnSelect.Projection)columns[2]).Item);
+            Assert.AreEqual(Sql.valueOrFunc.NewValue(Sql.value.NewId("z")), ((Sql.columnSelect.ValueOrFunc)columns[2]).Item);
         }
 
         [Test]
@@ -174,8 +184,13 @@ namespace ParserLexerTests
             Assert.AreEqual("t1.y", ((Sql.columnSelect.Aggregate)columns[1]).Item.Item2);
             Assert.AreEqual(Sql.aggType.Min,((Sql.columnSelect.Aggregate)columns[1]).Item.Item1);
 
-            Assert.IsTrue(((Sql.columnSelect.Projection)columns[2]).Item.IsId);
-            Assert.AreEqual("t1.z", ((Sql.value.Id)(((Sql.columnSelect.Projection)columns[2]).Item)).Item);
+            Sql.valueOrFunc valueOrFunc = ((Sql.columnSelect.ValueOrFunc)columns[2]).Item;
+            Assert.IsTrue(valueOrFunc.IsValue);
+
+            Sql.value valCol2 = ((Sql.valueOrFunc.Value)valueOrFunc).Item;
+
+            Assert.IsTrue(valCol2.IsId);
+            Assert.AreEqual("t1.z", ((Sql.value.Id)(valCol2)).Item);
         }
 
         [Test]
@@ -198,8 +213,12 @@ WHERE t1.a > 20
             Sql.where whereStatement = selectStatement.Joins[0].Item3.Value;
             Assert.IsTrue(whereStatement.IsCond);
             Sql.where.Cond whereCond = (Sql.where.Cond)whereStatement;
-            Assert.IsTrue(whereCond.Item.Item1.IsId);
-            Assert.IsTrue(whereCond.Item.Item3.IsId);
+
+
+            Sql.value leftItem = ((Sql.valueOrFunc.Value)whereCond.Item.Item1).Item;
+            Sql.value rightItem = ((Sql.valueOrFunc.Value)whereCond.Item.Item1).Item;
+            Assert.IsTrue(leftItem.IsId);
+            Assert.IsTrue(rightItem.IsId);
 
             Assert.AreEqual("t3", selectStatement.Joins[1].Item1);
             Assert.AreEqual(Sql.joinType.Inner, selectStatement.Joins[1].Item2);
@@ -246,8 +265,10 @@ WHERE t1.a > 20
             var statement = GetSelectStatement(query);
             var selects = ((Sql.selectType.ColumnList)statement.Columns).Item.ToArray();
 
-            Assert.IsTrue(selects[0].IsFunc);
-            var func = ((Sql.columnSelect.Func)selects[0]).Item;
+            Assert.IsTrue(selects[0].IsValueOrFunc);
+            var valueOrFunc = ((Sql.columnSelect.ValueOrFunc)selects[0]).Item;
+            Assert.IsTrue(valueOrFunc.IsFuncCall);
+            var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc).Item;
             Assert.AreEqual(func.Item1, "ADD");
             Assert.IsTrue(func.Item2.IsArgs2);
 
@@ -258,10 +279,64 @@ WHERE t1.a > 20
             Assert.AreEqual(funcItems.Item1, Sql.value.NewId("a"));
             Assert.AreEqual(funcItems.Item2, Sql.value.NewId("b"));
 
-            Assert.IsTrue(selects[1].IsProjection);
-            var projection = ((Sql.columnSelect.Projection)selects[1]).Item;
+            Assert.IsTrue(selects[1].IsValueOrFunc);
+            valueOrFunc = ((Sql.columnSelect.ValueOrFunc)selects[1]).Item;
+            Assert.IsTrue(valueOrFunc.IsValue);
+            var projection = ((Sql.valueOrFunc.Value)valueOrFunc).Item;
+
             Assert.IsTrue(projection.IsId);
             Assert.AreEqual(projection, Sql.value.NewId("a"));
+        }
+
+        [Test]
+        public void FunctionCallInWhereTest()
+        {
+            string query =
+                @"SELECT x, y, z
+                FROM t1
+                WHERE ADD(x, y) > 50 OR 'trtmrt' = CONCAT(z, z)";
+
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.AreEqual(
+                new Sql.valueOrFunc[] { Sql.valueOrFunc.NewValue(Sql.value.NewId("x")), Sql.valueOrFunc.NewValue(Sql.value.NewId("y")), Sql.valueOrFunc.NewValue(Sql.value.NewId("z")) },
+                (((Sql.selectType.ColumnList)selectStatement.Columns).Item).Select(c => ((Sql.columnSelect.ValueOrFunc)c).Item).ToArray());
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("t1", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
+
+            Sql.where whereStatement = selectStatement.Where.Value;
+            Assert.IsTrue(whereStatement.IsOr);
+            Sql.where.Or orStatement = (Sql.where.Or)whereStatement;
+            var leftItem = orStatement.Item1;
+            var rightItem = orStatement.Item2;
+
+            Assert.IsTrue(leftItem.IsCond);
+            Assert.IsTrue(rightItem.IsCond);
+            Sql.where.Cond leftCond = (Sql.where.Cond)leftItem;
+            Sql.where.Cond rightCond = (Sql.where.Cond)rightItem;
+
+            Assert.IsTrue(leftCond.Item.Item1.IsFuncCall);
+            Assert.IsTrue(leftCond.Item.Item3.IsValue);
+
+            Assert.IsTrue(rightCond.Item.Item1.IsValue);
+            Assert.IsTrue(rightCond.Item.Item3.IsFuncCall);
+        }
+
+        [Test]
+        public void SubqueryTest()
+        {
+            string query = @"SELECT * FROM (SELECT * FROM (SELECT * FROM T))";
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.IsTrue(selectStatement.From.IsFromSubquery);
+            selectStatement = ((Sql.sqlStatementOrId.FromSubquery)selectStatement.From).Item;
+
+            Assert.IsTrue(selectStatement.From.IsFromSubquery);
+            selectStatement = ((Sql.sqlStatementOrId.FromSubquery)selectStatement.From).Item;
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
         }
 
         #region Helper

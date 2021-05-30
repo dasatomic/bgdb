@@ -32,7 +32,7 @@ namespace QueryProcessing
         public AstToOpTreeBuilder(MetadataManager.MetadataManager metadataManager)
         {
             this.metadataManager = metadataManager;
-            statementBuildersList.Add(new SourceOpBuilder(metadataManager));
+            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this));
             statementBuildersList.Add(new JoinOpBuilder(metadataManager));
             statementBuildersList.Add(new FilterStatementBuilder());
             statementBuildersList.Add(new AggGroupOpBuilder());

@@ -105,11 +105,11 @@ type nonTerminalId =
     | NONTERM_columnTypeList
     | NONTERM_columnType
     | NONTERM_SelectStatement
+    | NONTERM_fromStatement
     | NONTERM_topClause
     | NONTERM_columnSelect
     | NONTERM_columnList
     | NONTERM_aggregate
-    | NONTERM_func
     | NONTERM_joinList
     | NONTERM_joinClause
     | NONTERM_joinOnClause
@@ -122,6 +122,7 @@ type nonTerminalId =
     | NONTERM_orderByClause
     | NONTERM_orderByList
     | NONTERM_orderBy
+    | NONTERM_funcCall
 /// This function maps tokens to integer indexes
 val tagOfToken: token -> int
 

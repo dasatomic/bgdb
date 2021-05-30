@@ -2,12 +2,13 @@
 using PageManager;
 using QueryProcessing.Utilities;
 using QueryProcessing.Exceptions;
+using System;
 
 namespace QueryProcessing.Functions
 {
     public class AddFunctorOutputMappingHandler : IFunctionMappingHandler
     {
-        public MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        public MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] metadataColumns)
         {
             ColumnType[] columnTypes = FuncCallMapper.ExtractCallTypes(func, metadataColumns);
 
@@ -48,16 +49,19 @@ namespace QueryProcessing.Functions
     {
         public void ExecCompute(RowHolder inputRowHolder, RowHolder outputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments, int outputPosition)
         {
-            int argOneExtracted = sourceArguments[0].Match<int>(
-                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Int)val).Item);
-            int argTwoExtracted = sourceArguments[1].Match<int>(
-                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Int)val).Item);
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Int });
 
-            int res = argOneExtracted + argTwoExtracted;
-
+            FunctorArgExtractIntInt args = new FunctorArgExtractIntInt(inputRowHolder, sourceArguments);
+            int res = args.ArgOne + args.ArgTwo;
             outputRowHolder.SetField<int>(outputPosition, res);
+        }
+
+        public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)
+        {
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Int });
+
+            FunctorArgExtractIntInt args = new FunctorArgExtractIntInt(inputRowHolder, sourceArguments);
+            return args.ArgOne + args.ArgTwo;
         }
     }
 
@@ -67,17 +71,17 @@ namespace QueryProcessing.Functions
         {
             FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Double});
 
-            double argOneExtracted = sourceArguments[0].Match<double>(
-                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Float)val).Item);
-
-            double argTwoExtracted = sourceArguments[1].Match<double>(
-                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Float)val).Item);
-
-            double res = argOneExtracted + argTwoExtracted;
-
+            FunctorArgExtractDoubleDouble args = new FunctorArgExtractDoubleDouble(inputRowHolder, sourceArguments);
+            double res = args.ArgOne + args.ArgTwo;
             outputRowHolder.SetField<double>(outputPosition, res);
+        }
+
+        public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)
+        {
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Double});
+
+            FunctorArgExtractDoubleDouble args = new FunctorArgExtractDoubleDouble(inputRowHolder, sourceArguments);
+            return args.ArgOne + args.ArgTwo;
         }
     }
 
@@ -87,17 +91,17 @@ namespace QueryProcessing.Functions
         {
             FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Int});
 
-            double argOneExtracted = sourceArguments[0].Match<double>(
-                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Float)val).Item);
-
-            int argTwoExtracted = sourceArguments[1].Match<int>(
-                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Int)val).Item);
-
-            double res = argOneExtracted + argTwoExtracted;
-
+            FunctorArgExtractDoubleInt args = new FunctorArgExtractDoubleInt(inputRowHolder, sourceArguments);
+            double res = args.ArgOne + args.ArgTwo;
             outputRowHolder.SetField<double>(outputPosition, res);
+        }
+
+        public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)
+        {
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Double, ColumnType.Int});
+
+            FunctorArgExtractDoubleInt args = new FunctorArgExtractDoubleInt(inputRowHolder, sourceArguments);
+            return args.ArgOne + args.ArgTwo;
         }
     }
 
@@ -107,18 +111,17 @@ namespace QueryProcessing.Functions
         {
             FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Double});
 
-            int argOneExtracted = sourceArguments[0].Match<int>(
-                (MetadataColumn md) => inputRowHolder.GetField<int>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Int)val).Item);
-
-            double argTwoExtracted = sourceArguments[1].Match<double>(
-                (MetadataColumn md) => inputRowHolder.GetField<double>(md.ColumnId),
-                (Sql.value val) => ((Sql.value.Float)val).Item);
-
-
-            double res = argOneExtracted + argTwoExtracted;
-
+            FunctorArgExtractIntDouble args = new FunctorArgExtractIntDouble(inputRowHolder, sourceArguments);
+            double res = args.ArgOne + args.ArgTwo;
             outputRowHolder.SetField<double>(outputPosition, res);
+        }
+
+        public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)
+        {
+            FunctorArgChecks.CheckInputArguments(sourceArguments, new[] { ColumnType.Int, ColumnType.Double});
+
+            FunctorArgExtractIntDouble args = new FunctorArgExtractIntDouble(inputRowHolder, sourceArguments);
+            return args.ArgOne + args.ArgTwo;
         }
     }
 }

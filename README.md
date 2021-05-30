@@ -7,7 +7,7 @@
 The starting point is that database development is fun and that it can help us learn many fundamental computer science concepts. To name a few:
 1) Parser/Lexer/Compiler development
 2) Data Structures
-3) Asyncronous programming
+3) Asynchronous programming
 4) Concurrency
 5) Performance
 6) Working with hardware
@@ -19,11 +19,11 @@ The starting point is that database development is fun and that it can help us l
 ## Dependencies
 After cloning the enlistment you will need `dotnet core 3.1` or above. It can be found [here](https://dotnet.microsoft.com/download/dotnet-core/3.1).
 
-The engine it self doesn't have any dependencies, besides .net core. Tests and perf benchmarks will pull additional nugets. For running perf tests and updating plots you will need to install R. Instaructions are in perf [readme.md](https://github.com/dasatomic/bgdb/tree/master/UnitBenchmark/readme.md).
+The engine it self doesn't have any dependencies, besides .net core. Tests and perf benchmarks will pull additional nugets. For running perf tests and updating plots you will need to install R. Instructions are in perf [readme.md](https://github.com/dasatomic/bgdb/tree/master/UnitBenchmark/readme.md).
 
 ## Read eval print loop
 
-To try it out you can start bgdbRepl (read-eval-print-loop) by starting project in bgdbRepl folder. From root enlistment do folloowing:
+To try it out you can start bgdbRepl (read-eval-print-loop) by starting project in bgdbRepl folder. From root enlistment do following:
 
 ```cmd
 cd bgdbRepl
@@ -192,15 +192,17 @@ E2E tests can be found [here](https://github.com/dasatomic/bgdb/tree/master/test
 # Supported features and project ramp-up
 At this point list of features is rather limited but, hopefully, the list will keep growing.
 
-## Langauge features
+## Language features
 1) `CREATE TABLE`
 2) `INSERT INTO TABLE`
 3) FILTERS (`WHERE` statement with basic arithmetic)
-4) `GROUP BY` stetement
+4) `GROUP BY` statement
 5) Aggregates (`MAX`, `MIN`, `SUM`, `COUNT`)
 6) Support for wildcard select (`SELECT * FROM`)
 7) Support for TOP clause (`SELECT TOP N * FROM`)
 8) Support for JOIN clause (only `INNER JOIN` for now)
+9) Support for functions (`SELECT CONCAT(str1, str2) FROM WHERE ADD(x, y) > 10`)
+10) Support for nested subqueries (`SELECT * FROM (SELECT a, b FROM T) WHERE b > 42`)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)

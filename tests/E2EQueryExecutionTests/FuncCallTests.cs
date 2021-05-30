@@ -270,6 +270,49 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
+        public async Task WhereInFilter()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT a FROM T1 WHERE ADD(a,a) > a";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+
+                // All rows expect first one will be returned.
+                Assert.AreEqual(19, result.Length);
+
+                int i = 1;
+                foreach (var row in result)
+                {
+                    Assert.AreEqual(i, row.GetField<int>(0));
+                    i++;
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
+        public async Task WhereInFilterString()
+        {
+            await using (ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS"))
+            {
+                string query = @"SELECT a FROM T1 WHERE CONCAT(c,'tst') = 'mystringtst'";
+                RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+
+                Assert.AreEqual(20, result.Length);
+
+                int i = 0;
+                foreach (var row in result)
+                {
+                    Assert.AreEqual(i, row.GetField<int>(0));
+                    i++;
+                }
+
+                await tran.Commit();
+            }
+        }
+
+        [Test]
         [Ignore("Currently we don't support long strings as function output.")]
         public async Task StringConcatLongStrings()
         {

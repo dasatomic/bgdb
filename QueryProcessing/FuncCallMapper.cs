@@ -15,14 +15,20 @@ namespace QueryProcessing
     {
         private struct MetadataOutputFunctorBuilderPair
         {
-            public Func<Sql.columnSelect.Func, MetadataColumn[] /* source columns */, MetadataColumn /* ret - output type */> GetMetadataInfoForOutput;
-            public Func<Sql.columnSelect.Func, int /* output position */, MetadataColumn[] /* source columns */, Action<RowHolder, RowHolder> /* ret - Action mapper */> FunctorBuilder;
+            public Func<Sql.valueOrFunc.FuncCall, MetadataColumn[] /* source columns */, MetadataColumn /* ret - output type */> GetMetadataInfoForOutput;
+            public Func<Sql.valueOrFunc.FuncCall, int /* output position */, MetadataColumn[] /* source columns */, Action<RowHolder, RowHolder> /* ret - Action mapper */> FunctorBuilder;
+
+            public Func<Sql.valueOrFunc.FuncCall, MetadataColumn[] /* source columns */, Func<RowHolder, IComparable>> FunctionReturnValueBuilder;
         }
 
+        // TODO: Mapping handlers should be singletons.
         private static AddFunctorOutputMappingHandler addMappingHandler = new AddFunctorOutputMappingHandler();
         private static StringConcatOutputMappingHandler concatMappingHandler = new StringConcatOutputMappingHandler();
 
-        private static Action<RowHolder, RowHolder> FunctionBuilder(Sql.columnSelect.Func func, int output, MetadataColumn[] sourceColumns, IFunctionMappingHandler mappingHandler)
+        /// <summary>
+        /// Returns Action that maps input rowholder to output rowholder with func applied.
+        /// </summary>
+        private static Action<RowHolder, RowHolder> FunctionBuilder(Sql.valueOrFunc.FuncCall func, int output, MetadataColumn[] sourceColumns, IFunctionMappingHandler mappingHandler)
         {
             ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
             var functor = mappingHandler.MapToFunctor(funcCallTypes);
@@ -39,6 +45,28 @@ namespace QueryProcessing
             };
         }
 
+        /// <summary>
+        /// Returns func that extracts IComparable.
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="sourceColumns"></param>
+        /// <param name="mappingHandler"></param>
+        /// <returns></returns>
+        private static Func<RowHolder, IComparable> FunctionResultBuilder(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceColumns, IFunctionMappingHandler mappingHandler)
+        {
+            ColumnType[] funcCallTypes = ExtractCallTypes(func, sourceColumns);
+            var functor = mappingHandler.MapToFunctor(funcCallTypes);
+            Union2Type<MetadataColumn, Sql.value>[] fetchers = BuildFunctionArgumentFetchers(func, sourceColumns);
+
+            return (RowHolder inputRh) =>
+            {
+                return functor.ExecCompute(
+                    inputRh,
+                    fetchers
+                );
+            };
+        }
+
         private static Dictionary<string, MetadataOutputFunctorBuilderPair> FuncDictionary = new Dictionary<string, MetadataOutputFunctorBuilderPair>()
         {
             {
@@ -46,6 +74,7 @@ namespace QueryProcessing
                 {
                     GetMetadataInfoForOutput = (func, mds) => addMappingHandler.GetMetadataInfoForOutput(func, mds),
                     FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, addMappingHandler),
+                    FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, addMappingHandler),
                 }
             },
             {
@@ -53,11 +82,12 @@ namespace QueryProcessing
                 {
                     GetMetadataInfoForOutput = (func, mds) => concatMappingHandler.GetMetadataInfoForOutput(func, mds),
                     FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, concatMappingHandler),
+                    FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, concatMappingHandler),
                 }
             }
         };
 
-        public static MetadataColumn GetMetadataInfoForOutput(Sql.columnSelect.Func func, MetadataColumn[] sourceInput)
+        public static MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceInput)
         {
             string funcName = func.Item.Item1;
 
@@ -69,7 +99,7 @@ namespace QueryProcessing
             throw new InvalidFunctionNameException();
         }
 
-        private static int GetNumOfArguments(Sql.columnSelect.Func func)
+        private static int GetNumOfArguments(Sql.valueOrFunc.FuncCall func)
         {
             if (func.Item.Item2.IsArgs1)
             {
@@ -142,7 +172,7 @@ namespace QueryProcessing
             }
         }
 
-        public static ColumnType[] ExtractCallTypes(Sql.columnSelect.Func func, MetadataColumn[] metadataColumns)
+        public static ColumnType[] ExtractCallTypes(Sql.valueOrFunc.FuncCall func, MetadataColumn[] metadataColumns)
         {
             int numOfArguments = GetNumOfArguments(func);
             ColumnType[] result = new ColumnType[numOfArguments];
@@ -166,7 +196,7 @@ namespace QueryProcessing
             return result;
         }
 
-        private static Union2Type<MetadataColumn, Sql.value>[] BuildFunctionArgumentFetchers(Sql.columnSelect.Func func, MetadataColumn[] sourceColumns)
+        private static Union2Type<MetadataColumn, Sql.value>[] BuildFunctionArgumentFetchers(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceColumns)
         {
             Sql.scalarArgs args = func.Item.Item2;
             int numOfArgumnets = GetNumOfArguments(func);
@@ -191,13 +221,25 @@ namespace QueryProcessing
             return fetchers;
         }
 
-        public static Action<RowHolder, RowHolder> BuildFunctor(Sql.columnSelect.Func func, int outputPosition, MetadataColumn[] sourceColumns)
+        public static Action<RowHolder, RowHolder> BuildRowHolderMapperFunctor(Sql.valueOrFunc.FuncCall func, int outputPosition, MetadataColumn[] sourceColumns)
         {
             string funcName = func.Item.Item1;
 
             if (FuncDictionary.TryGetValue(funcName, out MetadataOutputFunctorBuilderPair metadataOutFetcher))
             {
                 return metadataOutFetcher.FunctorBuilder(func, outputPosition, sourceColumns);
+            }
+
+            throw new InvalidFunctionNameException();
+        }
+
+        public static Func<RowHolder, IComparable> BuildResultFunctor(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceColumns)
+        {
+            string funcName = func.Item.Item1;
+
+            if (FuncDictionary.TryGetValue(funcName, out MetadataOutputFunctorBuilderPair metadataOutFetcher))
+            {
+                return metadataOutFetcher.FunctionReturnValueBuilder(func, sourceColumns);
             }
 
             throw new InvalidFunctionNameException();
