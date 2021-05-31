@@ -2,6 +2,7 @@
 module SqlParser
 type token = 
   | TOP
+  | FILESYSTEM
   | STAR
   | QUOT
   | EOF
@@ -48,6 +49,7 @@ type token =
   | ID of (string)
 type tokenId = 
     | TOKEN_TOP
+    | TOKEN_FILESYSTEM
     | TOKEN_STAR
     | TOKEN_QUOT
     | TOKEN_EOF

@@ -339,6 +339,17 @@ WHERE t1.a > 20
             Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
         }
 
+        [Test]
+        public void SelectFromFileSystemTest()
+        {
+            string query = @"SELECT * FROM FILESYSTEM('some_path')";
+            var selectStatement = GetSelectStatement(query);
+            Assert.IsTrue(selectStatement.From.IsFileSystemProvider);
+            var fileSystemProvider = ((Sql.sqlStatementOrId.FileSystemProvider)selectStatement.From);
+            Assert.IsTrue(fileSystemProvider.Item.IsString);
+            Assert.AreEqual(((Sql.value.String)fileSystemProvider.Item).Item, "some_path");
+        }
+
         #region Helper
         private Sql.sqlStatement GetSelectStatement(string query)
         {

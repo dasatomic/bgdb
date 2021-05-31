@@ -18,8 +18,8 @@ namespace ImageProcessing
 
         private static string GetAssetsPath()
         {
-            FileInfo _dataRoot = new FileInfo(typeof(TFModelImageLabelScorer).Assembly.Location);
-            string assemblyFolderPath = _dataRoot.Directory.FullName;
+            FileInfo dataRoot = new FileInfo(typeof(TFModelImageLabelScorer).Assembly.Location);
+            string assemblyFolderPath = dataRoot.Directory.FullName;
             return Path.Combine(assemblyFolderPath, "assets");
         }
 
