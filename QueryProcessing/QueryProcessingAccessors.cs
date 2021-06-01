@@ -40,7 +40,7 @@ namespace QueryProcessing
                 // So just find the column.
                 foreach (MetadataColumn mc in metadataColumns)
                 {
-                    if (mc.ColumnName == name)
+                    if (string.Equals(mc.ColumnName, name, StringComparison.OrdinalIgnoreCase))
                     {
                         return mc;
                     }
@@ -55,7 +55,18 @@ namespace QueryProcessing
                 MetadataColumn? foundMc = null;
                 foreach (MetadataColumn mc in metadataColumns)
                 {
-                    if (mc.ColumnName.Split('.')[1] == name)
+                    string searchColumnName = mc.ColumnName;
+                    if (searchColumnName.Contains('.'))
+                    {
+                        if (searchColumnName.Count(c => c == '.') != 1)
+                        {
+                            throw new InvalidColumnNameException();
+                        }
+
+                        searchColumnName = searchColumnName.Split('.')[1];
+                    }
+
+                    if (string.Equals(searchColumnName, name, StringComparison.OrdinalIgnoreCase))
                     {
                         if (foundMc == null)
                         {

@@ -65,7 +65,7 @@ namespace PageManager
 
             for (int i = 0; i < columnTypes.Length - 1; i++)
             {
-                this.ColumnPosition[i + 1] = (byte)(this.ColumnPosition[i] + ColumnTypeSize.GetSize(columnTypes[i]));
+                this.ColumnPosition[i + 1] = (short)(this.ColumnPosition[i] + ColumnTypeSize.GetSize(columnTypes[i]));
             }
 
             int totalSize = this.ColumnPosition[columnTypes.Length - 1] + ColumnTypeSize.GetSize(columnTypes[columnTypes.Length - 1]);
@@ -79,7 +79,7 @@ namespace PageManager
 
             for (int i = 0; i < columnTypes.Length - 1; i++)
             {
-                this.ColumnPosition[i + 1] = (byte)(this.ColumnPosition[i] + columnTypes[i].GetSize());
+                this.ColumnPosition[i + 1] = (short)(this.ColumnPosition[i] + columnTypes[i].GetSize());
             }
 
             this.Storage = byteArr;
@@ -94,7 +94,7 @@ namespace PageManager
 
             for (int i = 0; i < columnTypes.Length - 1; i++)
             {
-                this.ColumnPosition[i + 1] = (byte)(this.ColumnPosition[i] + columnTypes[i].GetSize());
+                this.ColumnPosition[i + 1] = (short)(this.ColumnPosition[i] + columnTypes[i].GetSize());
             }
 
             this.Storage = storage;

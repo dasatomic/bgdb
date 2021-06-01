@@ -42,6 +42,24 @@ namespace QueryProcessing
                 // Since we currently don't support indexes we can only build scan operation.
                 return new PhyOpScan(table.Collection, tran, table.Columns, table.TableName);
             }
+            else if (statement.From.IsFileSystemProvider)
+            {
+                Sql.value value = ((Sql.sqlStatementOrId.FileSystemProvider)statement.From).Item;
+
+                if (value.IsId)
+                {
+                    throw new NotImplementedException("File system scan from ID currently not supported");
+                }
+
+                if (value.IsString)
+                {
+                    value = stringNormalizer.ApplyReplacementTokens(value);
+                    string path = ((Sql.value.String)value).Item;
+                    return new PhyOpFileSystemProvider(path);
+                }
+
+                throw new ArgumentException("Invalid argument for FROM FILESYSTEM");
+            }
 
             throw new ArgumentException("Scan can only be done from Table or from Subquery");
         }
