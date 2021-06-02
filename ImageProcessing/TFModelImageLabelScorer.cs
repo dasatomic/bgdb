@@ -19,7 +19,7 @@ namespace ImageProcessing
         {
             FileInfo dataRoot = new FileInfo(typeof(TFModelImageLabelScorer).Assembly.Location);
             string assemblyFolderPath = dataRoot.Directory.FullName;
-            return Path.Combine(assemblyFolderPath, "assets");
+            return Path.Combine(assemblyFolderPath, "assets_image_processing");
         }
 
         public TFModelImageLabelScorer(string modelFileName, string labelsFileName)

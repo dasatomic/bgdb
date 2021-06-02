@@ -24,7 +24,7 @@ namespace E2EQueryExecutionTests
         public async Task FetchFileSystemTest()
         {
             await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");
-            const string query = "SELECT * FROM FILESYSTEM('.\\assets')";
+            const string query = "SELECT * FROM FILESYSTEM('./assets')";
             RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
             await tran.Commit();
 
@@ -55,7 +55,7 @@ namespace E2EQueryExecutionTests
         public async Task FetchFileSystemWithFilter()
         {
             await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");
-            const string query = "SELECT * FROM FILESYSTEM('.\\assets') WHERE Extension = '.txt' AND FileSize < 14";
+            const string query = "SELECT * FROM FILESYSTEM('./assets') WHERE Extension = '.txt' AND FileSize < 14";
             RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
             await tran.Commit();
 
@@ -84,7 +84,7 @@ namespace E2EQueryExecutionTests
         public async Task GroupBySizeByExtension()
         {
             await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");
-            const string query = "SELECT Extension, SUM(FileSize) FROM FILESYSTEM('.\\assets') GROUP BY Extension";
+            const string query = "SELECT Extension, SUM(FileSize) FROM FILESYSTEM('./assets') GROUP BY Extension";
             RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
             await tran.Commit();
 

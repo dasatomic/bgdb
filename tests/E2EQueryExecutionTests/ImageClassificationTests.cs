@@ -22,7 +22,7 @@ namespace E2EQueryExecutionTests
         public async Task FetchFileSystemTest()
         {
             await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");
-            const string query = "SELECT CLASSIFY_IMAGE(FilePath), FilePath, FileName FROM FILESYSTEM('.\\assets\\pics') WHERE EXTENSION = '.jpg' OR EXTENSION = '.jfif'";
+            const string query = "SELECT CLASSIFY_IMAGE(FilePath), FilePath, FileName FROM FILESYSTEM('./assets/pics') WHERE EXTENSION = '.jpg' OR EXTENSION = '.jfif'";
             RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
             await tran.Commit();
 
