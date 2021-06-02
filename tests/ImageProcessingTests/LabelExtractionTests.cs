@@ -1,6 +1,5 @@
 using ImageProcessing;
 using System.IO;
-using System.Linq;
 using System.Collections.Generic;
 using NUnit.Framework;
 
@@ -16,14 +15,11 @@ namespace ImageProcessingTests
         }
 
         [Test]
-        public void ExtractLabelsE2EWithImageNetModel()
+        public void ExtractLabelSingle()
         {
             var imagesFolder = GetImageInputPath();
             var inceptionPb = "tensorflow_inception_graph.pb";
             var labelsTxt = "imagenet_comp_graph_label_strings.txt";
-
-            TFModelImageLabelScorer scorer = new TFModelImageLabelScorer(imagesFolder, inceptionPb, labelsTxt);
-            ImageLabelPredictionProbability[] scores = scorer.Score().ToArray();
 
             // TODO: These are results of imagenet model.
             // Hardcoding results.
@@ -38,12 +34,14 @@ namespace ImageProcessingTests
                 { "yoda.jfif", "trench coat" }
             };
 
-            foreach (var label in scores)
+            TFModelImageLabelScorer scorer = new TFModelImageLabelScorer(inceptionPb, labelsTxt);
+            foreach (var file in Directory.GetFiles(imagesFolder))
             {
-                string fileName = Path.GetFileName(label.ImagePath);
-                string correctLabel = mappings[fileName];
+                ImageLabelPredictionProbability score = scorer.ScoreSingle(file);
 
-                Assert.AreEqual(correctLabel, label.PredictedLabels[0]);
+                string fileName = Path.GetFileName(score.ImagePath);
+                string correctLabel = mappings[fileName];
+                Assert.AreEqual(correctLabel, score.PredictedLabels[0]);
             }
         }
     }

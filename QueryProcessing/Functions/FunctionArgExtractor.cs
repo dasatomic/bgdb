@@ -26,6 +26,16 @@ namespace QueryProcessing.Functions
         public C ArgThree;
     }
 
+    public class FunctorArgExtractString : FunctionArg1Extractor<string>
+    {
+        public FunctorArgExtractString(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArgs)
+        {
+            this.ArgOne = sourceArgs[0].Match<string>(
+                (MetadataColumn md) => new string(inputRowHolder.GetStringField(md.ColumnId)),
+                (Sql.value val) => ((Sql.value.String)val).Item);
+        }
+    }
+
     public class FunctorArgExtractIntInt : FunctionArg2Extractor<int, int>
     {
         public FunctorArgExtractIntInt(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArgs)

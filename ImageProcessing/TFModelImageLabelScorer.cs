@@ -7,7 +7,6 @@ namespace ImageProcessing
 {
     public class TFModelImageLabelScorer
     {
-        private readonly string imagesFolder;
         private readonly string modelLocation;
         private readonly string labelsLocation;
         private readonly MLContext mlContext;
@@ -23,14 +22,13 @@ namespace ImageProcessing
             return Path.Combine(assemblyFolderPath, "assets");
         }
 
-        public TFModelImageLabelScorer(string imagesFolder, string modelFileName, string labelsFileName)
+        public TFModelImageLabelScorer(string modelFileName, string labelsFileName)
         {
             string assetsPath = GetAssetsPath();
-            this.imagesFolder = imagesFolder;
             this.modelLocation = Path.Combine(assetsPath, modelFileName);
             this.labelsLocation = Path.Combine(assetsPath, labelsFileName);
             this.mlContext = new MLContext();
-            this.model = LoadModel(imagesFolder, modelLocation);
+            this.model = LoadModel(modelLocation);
 
         }
 
@@ -53,21 +51,24 @@ namespace ImageProcessing
             public const string outputTensorName = "softmax2";
         }
 
-        public IEnumerable<ImageLabelPredictionProbability> Score()
+        public ImageLabelPredictionProbability ScoreSingle(string path)
         {
-            return PredictDataUsingModel(labelsLocation).ToArray();
+            return PredictDataUsingModelSinge(labelsLocation, path);
         }
 
         private IEnumerable<ImageDataSource> LoadSource()
         {
-            return Directory.GetFiles(imagesFolder).Select(path => new ImageDataSource() { ImagePath = path });
+            return Enumerable.Empty<ImageDataSource>();
         }
 
-        private PredictionEngine<ImageDataSource, ImageLabelPrediction> LoadModel(string imagesFolder, string modelLocation)
+        private PredictionEngine<ImageDataSource, ImageLabelPrediction> LoadModel(string modelLocation)
         {
+            // Don't train anything.
+            // Keep the source empty and feed with when scorer is invoked.
+            // TODO: This is ugly. Not sure if there is a nicer way to do this.
             var data = mlContext.Data.LoadFromEnumerable(LoadSource());
 
-            var pipeline = mlContext.Transforms.LoadImages(outputColumnName: "input", imageFolder: imagesFolder, inputColumnName: nameof(ImageDataSource.ImagePath))
+            var pipeline = mlContext.Transforms.LoadImages(outputColumnName: "input", imageFolder: ".", inputColumnName: nameof(ImageDataSource.ImagePath))
                             .Append(mlContext.Transforms.ResizeImages(outputColumnName: "input", imageWidth: ImageNetSettings.imageWidth, imageHeight: ImageNetSettings.imageHeight, inputColumnName: "input"))
                             .Append(mlContext.Transforms.ExtractPixels(outputColumnName: "input", interleavePixelColors: ImageNetSettings.channelsLast, offsetImage: ImageNetSettings.mean))
                             .Append(mlContext.Model.LoadTensorFlowModel(modelLocation).
@@ -81,31 +82,24 @@ namespace ImageProcessing
             return predictionEngine;
         }
 
-        protected IEnumerable<ImageLabelPredictionProbability> PredictDataUsingModel(string labelsLocation)
+        protected ImageLabelPredictionProbability PredictDataUsingModelSinge(string labelsLocation, string path)
         {
-            var labels = ReadLabels(labelsLocation);
+            string[] labels = File.ReadAllLines(labelsLocation);
 
-            var testData = LoadSource();
+            ImageDataSource dataSource = new ImageDataSource() { ImagePath = path };
 
-            foreach (var sample in testData)
-            {
-                var probs = this.model.Predict(sample).PredictedLabels;
+                var probs = this.model.Predict(dataSource).PredictedLabels;
                 var bestLabels = GetBestLabels(labels, probs, ImageNetSettings.returnTopNLabels);
 
-                yield return new ImageLabelPredictionProbability()
+                return new ImageLabelPredictionProbability()
                 {
-                    ImagePath = sample.ImagePath,
+                    ImagePath = dataSource.ImagePath,
                     PredictedLabels = bestLabels.Item1,
                     Probabilities = bestLabels.Item2,
                 };
-            }
         }
 
-        public static string[] ReadLabels(string labelsLocation)
-        {
-            return File.ReadAllLines(labelsLocation);
-        }
-        public static (string[], float[]) GetBestLabels(string[] labels, float[] probs, int topN)
+        private static (string[], float[]) GetBestLabels(string[] labels, float[] probs, int topN)
         {
             // TODO: This is naive slow implementation.
             List<string> bestLabels = new List<string>();

@@ -87,6 +87,20 @@ namespace QueryProcessing
             }
         };
 
+        /// <summary>
+        /// Externally exposed handler for func registration.
+        /// Use it as part of engine boot to register funcs from external components.
+        /// </summary>
+        public static void RegisterFunc(string functionName, IFunctionMappingHandler mappingHandler)
+        {
+            FuncDictionary.Add(functionName, new MetadataOutputFunctorBuilderPair()
+            {
+                GetMetadataInfoForOutput = (func, mds) => mappingHandler.GetMetadataInfoForOutput(func, mds),
+                FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, mappingHandler),
+                FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, mappingHandler),
+            });
+        }
+
         public static MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceInput)
         {
             string funcName = func.Item.Item1;

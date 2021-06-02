@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ImageProcessing\ImageProcessing.csproj" />
     <ProjectReference Include="..\..\MetadataManager\MetadataManager.csproj" />
     <ProjectReference Include="..\..\PageManager\PageManager.csproj" />
     <ProjectReference Include="..\..\ParserLexerFSharp\ParserLexerFSharp.fsproj" />
@@ -32,6 +33,11 @@
 
   <ItemGroup>
     <Content Include="assets\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>  
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\pics\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>  
   </ItemGroup>
