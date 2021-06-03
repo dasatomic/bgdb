@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML" Version="1.5.5" />
+    <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="1.5.5" />
+    <PackageReference Include="Microsoft.ML.TensorFlow" Version="1.5.5" />
+    <PackageReference Include="Microsoft.ML.TensorFlow.Redist" Version="0.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets_image_processing\*.*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>  
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QueryProcessing\QueryProcessing.csproj" />
+  </ItemGroup>
+
+</Project>

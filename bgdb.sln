@@ -39,6 +39,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LockManagerTests", "tests\L
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Instrumentation", "Instrumentation\Instrumentation.csproj", "{E53631B2-B716-4418-8196-506C6A162846}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageProcessing", "ImageProcessing\ImageProcessing.csproj", "{D888FA29-F32D-4BC6-BCF1-5F5775B02A08}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageProcessingTests", "tests\ImageProcessingTests\ImageProcessingTests.csproj", "{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +121,14 @@ Global
 		{E53631B2-B716-4418-8196-506C6A162846}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E53631B2-B716-4418-8196-506C6A162846}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E53631B2-B716-4418-8196-506C6A162846}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D888FA29-F32D-4BC6-BCF1-5F5775B02A08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D888FA29-F32D-4BC6-BCF1-5F5775B02A08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D888FA29-F32D-4BC6-BCF1-5F5775B02A08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D888FA29-F32D-4BC6-BCF1-5F5775B02A08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

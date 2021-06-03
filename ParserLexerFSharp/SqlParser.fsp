@@ -27,6 +27,7 @@ open Sql
 %token EOF
 %token QUOT
 %token STAR
+%token FILESYSTEM
 %token TOP
 
 %start startCT
@@ -98,6 +99,7 @@ SelectStatement: topClause columnSelect
 fromStatement:
     | FROM ID { FromTable($2) }
     | FROM OBRCK SELECT SelectStatement CBRCK { FromSubquery($4) }
+    | FROM FILESYSTEM OBRCK value CBRCK { FileSystemProvider($4) }
 
 topClause:
     | TOP INT { Some($2) }

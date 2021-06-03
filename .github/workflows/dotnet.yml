@@ -2,7 +2,7 @@ name: .NET
 
 on:
   push:
-    branches: [ master, image_processing_proto, functions_support ]
+    branches: [ master, image_processing_proto ]
   pull_request:
     branches: [ master, image_processing_proto, functions_support ]
 
@@ -13,6 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install libc6-dev
+      run: sudo apt-get install libc6-dev
+    - name: Install libgdiplus
+      run: sudo apt-get install libgdiplus
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:

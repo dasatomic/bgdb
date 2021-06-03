@@ -5,7 +5,7 @@ using QueryProcessing.Utilities;
 
 namespace QueryProcessing.Functions
 {
-    static class FunctorArgChecks
+    public static class FunctorArgChecks
     {
         public static void CheckInputArguments(Union2Type<MetadataColumn, Sql.value>[] sourceArguments, ColumnType[] acceptedColumnTypes)
         {

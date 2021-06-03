@@ -53,6 +53,8 @@ type sqlStatement =
 and sqlStatementOrId =
     | FromTable of string
     | FromSubquery of sqlStatement
+    // Path + extension filter
+    | FileSystemProvider of value 
 
 type columntype = IntCType | StringCType | DoubleCType
 // columntype + rep count + name.
