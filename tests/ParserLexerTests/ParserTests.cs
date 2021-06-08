@@ -350,6 +350,19 @@ WHERE t1.a > 20
             Assert.AreEqual(((Sql.value.String)fileSystemProvider.Item).Item, "some_path");
         }
 
+        [Test]
+        public void SelectFromVideoChunker()
+        {
+            string query = @"SELECT * FROM VIDEO_CHUNKER(SELECT * FROM T)";
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.IsTrue(selectStatement.From.IsVideoChunkProviderSubquery);
+            selectStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item;
+
+            Assert.IsTrue(selectStatement.From.IsFromTable);
+            Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
+        }
+
         #region Helper
         private Sql.sqlStatement GetSelectStatement(string query)
         {

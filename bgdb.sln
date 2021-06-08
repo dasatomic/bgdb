@@ -43,6 +43,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageProcessing", "ImagePro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageProcessingTests", "tests\ImageProcessingTests\ImageProcessingTests.csproj", "{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing", "VideoProcessing\VideoProcessing.csproj", "{57580522-BCAF-485A-B190-60D47175752C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessingTests", "tests\VideoProcessingTests\VideoProcessingTests.csproj", "{6667509E-DA9F-4323-8326-EDA665BE3EBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +133,14 @@ Global
 		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0D3709F-7490-47ED-96C6-E6FD6786E6ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57580522-BCAF-485A-B190-60D47175752C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57580522-BCAF-485A-B190-60D47175752C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57580522-BCAF-485A-B190-60D47175752C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57580522-BCAF-485A-B190-60D47175752C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6667509E-DA9F-4323-8326-EDA665BE3EBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6667509E-DA9F-4323-8326-EDA665BE3EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6667509E-DA9F-4323-8326-EDA665BE3EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6667509E-DA9F-4323-8326-EDA665BE3EBC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

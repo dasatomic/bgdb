@@ -102,5 +102,24 @@ namespace E2EQueryExecutionTests
                 // Assert.AreEqual(expectedResults[extension], lengthSum);
             }
         }
+
+        [Test]
+        public async Task VideoChunkerTest()
+        {
+
+            await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");
+            const string query = "SELECT * FROM VIDEO_CHUNKER(SELECT * FROM FILESYSTEM('./assets') WHERE Extension = '.mkv')";
+            RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+            await tran.Commit();
+
+            foreach (RowHolder rh in result)
+            {
+                string fullPath = new string(rh.GetStringField(0));
+                string fileName = new string(rh.GetStringField(1));
+                string extension = new string(rh.GetStringField(2));
+                int length = rh.GetField<int>(3);
+                string chunkName = new string(rh.GetStringField(4));
+            }
+        }
     }
 }

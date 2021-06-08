@@ -60,6 +60,13 @@ namespace QueryProcessing
 
                 throw new ArgumentException("Invalid argument for FROM FILESYSTEM");
             }
+            else if (statement.From.IsVideoChunkProviderSubquery)
+            {
+                Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item;
+                RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
+
+                return new PhyOpVideoChunker(rowProvider);
+            }
 
             throw new ArgumentException("Scan can only be done from Table or from Subquery");
         }

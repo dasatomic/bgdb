@@ -27,7 +27,7 @@ open Sql
 %token EOF
 %token QUOT
 %token STAR
-%token FILESYSTEM
+%token FILESYSTEM VIDEO_CHUNKER
 %token TOP
 
 %start startCT
@@ -100,6 +100,7 @@ fromStatement:
     | FROM ID { FromTable($2) }
     | FROM OBRCK SELECT SelectStatement CBRCK { FromSubquery($4) }
     | FROM FILESYSTEM OBRCK value CBRCK { FileSystemProvider($4) }
+    | FROM VIDEO_CHUNKER OBRCK SELECT SelectStatement CBRCK { VideoChunkProviderSubquery($5) }
 
 topClause:
     | TOP INT { Some($2) }

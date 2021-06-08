@@ -3,6 +3,7 @@ module SqlParser
 type token = 
   | TOP
   | FILESYSTEM
+  | VIDEO_CHUNKER
   | STAR
   | QUOT
   | EOF
@@ -50,6 +51,7 @@ type token =
 type tokenId = 
     | TOKEN_TOP
     | TOKEN_FILESYSTEM
+    | TOKEN_VIDEO_CHUNKER
     | TOKEN_STAR
     | TOKEN_QUOT
     | TOKEN_EOF
