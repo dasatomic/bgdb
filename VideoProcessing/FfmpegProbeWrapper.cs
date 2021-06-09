@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace VideoProcessing
 {
-    public class FfmpegProbeWrapper : IExeRunner
+    public class FfmpegProbeWrapper
     {
         private static string GetFfmpegPath()
         {
