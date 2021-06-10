@@ -62,10 +62,11 @@ namespace QueryProcessing
             }
             else if (statement.From.IsVideoChunkProviderSubquery)
             {
-                Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item;
+                Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item1;
+                TimeSpan chunkSize = TimeSpan.FromSeconds(((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item2);
                 RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
 
-                return new PhyOpVideoChunker(rowProvider);
+                return new PhyOpVideoChunker(rowProvider, chunkSize);
             }
 
             throw new ArgumentException("Scan can only be done from Table or from Subquery");

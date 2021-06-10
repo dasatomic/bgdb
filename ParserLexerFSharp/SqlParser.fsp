@@ -100,7 +100,7 @@ fromStatement:
     | FROM ID { FromTable($2) }
     | FROM OBRCK SELECT SelectStatement CBRCK { FromSubquery($4) }
     | FROM FILESYSTEM OBRCK value CBRCK { FileSystemProvider($4) }
-    | FROM VIDEO_CHUNKER OBRCK SELECT SelectStatement CBRCK { VideoChunkProviderSubquery($5) }
+    | FROM VIDEO_CHUNKER OBRCK INT COMMA SELECT SelectStatement CBRCK { VideoChunkProviderSubquery($7, $4) }
 
 topClause:
     | TOP INT { Some($2) }

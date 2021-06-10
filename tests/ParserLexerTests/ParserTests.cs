@@ -353,14 +353,16 @@ WHERE t1.a > 20
         [Test]
         public void SelectFromVideoChunker()
         {
-            string query = @"SELECT * FROM VIDEO_CHUNKER(SELECT * FROM T)";
+            string query = @"SELECT * FROM VIDEO_CHUNKER(10, SELECT * FROM T)";
             var selectStatement = GetSelectStatement(query);
 
             Assert.IsTrue(selectStatement.From.IsVideoChunkProviderSubquery);
-            selectStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item;
+            selectStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item1;
+            int chunkSizeSeconds = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item2;
 
             Assert.IsTrue(selectStatement.From.IsFromTable);
             Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);
+            Assert.AreEqual(10, chunkSizeSeconds);
         }
 
         #region Helper

@@ -28,11 +28,13 @@ namespace QueryProcessing
     public class PhyOpVideoChunker : IPhysicalOperator<RowHolder>
     {
         private RowProvider rowProvider;
+        private TimeSpan chunkLength;
         const string FilePathField = "FilePath";
 
-        public PhyOpVideoChunker(RowProvider rowProvider)
+        public PhyOpVideoChunker(RowProvider rowProvider, TimeSpan chunkLength)
         {
             this.rowProvider = rowProvider;
+            this.chunkLength = chunkLength;
         }
 
         public MetadataColumn[] GetOutputColumns() => rowProvider.ColumnInfo;
