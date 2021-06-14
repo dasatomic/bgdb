@@ -40,7 +40,7 @@ namespace E2EQueryExecutionTests
 
             metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
 
-            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath());
+            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), TestGlobals.TestFileLogger);
             var videoChunkerCallback = SourceRegistration.VideoChunkerCallback(videoChunker);
             AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, videoChunkerCallback);
 

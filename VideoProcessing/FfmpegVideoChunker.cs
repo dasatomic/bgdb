@@ -10,10 +10,12 @@ namespace VideoProcessing
     {
         private const string ffArgsFormat = "-hide_banner -i {0} -c copy -map 0 -segment_time {1} -f segment {2}";
         private readonly string tempDestination;
+        private readonly IVideoProcessingInstrumentationInterface logger;
 
-        public FfmpegVideoChunker(string tempDestination)
+        public FfmpegVideoChunker(string tempDestination, IVideoProcessingInstrumentationInterface logger)
         {
             this.tempDestination = tempDestination;
+            this.logger = logger;
         }
 
         private ProcessStartInfo CreateProcessStartInfo(string ffmpegArgs)
@@ -62,18 +64,22 @@ namespace VideoProcessing
             ProcessStartInfo pci = CreateProcessStartInfo(arguments);
             using (Process proc = Process.Start(pci))
             {
+                this.logger.LogDebug($"Running Process name {proc.ProcessName} with id {proc.Id}.");
                 await proc.WaitForExitAsync(token);
+                this.logger.LogDebug($"Process Id {proc.Id} exited with exit code {proc.ExitCode}.");
 
                 if (!proc.StandardOutput.EndOfStream)
                 {
-                    // TODO: Log
-                    string jsonOutput = await proc.StandardOutput.ReadToEndAsync();
+                    string output = await proc.StandardOutput.ReadToEndAsync();
+                    output = $"Process id {proc.Id} standard output: " + Environment.NewLine + output;
+                    this.logger.LogDebug(output);
                 }
 
                 if (!proc.StandardError.EndOfStream)
                 {
-                    // TODO: Log
-                    string jsonOutput = await proc.StandardError.ReadToEndAsync();
+                    string output = await proc.StandardError.ReadToEndAsync();
+                    output = $"Process id {proc.Id} standard output: " + Environment.NewLine + output;
+                    this.logger.LogDebug(output);
                 }
             }
 

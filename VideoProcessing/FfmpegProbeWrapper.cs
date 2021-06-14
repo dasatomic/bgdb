@@ -11,7 +11,12 @@ namespace VideoProcessing
     {
         private const string ffProbeArgs = " -v quiet -print_format json -show_format -show_streams -hide_banner ";
 
-        public FfmpegProbeWrapper() { }
+        private readonly IVideoProcessingInstrumentationInterface logger;
+
+        public FfmpegProbeWrapper(IVideoProcessingInstrumentationInterface logger)
+        {
+            this.logger = logger;
+        }
 
         private ProcessStartInfo CreateProcessStartInfo(string ffProbeArgs)
         {
@@ -45,20 +50,30 @@ namespace VideoProcessing
             return pci;
         }
 
-        public async Task<FfProbeOutputSerializer> Execute(string videoName, CancellationToken cancellationToken)
+        public async Task<FfProbeOutputSerializer> Execute(string videoName, CancellationToken token)
         {
             string args = ffProbeArgs + videoName;
             ProcessStartInfo pci = CreateProcessStartInfo(args);
 
             using (Process proc = Process.Start(pci))
             {
-                await proc.WaitForExitAsync(cancellationToken);
+                this.logger.LogDebug($"Running Process name {proc.ProcessName} with id {proc.Id}.");
+                await proc.WaitForExitAsync(token);
+                this.logger.LogDebug($"Process Id {proc.Id} exited with exit code {proc.ExitCode}.");
 
                 if (!proc.StandardOutput.EndOfStream)
                 {
                     string jsonOutput = await proc.StandardOutput.ReadToEndAsync();
-
+                    string output = $"Process id {proc.Id} standard output: " + Environment.NewLine + jsonOutput;
+                    this.logger.LogDebug(output);
                     return JsonConvert.DeserializeObject<FfProbeOutputSerializer>(jsonOutput);
+                }
+
+                if (!proc.StandardError.EndOfStream)
+                {
+                    string output = await proc.StandardError.ReadToEndAsync();
+                    output = $"Process id {proc.Id} standard output: " + Environment.NewLine + output;
+                    this.logger.LogDebug(output);
                 }
             }
 

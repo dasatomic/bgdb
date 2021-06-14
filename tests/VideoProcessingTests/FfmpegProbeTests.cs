@@ -18,7 +18,7 @@ namespace VideoProcessingTests
         [Test]
         public async Task FFmpegProbeOutputGeneration()
         {
-            var ffmpegProbeWrapper = new FfmpegProbeWrapper();
+            var ffmpegProbeWrapper = new FfmpegProbeWrapper(new NoOpLogging());
 
             var output = await ffmpegProbeWrapper.Execute(GetExampleVideoPath(), CancellationToken.None);
             Assert.AreEqual(2, output.Streams.Length);

@@ -29,7 +29,7 @@ namespace VideoProcessingTests
         [Test]
         public async Task FFmpegVideoChunkerTests()
         {
-            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath());
+            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), new NoOpLogging());
 
             string[] chunkPaths = await videoChunker.Execute(GetExampleVideoPath(), TimeSpan.FromSeconds(10), CancellationToken.None);
 

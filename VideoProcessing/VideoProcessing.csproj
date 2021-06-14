@@ -14,8 +14,4 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Instrumentation\Instrumentation.csproj" />
-  </ItemGroup>
-
 </Project>
