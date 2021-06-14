@@ -50,5 +50,10 @@ namespace QueryProcessing
 
             throw new ArgumentException();
         }
+
+        public void RegisterExternalFunction(string functionName, IFunctionMappingHandler mappingHandler)
+        {
+            FuncCallMapper.RegisterFunc(functionName, mappingHandler);
+        }
     }
 }

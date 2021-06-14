@@ -357,8 +357,8 @@ WHERE t1.a > 20
             var selectStatement = GetSelectStatement(query);
 
             Assert.IsTrue(selectStatement.From.IsVideoChunkProviderSubquery);
-            selectStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item1;
             int chunkSizeSeconds = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item2;
+            selectStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)selectStatement.From).Item1;
 
             Assert.IsTrue(selectStatement.From.IsFromTable);
             Assert.AreEqual("T", ((Sql.sqlStatementOrId.FromTable)selectStatement.From).Item);

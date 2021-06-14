@@ -29,10 +29,13 @@ namespace QueryProcessing
         private MetadataManager.MetadataManager metadataManager;
         private IList<IStatementTreeBuilder> statementBuildersList = new List<IStatementTreeBuilder>();
 
-        public AstToOpTreeBuilder(MetadataManager.MetadataManager metadataManager)
+        public AstToOpTreeBuilder(
+            MetadataManager.MetadataManager metadataManager,
+            // TODO: All external operations that are linked to ops should go here.
+            Func<string, TimeSpan, Task<string[]>> sourceVideoChunker = null)
         {
             this.metadataManager = metadataManager;
-            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this));
+            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this, sourceVideoChunker));
             statementBuildersList.Add(new JoinOpBuilder(metadataManager));
             statementBuildersList.Add(new FilterStatementBuilder());
             statementBuildersList.Add(new AggGroupOpBuilder());

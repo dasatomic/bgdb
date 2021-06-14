@@ -1,5 +1,6 @@
 ﻿using MetadataManager;
 using PageManager;
+using QueryProcessing.Exceptions;
 using System;
 using System.Threading.Tasks;
 
@@ -10,10 +11,21 @@ namespace QueryProcessing
         private MetadataManager.MetadataManager metadataManager;
         private AstToOpTreeBuilder nestedStatementBuilder;
 
-        public SourceOpBuilder(MetadataManager.MetadataManager metadataManager, AstToOpTreeBuilder nestedStatementBuilder)
+        private Func<string, TimeSpan, Task<string[]>> videoChunkProvider;
+
+        public SourceOpBuilder(
+            MetadataManager.MetadataManager metadataManager,
+            AstToOpTreeBuilder nestedStatementBuilder,
+            Func<string, TimeSpan, Task<string[]>> videoChunkProvider)
         {
             this.metadataManager = metadataManager;
             this.nestedStatementBuilder = nestedStatementBuilder;
+            this.videoChunkProvider = videoChunkProvider;
+        }
+
+        public void RegisterVideoChunkProvider(Func<string, TimeSpan, Task<string[]>> func)
+        {
+            this.videoChunkProvider = func;
         }
 
         public async Task<IPhysicalOperator<RowHolder>> BuildStatement(Sql.sqlStatement statement, ITransaction tran, IPhysicalOperator<RowHolder> source, InputStringNormalizer stringNormalizer)
@@ -62,11 +74,16 @@ namespace QueryProcessing
             }
             else if (statement.From.IsVideoChunkProviderSubquery)
             {
+                if (this.videoChunkProvider == null)
+                {
+                    throw new SourceProviderNotSetException();
+                }
+
                 Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item1;
                 TimeSpan chunkSize = TimeSpan.FromSeconds(((Sql.sqlStatementOrId.VideoChunkProviderSubquery)statement.From).Item2);
                 RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
 
-                return new PhyOpVideoChunker(rowProvider, chunkSize);
+                return new PhyOpVideoChunker(rowProvider, chunkSize, this.videoChunkProvider);
             }
 
             throw new ArgumentException("Scan can only be done from Table or from Subquery");

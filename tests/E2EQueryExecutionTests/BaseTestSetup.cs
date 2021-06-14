@@ -5,6 +5,7 @@ using QueryProcessing;
 using System.IO;
 using System.Threading.Tasks;
 using Test.Common;
+using VideoProcessing;
 
 namespace E2EQueryExecutionTests
 {
@@ -14,6 +15,16 @@ namespace E2EQueryExecutionTests
         protected ILogManager logManager;
         protected IPageManager pageManager;
         protected MetadataManager.MetadataManager metadataManager;
+
+        private static string GetTempFolderPath()
+        {
+            FileInfo dataRoot = new FileInfo(typeof(BaseTestSetup).Assembly.Location);
+            string assemblyFolderPath = dataRoot.Directory.FullName;
+
+            string path = Path.Combine(assemblyFolderPath, "temp");
+            Directory.CreateDirectory(path);
+            return path;
+        }
 
         protected virtual async Task Setup()
         {
@@ -28,7 +39,10 @@ namespace E2EQueryExecutionTests
             }
 
             metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager);
+
+            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath());
+            var videoChunkerCallback = SourceRegistration.VideoChunkerCallback(videoChunker);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, videoChunkerCallback);
 
             this.queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]

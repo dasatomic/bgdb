@@ -15,7 +15,8 @@ namespace E2EQueryExecutionTests
         {
             await base.Setup();
             IFunctionMappingHandler mappingHandler = new ImageObjectClassificationFuncMappingHandler();
-            FuncCallMapper.RegisterFunc("CLASSIFY_IMAGE", mappingHandler);
+
+            this.queryEntryGate.RegisterExternalFunction("CLASSIFY_IMAGE", mappingHandler);
         }
 
         [Test]

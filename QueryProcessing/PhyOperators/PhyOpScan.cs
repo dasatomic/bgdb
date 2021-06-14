@@ -29,12 +29,14 @@ namespace QueryProcessing
     {
         private RowProvider rowProvider;
         private TimeSpan chunkLength;
+        private Func<string, TimeSpan, Task<string[]>> videoChunkProvider;
         const string FilePathField = "FilePath";
 
-        public PhyOpVideoChunker(RowProvider rowProvider, TimeSpan chunkLength)
+        public PhyOpVideoChunker(RowProvider rowProvider, TimeSpan chunkLength, Func<string, TimeSpan, Task<string[]>> videoChunkerCallback)
         {
             this.rowProvider = rowProvider;
             this.chunkLength = chunkLength;
+            this.videoChunkProvider = videoChunkerCallback;
         }
 
         public MetadataColumn[] GetOutputColumns() => rowProvider.ColumnInfo;
@@ -87,12 +89,10 @@ namespace QueryProcessing
             {
                 string filePath = new string(row.GetStringField(filePathColumnId));
 
-                // TODO: just WIP.
-                for (int i = 0; i < 10; i++)
+                foreach (string chunkPath in await this.videoChunkProvider(filePath, this.chunkLength))
                 {
                     RowHolder expended = row.ProjectAndExtend(extendInfo);
-                    string chunkName = filePath + "00" + i;
-                    expended.SetField(chunkNamePosition, chunkName.ToCharArray());
+                    expended.SetField(chunkNamePosition, chunkPath.ToCharArray());
 
                     yield return expended;
                 }
