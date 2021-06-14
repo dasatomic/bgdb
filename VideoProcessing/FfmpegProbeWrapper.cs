@@ -15,18 +15,14 @@ namespace VideoProcessing
 
         private ProcessStartInfo CreateProcessStartInfo(string ffProbeArgs)
         {
+            ProcessStartInfo pci = new ProcessStartInfo();
             if (OperatingSystem.IsWindows())
             {
                 FileInfo dataRoot = new FileInfo(typeof(FfmpegProbeWrapper).Assembly.Location);
                 string assemblyFolderPath = dataRoot.Directory.FullName;
-                string exePath = Path.Combine(assemblyFolderPath, "ffmpeg/ffprobe.exe");
-                ProcessStartInfo pci = new ProcessStartInfo(exePath, ffProbeArgs);
+                pci.FileName = Path.Combine(assemblyFolderPath, "ffmpeg/ffprobe.exe");
+                pci.Arguments = ffProbeArgs;
 
-                pci.UseShellExecute = false;
-                pci.RedirectStandardOutput = true;
-                pci.RedirectStandardError = true;
-
-                return pci;
             }
             else if (OperatingSystem.IsLinux())
             {
@@ -34,16 +30,19 @@ namespace VideoProcessing
                 // This means that ffmpeg needs to be installed.
                 // TODO: Error handling if ffmpeg isn't installed/bash is not used etc.
                 // For now this is only to pass basic test on Ubuntu when everything is correctly preinstalled.
-                ProcessStartInfo pci = new ProcessStartInfo("/bin/bash", $"-c \"ffprobe {ffProbeArgs}\"");
-
-                pci.UseShellExecute = false;
-                pci.RedirectStandardOutput = true;
-                pci.RedirectStandardError = true;
-
-                return pci;
+                pci.FileName = "/bin/bash";
+                pci.Arguments = $"-c \"ffprobe {ffProbeArgs}\"";
+            }
+            else
+            {
+                throw new NotImplementedException("Os currently not supported");
             }
 
-            throw new NotImplementedException("Os currently not supported");
+            pci.UseShellExecute = false;
+            pci.RedirectStandardOutput = true;
+            pci.RedirectStandardError = true;
+
+            return pci;
         }
 
         public async Task<FfProbeOutputSerializer> Execute(string videoName, CancellationToken cancellationToken)

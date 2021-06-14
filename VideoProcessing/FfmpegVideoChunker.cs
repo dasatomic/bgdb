@@ -18,18 +18,14 @@ namespace VideoProcessing
 
         private ProcessStartInfo CreateProcessStartInfo(string ffmpegArgs)
         {
+            ProcessStartInfo pci = new ProcessStartInfo();
             if (OperatingSystem.IsWindows())
             {
                 FileInfo dataRoot = new FileInfo(typeof(FfmpegProbeWrapper).Assembly.Location);
                 string assemblyFolderPath = dataRoot.Directory.FullName;
-                string exePath = Path.Combine(assemblyFolderPath, "ffmpeg/ffmpeg.exe");
-                ProcessStartInfo pci = new ProcessStartInfo(exePath, ffmpegArgs);
+                pci.FileName = Path.Combine(assemblyFolderPath, "ffmpeg/ffmpeg.exe");
+                pci.Arguments = ffmpegArgs;
 
-                pci.UseShellExecute = false;
-                pci.RedirectStandardOutput = true;
-                pci.RedirectStandardError = true;
-
-                return pci;
             }
             else if (OperatingSystem.IsLinux())
             {
@@ -37,16 +33,19 @@ namespace VideoProcessing
                 // This means that ffmpeg needs to be installed.
                 // TODO: Error handling if ffmpeg isn't installed/bash is not used etc.
                 // For now this is only to pass basic test on Ubuntu when everything is correctly preinstalled.
-                ProcessStartInfo pci = new ProcessStartInfo("/bin/bash", $"-c \"ffmpeg {ffmpegArgs}\"");
-
-                pci.UseShellExecute = false;
-                pci.RedirectStandardOutput = true;
-                pci.RedirectStandardError = true;
-
-                return pci;
+                pci.FileName = "/bin/bash";
+                pci.Arguments = $"-c \"ffmpeg {ffmpegArgs}\"";
+            }
+            else
+            {
+                throw new NotImplementedException("Os currently not supported");
             }
 
-            throw new NotImplementedException("Os currently not supported");
+            pci.UseShellExecute = false;
+            pci.RedirectStandardOutput = true;
+            pci.RedirectStandardError = true;
+
+            return pci;
         }
 
         public async Task<string[]> Execute(string fileName, TimeSpan span, CancellationToken token)
