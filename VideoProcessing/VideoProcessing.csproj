@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PageManager\PageManager.csproj" />
+    <ProjectReference Include="..\QueryProcessing\QueryProcessing.csproj" />
   </ItemGroup>
 
 </Project>
