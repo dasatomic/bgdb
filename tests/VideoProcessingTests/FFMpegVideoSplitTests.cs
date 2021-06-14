@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Test.Common;
 using VideoProcessing;
 
 namespace VideoProcessingTests
@@ -31,7 +32,7 @@ namespace VideoProcessingTests
         {
             var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), new NoOpLogging());
 
-            string[] chunkPaths = await videoChunker.Execute(GetExampleVideoPath(), TimeSpan.FromSeconds(10), CancellationToken.None);
+            string[] chunkPaths = await videoChunker.Execute(GetExampleVideoPath(), TimeSpan.FromSeconds(10), new DummyTran(), CancellationToken.None);
 
             Assert.AreEqual(5, chunkPaths.Length);
         }

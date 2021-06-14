@@ -32,7 +32,7 @@ namespace QueryProcessing
         public AstToOpTreeBuilder(
             MetadataManager.MetadataManager metadataManager,
             // TODO: All external operations that are linked to ops should go here.
-            Func<string, TimeSpan, Task<string[]>> sourceVideoChunker = null)
+            Func<string, TimeSpan, ITransaction, Task<string[]>> sourceVideoChunker = null)
         {
             this.metadataManager = metadataManager;
             statementBuildersList.Add(new SourceOpBuilder(metadataManager, this, sourceVideoChunker));

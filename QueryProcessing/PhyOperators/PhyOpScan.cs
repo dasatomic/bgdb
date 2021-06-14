@@ -29,10 +29,10 @@ namespace QueryProcessing
     {
         private RowProvider rowProvider;
         private TimeSpan chunkLength;
-        private Func<string, TimeSpan, Task<string[]>> videoChunkProvider;
+        private Func<string, TimeSpan, ITransaction, Task<string[]>> videoChunkProvider;
         const string FilePathField = "FilePath";
 
-        public PhyOpVideoChunker(RowProvider rowProvider, TimeSpan chunkLength, Func<string, TimeSpan, Task<string[]>> videoChunkerCallback)
+        public PhyOpVideoChunker(RowProvider rowProvider, TimeSpan chunkLength, Func<string, TimeSpan, ITransaction, Task<string[]>> videoChunkerCallback)
         {
             this.rowProvider = rowProvider;
             this.chunkLength = chunkLength;
@@ -89,7 +89,7 @@ namespace QueryProcessing
             {
                 string filePath = new string(row.GetStringField(filePathColumnId));
 
-                foreach (string chunkPath in await this.videoChunkProvider(filePath, this.chunkLength))
+                foreach (string chunkPath in await this.videoChunkProvider(filePath, this.chunkLength, tran))
                 {
                     RowHolder expended = row.ProjectAndExtend(extendInfo);
                     expended.SetField(chunkNamePosition, chunkPath.ToCharArray());

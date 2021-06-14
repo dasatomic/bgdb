@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PageManager;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -50,13 +51,14 @@ namespace VideoProcessing
             return pci;
         }
 
-        public async Task<string[]> Execute(string fileName, TimeSpan span, CancellationToken token)
+        public async Task<string[]> Execute(string fileName, TimeSpan span, ITransaction tran, CancellationToken token)
         {
             FileInfo fi = new FileInfo(fileName);
             string outputFileName = Path.GetFileNameWithoutExtension(fi.Name) + "%03d" + fi.Extension;
 
             string destinationDir = Path.Combine(tempDestination, Guid.NewGuid().ToString());
-            Directory.CreateDirectory(destinationDir);
+            DirectoryInfo tempDir = Directory.CreateDirectory(destinationDir);
+            tran.RegisterTempFolder(tempDir);
             string outputDestination = Path.Combine(destinationDir, outputFileName);
 
             string arguments = string.Format(ffArgsFormat, fileName, span, outputDestination);

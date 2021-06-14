@@ -11,19 +11,19 @@ namespace QueryProcessing
         private MetadataManager.MetadataManager metadataManager;
         private AstToOpTreeBuilder nestedStatementBuilder;
 
-        private Func<string, TimeSpan, Task<string[]>> videoChunkProvider;
+        private Func<string, TimeSpan, ITransaction, Task<string[]>> videoChunkProvider;
 
         public SourceOpBuilder(
             MetadataManager.MetadataManager metadataManager,
             AstToOpTreeBuilder nestedStatementBuilder,
-            Func<string, TimeSpan, Task<string[]>> videoChunkProvider)
+            Func<string, TimeSpan, ITransaction, Task<string[]>> videoChunkProvider)
         {
             this.metadataManager = metadataManager;
             this.nestedStatementBuilder = nestedStatementBuilder;
             this.videoChunkProvider = videoChunkProvider;
         }
 
-        public void RegisterVideoChunkProvider(Func<string, TimeSpan, Task<string[]>> func)
+        public void RegisterVideoChunkProvider(Func<string, TimeSpan, ITransaction, Task<string[]>> func)
         {
             this.videoChunkProvider = func;
         }
