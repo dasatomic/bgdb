@@ -2,9 +2,9 @@ name: .NET
 
 on:
   push:
-    branches: [ master, image_processing_proto ]
+    branches: [ master, video_processing ]
   pull_request:
-    branches: [ master, image_processing_proto, functions_support ]
+    branches: [ master, video_processing ]
 
 jobs:
   build:
@@ -17,6 +17,8 @@ jobs:
       run: sudo apt-get install libc6-dev
     - name: Install libgdiplus
       run: sudo apt-get install libgdiplus
+    - name: Install ffmpeg
+      run: sudo apt-get install ffmpeg
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
