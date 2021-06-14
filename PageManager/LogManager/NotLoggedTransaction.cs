@@ -3,6 +3,7 @@ using LockManager.LockImplementation;
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -45,6 +46,11 @@ namespace LogManager
         public IEnumerable<ILogRecord> GetRecords() => Enumerable.Empty<ILogRecord>();
 
         public TransactionState GetTransactionState() => TransactionState.Open;
+
+        public void RegisterTempFolder(DirectoryInfo tempFolder)
+        {
+            throw new NotImplementedException("Not logged tran shouldn't mess with file system");
+        }
 
         public Task Rollback()
         {

@@ -4,6 +4,7 @@ using PageManager;
 using PageManager.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,6 +16,7 @@ namespace LogManager
         private Dictionary<int, LockTypeEnum> locksHeld = new Dictionary<int, LockTypeEnum>();
         private readonly ulong transactionId;
         private object lck = new object();
+        private Queue<DirectoryInfo> tempDirectoriesToCleanUp = new Queue<DirectoryInfo>();
 
         public ReadonlyTransaction(ILockManager lockManager, ulong transactionId)
         {
@@ -84,6 +86,12 @@ namespace LogManager
             }
 
             this.lockManager.ReleaseOwner(this.transactionId);
+
+            while (this.tempDirectoriesToCleanUp.Any())
+            {
+                DirectoryInfo dir = this.tempDirectoriesToCleanUp.Dequeue();
+                Directory.Delete(dir.FullName, true);
+            }
         }
 
         public ValueTask DisposeAsync()
@@ -126,6 +134,11 @@ namespace LogManager
                 lockType = LockTypeEnum.Shared;
                 return this.locksHeld.ContainsKey(this.lockManager.LockIdForPage(pageId));
             }
+        }
+
+        public void RegisterTempFolder(DirectoryInfo tempFolder)
+        {
+            this.tempDirectoriesToCleanUp.Enqueue(tempFolder);
         }
     }
 }
