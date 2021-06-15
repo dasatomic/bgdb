@@ -57,6 +57,7 @@ and sqlStatementOrId =
     | FileSystemProvider of value 
     // Subquery + chunksize in seconds
     | VideoChunkProviderSubquery of sqlStatement * int
+    | VideoImageProviderSubquery of sqlStatement * int * int
 
 type columntype = IntCType | StringCType | DoubleCType
 // columntype + rep count + name.

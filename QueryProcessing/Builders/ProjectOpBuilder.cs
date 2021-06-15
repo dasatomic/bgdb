@@ -40,6 +40,13 @@ namespace QueryProcessing
                     var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc.Item);
                     result[pos] = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns());
                 }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+
+                // Update column position.
+                result[pos] = result[pos].SetNewColumnPosition(pos);
 
                 pos++;
             }

@@ -365,6 +365,22 @@ WHERE t1.a > 20
             Assert.AreEqual(10, chunkSizeSeconds);
         }
 
+        [Test]
+        public void SelectFromVideoToImage()
+        {
+            string query = @"SELECT * FROM VIDEO_TO_IMAGE(1, 60, SELECT * FROM VIDEO_CHUNKER(10, SELECT * FROM T))";
+            var selectStatement = GetSelectStatement(query);
+
+            Assert.IsTrue(selectStatement.From.IsVideoImageProviderSubquery);
+            int framesPerDuration = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)selectStatement.From).Item2;
+            int durationCapture = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)selectStatement.From).Item3;
+            selectStatement = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)selectStatement.From).Item1;
+
+            Assert.IsTrue(selectStatement.From.IsVideoChunkProviderSubquery);
+            Assert.AreEqual(1, framesPerDuration);
+            Assert.AreEqual(60, durationCapture);
+        }
+
         #region Helper
         private Sql.sqlStatement GetSelectStatement(string query)
         {

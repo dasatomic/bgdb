@@ -4,6 +4,7 @@ type token =
   | TOP
   | FILESYSTEM
   | VIDEO_CHUNKER
+  | VIDEO_TO_IMAGE
   | STAR
   | QUOT
   | EOF
@@ -52,6 +53,7 @@ type tokenId =
     | TOKEN_TOP
     | TOKEN_FILESYSTEM
     | TOKEN_VIDEO_CHUNKER
+    | TOKEN_VIDEO_TO_IMAGE
     | TOKEN_STAR
     | TOKEN_QUOT
     | TOKEN_EOF

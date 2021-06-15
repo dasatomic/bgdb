@@ -27,6 +27,103 @@ namespace QueryProcessing
         public IAsyncEnumerable<RowHolder> Iterate(ITransaction tran) => rowProvider.Enumerator;
     }
 
+    public class PhyOpVideoToImage : IPhysicalOperator<RowHolder>
+    {
+        private RowProvider rowProvider;
+        private VideoToImageProvider videoToImageProvider;
+        private const string FilePathField = "chunk_path";
+        private MetadataColumn[] outputColumns;
+        private int framesPerDuration;
+        private int durationInSeconds;
+
+        private MetadataColumn[] extensionColumns = new[]
+        {
+            new MetadataColumn(0, 0, "frame_path", new ColumnInfo(ColumnType.String, 256)), // Chunk path
+        };
+
+        public PhyOpVideoToImage(RowProvider rowProvider, int framesPerDuration, int durationInSeconds, VideoToImageProvider videoToImageProvider)
+        {
+            this.rowProvider = rowProvider;
+            this.videoToImageProvider = videoToImageProvider;
+            this.framesPerDuration = framesPerDuration;
+            this.durationInSeconds = durationInSeconds;
+
+            this.outputColumns = new MetadataColumn[rowProvider.ColumnInfo.Length + this.extensionColumns.Length];
+            rowProvider.ColumnInfo.CopyTo(outputColumns, 0);
+
+            int extensionPosition = 0;
+            for (int i = rowProvider.ColumnInfo.Length; i < outputColumns.Length; i++)
+            {
+                outputColumns[i] = new MetadataColumn(
+                    extensionColumns[extensionPosition].ColumnId + rowProvider.ColumnInfo.Length,
+                    extensionColumns[extensionPosition].TableId,
+                    extensionColumns[extensionPosition].ColumnName,
+                    extensionColumns[extensionPosition].ColumnType);
+                extensionPosition++;
+            }
+        }
+
+        public MetadataColumn[] GetOutputColumns() => this.outputColumns;
+
+        public async IAsyncEnumerable<RowHolder> Iterate(ITransaction tran)
+        {
+            int filePathColumnId = -1;
+            foreach (MetadataColumn md in this.rowProvider.ColumnInfo)
+            {
+                if (md.ColumnName == FilePathField)
+                {
+                    filePathColumnId = md.ColumnId;
+
+                    if (md.ColumnType.ColumnType != ColumnType.String && md.ColumnType.ColumnType != ColumnType.StringPointer)
+                    {
+                        throw new FilePathColumnNotStringException();
+                    }
+
+                    break;
+                }
+            }
+
+            if (filePathColumnId == -1)
+            {
+                throw new FilePathColumnDoesntExist();
+            }
+
+            ProjectExtendInfo.MappingType[] mappingTypes = new ProjectExtendInfo.MappingType[rowProvider.ColumnInfo.Length + extensionColumns.Length];
+
+            for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
+            {
+                mappingTypes[i] = ProjectExtendInfo.MappingType.Projection;
+            }
+
+            for (int i = rowProvider.ColumnInfo.Length; i < mappingTypes.Length; i++)
+            {
+                mappingTypes[i] = ProjectExtendInfo.MappingType.Extension;
+            }
+
+            int[] projectSourcePositions = new int[rowProvider.ColumnInfo.Length];
+            for (int i = 0; i < projectSourcePositions.Length; i++)
+            {
+                projectSourcePositions[i] = i;
+            }
+
+            ProjectExtendInfo extendInfo = new ProjectExtendInfo(mappingTypes, projectSourcePositions, extensionColumns.Select(ec => ec.ColumnType).ToArray());
+
+            await foreach (RowHolder row in rowProvider.Enumerator)
+            {
+                string filePath = new string(row.GetStringField(filePathColumnId));
+
+                ExtractedImageResult[] extractedImageResults = await this.videoToImageProvider(filePath, this.framesPerDuration, this.durationInSeconds, tran);
+                foreach (ExtractedImageResult imageResult in extractedImageResults)
+                {
+                    RowHolder expended = row.ProjectAndExtend(extendInfo);
+                    expended.SetField(rowProvider.ColumnInfo.Length + 0, imageResult.Path.ToCharArray());
+
+                    yield return expended;
+                }
+            }
+        }
+    }
+
     public class PhyOpVideoChunker : IPhysicalOperator<RowHolder>
     {
         private RowProvider rowProvider;

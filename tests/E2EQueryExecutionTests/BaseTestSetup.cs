@@ -1,4 +1,5 @@
 ﻿using DataStructures;
+using ImageProcessing;
 using LogManager;
 using PageManager;
 using QueryProcessing;
@@ -43,7 +44,10 @@ namespace E2EQueryExecutionTests
             var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), TestGlobals.TestFileLogger);
             var videoProbe = new FfmpegProbeWrapper(TestGlobals.TestFileLogger);
             var videoChunkerCallback = SourceRegistration.VideoChunkerCallback(videoChunker, videoProbe);
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, videoChunkerCallback);
+
+            var videoToImage = new FfmpegFrameExtractor(GetTempFolderPath(), TestGlobals.TestFileLogger);
+            var videoToImageCallback = SourceRegistration.VideoToImageCallback(videoToImage);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, videoChunkerCallback, videoToImageCallback);
 
             this.queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]
@@ -52,6 +56,10 @@ namespace E2EQueryExecutionTests
                     new InsertIntoTableStatement(treeBuilder),
                     new SelectStatement(treeBuilder),
                 });
+
+            IFunctionMappingHandler mappingHandler = new ImageObjectClassificationFuncMappingHandler();
+            this.queryEntryGate.RegisterExternalFunction("CLASSIFY_IMAGE", mappingHandler);
+
         }
     }
 }

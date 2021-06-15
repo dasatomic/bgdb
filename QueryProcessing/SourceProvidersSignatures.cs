@@ -17,6 +17,13 @@ namespace QueryProcessing
             public int BitRate;
         }
 
+        public struct ExtractedImageResult
+        {
+            public string Path;
+        }
+
         public delegate Task<VideoChunkerResult[]> VideoChunkerProvider(string videoPath, TimeSpan timespan, ITransaction tran);
+
+        public delegate Task<ExtractedImageResult[]> VideoToImageProvider(string videoPath, int framesPerDuration, int durationInSeconds, ITransaction tran);
     }
 }

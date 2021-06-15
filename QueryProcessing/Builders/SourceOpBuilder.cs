@@ -12,15 +12,18 @@ namespace QueryProcessing
         private AstToOpTreeBuilder nestedStatementBuilder;
 
         private SourceProvidersSignatures.VideoChunkerProvider videoChunkProvider;
+        private SourceProvidersSignatures.VideoToImageProvider videoToImageProvider;
 
         public SourceOpBuilder(
             MetadataManager.MetadataManager metadataManager,
             AstToOpTreeBuilder nestedStatementBuilder,
-            SourceProvidersSignatures.VideoChunkerProvider videoChunkProvider)
+            SourceProvidersSignatures.VideoChunkerProvider videoChunkProvider,
+            SourceProvidersSignatures.VideoToImageProvider videoToImageProvider)
         {
             this.metadataManager = metadataManager;
             this.nestedStatementBuilder = nestedStatementBuilder;
             this.videoChunkProvider = videoChunkProvider;
+            this.videoToImageProvider = videoToImageProvider;
         }
 
         public void RegisterVideoChunkProvider(SourceProvidersSignatures.VideoChunkerProvider func)
@@ -84,6 +87,20 @@ namespace QueryProcessing
                 RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
 
                 return new PhyOpVideoChunker(rowProvider, chunkSize, this.videoChunkProvider);
+            }
+            else if (statement.From.IsVideoImageProviderSubquery)
+            {
+                if (this.videoToImageProvider == null)
+                {
+                    throw new SourceProviderNotSetException();
+                }
+
+                Sql.sqlStatement nestedSqlStatement = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)statement.From).Item1;
+                int framesPerDuration = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)statement.From).Item2;
+                int durationInSeconds = ((Sql.sqlStatementOrId.VideoImageProviderSubquery)statement.From).Item3;
+                RowProvider rowProvider = await nestedStatementBuilder.ParseSqlStatement(nestedSqlStatement, tran, stringNormalizer);
+
+                return new PhyOpVideoToImage(rowProvider, framesPerDuration, durationInSeconds, this.videoToImageProvider);
             }
 
             throw new ArgumentException("Scan can only be done from Table or from Subquery");

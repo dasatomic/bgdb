@@ -14,6 +14,11 @@ namespace QueryProcessing
         public QueryEntryGate(IEnumerable<ISqlStatement> statementHandlers)
         {
             this.statementHandlers = statementHandlers;
+
+            // Clean all external funcs.
+            // TODO: This is a hack because func registration is currently static.
+            // FuncMapper should be non static class owned by TreeBuilder.
+            FuncCallMapper.ClearExternalFuncs();
         }
 
         private Sql.DmlDdlSqlStatement BuildStatement(string query, InputStringNormalizer stringNormalizer)

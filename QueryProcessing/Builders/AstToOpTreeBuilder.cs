@@ -59,17 +59,17 @@ namespace QueryProcessing
         public AstToOpTreeBuilder(
             MetadataManager.MetadataManager metadataManager,
             // TODO: All external operations that are linked to ops should go here.
-            SourceProvidersSignatures.VideoChunkerProvider sourceVideoChunker = null)
+            SourceProvidersSignatures.VideoChunkerProvider sourceVideoChunker = null,
+            SourceProvidersSignatures.VideoToImageProvider sourceVideoToImageProvider = null)
         {
             this.metadataManager = metadataManager;
-            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this, sourceVideoChunker));
+            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this, sourceVideoChunker, sourceVideoToImageProvider));
             statementBuildersList.Add(new JoinOpBuilder(metadataManager));
             statementBuildersList.Add(new FilterStatementBuilder());
             statementBuildersList.Add(new AggGroupOpBuilder());
             statementBuildersList.Add(new OrderByOpBuilder());
             statementBuildersList.Add(new ProjectOpBuilder());
         }
-
 
         public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {

@@ -33,5 +33,23 @@ namespace VideoProcessing
                 return chunkerResult;
             };
         }
+
+        public static VideoToImageProvider VideoToImageCallback(FfmpegFrameExtractor frameExtractor)
+        {
+            return async (string path, int framesPerDuration, int durationInSeconds, ITransaction tran) =>
+            {
+                string[] chunkPaths = await frameExtractor.Execute(path, framesPerDuration, durationInSeconds, tran, CancellationToken.None);
+                ExtractedImageResult[] extractorResults = new ExtractedImageResult[chunkPaths.Length];
+
+                int i = 0;
+                foreach (string imagePath in chunkPaths)
+                {
+                    extractorResults[i].Path = imagePath;
+                    i++;
+                }
+
+                return extractorResults;
+            };
+        }
     }
 }
