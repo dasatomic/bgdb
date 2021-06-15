@@ -14,14 +14,41 @@ namespace QueryProcessing
     /// </summary>
     public class RowProvider
     {
+        private Dictionary<string, int> columnPositions = new Dictionary<string, int>();
+
         public RowProvider(IAsyncEnumerable<RowHolder> enumerator, MetadataColumn[] columnInfo)
         {
             this.Enumerator = enumerator;
             this.ColumnInfo = columnInfo;
+
+            foreach (MetadataColumn ci in columnInfo)
+            {
+                columnPositions.Add(ci.ColumnName, ci.ColumnId);
+            }
         }
 
         public IAsyncEnumerable<RowHolder> Enumerator { get; }
         public MetadataColumn[] ColumnInfo { get; }
+
+        public T GetValue<T>(RowHolder rh, string columnName) where T : unmanaged
+        {
+            if (columnPositions.TryGetValue(columnName, out int position))
+            {
+                return rh.GetField<T>(position);
+            }
+
+            throw new InvalidColumnNameException();
+        }
+
+        public string GetValue(RowHolder rh, string columnName)
+        {
+            if (columnPositions.TryGetValue(columnName, out int position))
+            {
+                return new string(rh.GetStringField(position));
+            }
+
+            throw new InvalidColumnNameException();
+        }
     }
 
     public class AstToOpTreeBuilder

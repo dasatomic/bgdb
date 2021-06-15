@@ -48,6 +48,9 @@ namespace VideoProcessing
             [JsonProperty("duration")]
             public double DurationInSeconds;
 
+            [JsonProperty("start_time")]
+            public double StartTimeInSeconds;
+
             [JsonProperty("format_name")]
             public string FormatName;
 

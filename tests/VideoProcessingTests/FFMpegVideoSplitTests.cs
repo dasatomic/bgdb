@@ -28,13 +28,29 @@ namespace VideoProcessingTests
         }
 
         [Test]
-        public async Task FFmpegVideoChunkerTests()
+        public async Task FFmpegVideoChunkerTest()
         {
             var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), new NoOpLogging());
 
             string[] chunkPaths = await videoChunker.Execute(GetExampleVideoPath(), TimeSpan.FromSeconds(10), new DummyTran(), CancellationToken.None);
 
             Assert.AreEqual(5, chunkPaths.Length);
+        }
+
+        [Test]
+        public async Task TaskFFmpegChunkPlusProbeTest()
+        {
+
+            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), new NoOpLogging());
+            var probe = new FfmpegProbeWrapper(new NoOpLogging());
+
+            string[] chunkPaths = await videoChunker.Execute(GetExampleVideoPath(), TimeSpan.FromSeconds(10), new DummyTran(), CancellationToken.None);
+
+            Assert.AreEqual(5, chunkPaths.Length);
+            foreach (string chunkPath in chunkPaths)
+            {
+                var probeOutput = await probe.Execute(chunkPath, CancellationToken.None);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using PageManager;
+using QueryProcessing;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -111,7 +112,15 @@ namespace E2EQueryExecutionTests
             RowHolder[] result = await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
             await tran.Commit();
 
-            Assert.AreEqual(5, result.Length);
+            RowProvider rowProvider = await this.queryEntryGate.BuildExecutionTree(query, tran);
+
+            RowHolder[] rows = await rowProvider.Enumerator.ToArrayAsync();
+            Assert.AreEqual(5, rows.Length);
+
+            foreach (RowHolder row in rows)
+            {
+                Assert.AreEqual(rowProvider.GetValue(row, "FormatName"), "matroska,webm");
+            }
         }
     }
 }
