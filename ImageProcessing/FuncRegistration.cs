@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using MetadataManager;
 using PageManager;
 using QueryProcessing;
@@ -59,7 +56,14 @@ namespace ImageProcessing
             TFModelImageLabelScorer scorer = new TFModelImageLabelScorer(inceptionPb, labelsTxt);
             ImageLabelPredictionProbability score = scorer.ScoreSingle(arg.ArgOne);
 
-            outputRowHolder.SetField(outputPosition, score.PredictedLabels[0].ToCharArray());
+            if (score.PredictedLabels.Length > 0)
+            {
+                outputRowHolder.SetField(outputPosition, score.PredictedLabels[0].ToCharArray());
+            }
+            else
+            {
+                outputRowHolder.SetField(outputPosition, "unknown".ToCharArray());
+            }
         }
 
         public IComparable ExecCompute(RowHolder inputRowHolder, Union2Type<MetadataColumn, Sql.value>[] sourceArguments)

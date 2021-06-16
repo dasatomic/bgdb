@@ -10,7 +10,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ImageProcessing\ImageProcessing.csproj" />
     <ProjectReference Include="..\QueryProcessing\QueryProcessing.csproj" />
+    <ProjectReference Include="..\VideoProcessing\VideoProcessing.csproj" />
   </ItemGroup>
 
 </Project>

@@ -149,6 +149,7 @@ FROM VIDEO_TO_IMAGE(1, 5,
                 string filePath = rowProvider.GetValue(row, "FilePath");
                 string chunkPath= rowProvider.GetValue(row, "chunk_path");
                 string framePath = rowProvider.GetValue(row, "frame_path");
+                string label = rowProvider.GetValue(row, "Object_Classification_Result");
             }
         }
     }

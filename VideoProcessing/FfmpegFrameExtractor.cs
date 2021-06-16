@@ -55,7 +55,7 @@ namespace VideoProcessing
         public async Task<string[]> Execute(string fileName, int numOfFramesPerDuration, int numOfSecondsPerCapture, ITransaction tran, CancellationToken token)
         {
             FileInfo fi = new FileInfo(fileName);
-            string outputFileName = Path.GetFileNameWithoutExtension(fi.Name) + "%03d" + ".bmp";
+            string outputFileName = Path.GetFileNameWithoutExtension(fi.Name) + "%03d";
 
             string destinationDir = Path.Combine(tempDestination, Guid.NewGuid().ToString());
             DirectoryInfo tempDir = Directory.CreateDirectory(destinationDir);
