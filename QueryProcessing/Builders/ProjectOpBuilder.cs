@@ -9,36 +9,6 @@ using System.Threading.Tasks;
 
 namespace QueryProcessing
 {
-    class ProjectOrApplyFuncFunctors
-    {
-        /// <summary>
-        /// Functor that projects rowholder into new one.
-        /// Fields that are to be copied are copied.
-        /// Fields on which some execution is to be done
-        /// (e.g. func call) are kept empty and initialized
-        /// with default value.
-        /// </summary>
-        public Func<RowHolder, RowHolder> ProjectAndExtend { get; }
-
-        /// <summary>
-        /// Applies computations on initialized RowHolder
-        /// (i.e. one passed from ProjectAndExtend).
-        /// </summary>
-        public Action<RowHolder> ApplyCompute { get; }
-
-        public MetadataColumn[] ProjectColumnInfo { get; }
-
-        public ProjectOrApplyFuncFunctors(
-            Func<RowHolder, RowHolder> projectAndExtend,
-            Action<RowHolder> applyCompute,
-            MetadataColumn[] projectColumnInfo)
-        {
-            this.ProjectAndExtend = projectAndExtend;
-            this.ApplyCompute = applyCompute;
-            this.ProjectColumnInfo = projectColumnInfo;
-        }
-    }
-
     class ProjectOpBuilder : IStatementTreeBuilder
     {
         private MetadataColumn[] GetOutputSchema(Sql.columnSelect[] columns, IPhysicalOperator<RowHolder> source)
@@ -70,6 +40,13 @@ namespace QueryProcessing
                     var func = ((Sql.valueOrFunc.FuncCall)valueOrFunc.Item);
                     result[pos] = FuncCallMapper.GetMetadataInfoForOutput(func, source.GetOutputColumns());
                 }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+
+                // Update column position.
+                result[pos] = result[pos].SetNewColumnPosition(pos);
 
                 pos++;
             }

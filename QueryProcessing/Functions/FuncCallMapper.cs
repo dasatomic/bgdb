@@ -5,6 +5,7 @@ using QueryProcessing.Utilities;
 using QueryProcessing.Exceptions;
 using System.Collections.Generic;
 using QueryProcessing.Functions;
+using System.Linq;
 
 namespace QueryProcessing
 {
@@ -19,6 +20,7 @@ namespace QueryProcessing
             public Func<Sql.valueOrFunc.FuncCall, int /* output position */, MetadataColumn[] /* source columns */, Action<RowHolder, RowHolder> /* ret - Action mapper */> FunctorBuilder;
 
             public Func<Sql.valueOrFunc.FuncCall, MetadataColumn[] /* source columns */, Func<RowHolder, IComparable>> FunctionReturnValueBuilder;
+            public bool External;
         }
 
         // TODO: Mapping handlers should be singletons.
@@ -75,6 +77,7 @@ namespace QueryProcessing
                     GetMetadataInfoForOutput = (func, mds) => addMappingHandler.GetMetadataInfoForOutput(func, mds),
                     FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, addMappingHandler),
                     FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, addMappingHandler),
+                    External = false,
                 }
             },
             {
@@ -83,6 +86,7 @@ namespace QueryProcessing
                     GetMetadataInfoForOutput = (func, mds) => concatMappingHandler.GetMetadataInfoForOutput(func, mds),
                     FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, concatMappingHandler),
                     FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, concatMappingHandler),
+                    External = false,
                 }
             }
         };
@@ -98,7 +102,18 @@ namespace QueryProcessing
                 GetMetadataInfoForOutput = (func, mds) => mappingHandler.GetMetadataInfoForOutput(func, mds),
                 FunctorBuilder = (func, output, mds) => FunctionBuilder(func, output, mds, mappingHandler),
                 FunctionReturnValueBuilder = (func, mds) => FunctionResultBuilder(func, mds, mappingHandler),
+                External = true,
             });
+        }
+
+        public static void ClearExternalFuncs()
+        {
+            string[] externalFuncNames = FuncDictionary.Where(kv => kv.Value.External == true).Select(kv => kv.Key).ToArray();
+
+            foreach (string val in externalFuncNames)
+            {
+                FuncDictionary.Remove(val);
+            }
         }
 
         public static MetadataColumn GetMetadataInfoForOutput(Sql.valueOrFunc.FuncCall func, MetadataColumn[] sourceInput)

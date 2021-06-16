@@ -2,6 +2,7 @@
 using LockManager.LockImplementation;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace PageManager
@@ -25,5 +26,6 @@ namespace PageManager
         Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType);
         void VerifyLock(ulong pageId, LockTypeEnum expectedLock);
         public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType);
+        public void RegisterTempFolder(DirectoryInfo tempFolder);
     }
 }

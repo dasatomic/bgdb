@@ -14,14 +14,41 @@ namespace QueryProcessing
     /// </summary>
     public class RowProvider
     {
+        private Dictionary<string, int> columnPositions = new Dictionary<string, int>();
+
         public RowProvider(IAsyncEnumerable<RowHolder> enumerator, MetadataColumn[] columnInfo)
         {
             this.Enumerator = enumerator;
             this.ColumnInfo = columnInfo;
+
+            foreach (MetadataColumn ci in columnInfo)
+            {
+                columnPositions.Add(ci.ColumnName, ci.ColumnId);
+            }
         }
 
         public IAsyncEnumerable<RowHolder> Enumerator { get; }
         public MetadataColumn[] ColumnInfo { get; }
+
+        public T GetValue<T>(RowHolder rh, string columnName) where T : unmanaged
+        {
+            if (columnPositions.TryGetValue(columnName, out int position))
+            {
+                return rh.GetField<T>(position);
+            }
+
+            throw new InvalidColumnNameException();
+        }
+
+        public string GetValue(RowHolder rh, string columnName)
+        {
+            if (columnPositions.TryGetValue(columnName, out int position))
+            {
+                return new string(rh.GetStringField(position));
+            }
+
+            throw new InvalidColumnNameException();
+        }
     }
 
     public class AstToOpTreeBuilder
@@ -29,17 +56,20 @@ namespace QueryProcessing
         private MetadataManager.MetadataManager metadataManager;
         private IList<IStatementTreeBuilder> statementBuildersList = new List<IStatementTreeBuilder>();
 
-        public AstToOpTreeBuilder(MetadataManager.MetadataManager metadataManager)
+        public AstToOpTreeBuilder(
+            MetadataManager.MetadataManager metadataManager,
+            // TODO: All external operations that are linked to ops should go here.
+            SourceProvidersSignatures.VideoChunkerProvider sourceVideoChunker = null,
+            SourceProvidersSignatures.VideoToImageProvider sourceVideoToImageProvider = null)
         {
             this.metadataManager = metadataManager;
-            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this));
+            statementBuildersList.Add(new SourceOpBuilder(metadataManager, this, sourceVideoChunker, sourceVideoToImageProvider));
             statementBuildersList.Add(new JoinOpBuilder(metadataManager));
             statementBuildersList.Add(new FilterStatementBuilder());
             statementBuildersList.Add(new AggGroupOpBuilder());
             statementBuildersList.Add(new OrderByOpBuilder());
             statementBuildersList.Add(new ProjectOpBuilder());
         }
-
 
         public async Task<RowProvider> ParseSqlStatement(Sql.sqlStatement sqlStatement, ITransaction tran, InputStringNormalizer stringNormalizer)
         {

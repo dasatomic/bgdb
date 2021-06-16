@@ -18,6 +18,8 @@ let keywords =
         "SELECT", SELECT;
         "FROM", FROM;
         "FILESYSTEM", FILESYSTEM;
+        "VIDEO_CHUNKER", VIDEO_CHUNKER;
+        "VIDEO_TO_IMAGE", VIDEO_TO_IMAGE;
         "WHERE", WHERE;
         "ORDER", ORDER;
         "BY", BY;

@@ -25,6 +25,11 @@ namespace MetadataManager
             this.ColumnName = columnName;
             this.ColumnType = columnInfo;
         }
+
+        public MetadataColumn SetNewColumnPosition(int columnId)
+        {
+            return new MetadataColumn(columnId, this.TableId, this.ColumnName, this.ColumnType);
+        }
     }
 
     /// <summary>

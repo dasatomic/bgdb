@@ -2,6 +2,7 @@
 using LockManager.LockImplementation;
 using PageManager;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -48,6 +49,10 @@ namespace Test.Common
         public TransactionState GetTransactionState()
         {
             return TransactionState.Committed;
+        }
+
+        public void RegisterTempFolder(DirectoryInfo folderPath)
+        {
         }
 
         public Task Rollback()

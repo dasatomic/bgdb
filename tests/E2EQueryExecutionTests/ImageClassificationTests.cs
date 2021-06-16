@@ -14,8 +14,6 @@ namespace E2EQueryExecutionTests
         public new async Task Setup()
         {
             await base.Setup();
-            IFunctionMappingHandler mappingHandler = new ImageObjectClassificationFuncMappingHandler();
-            FuncCallMapper.RegisterFunc("CLASSIFY_IMAGE", mappingHandler);
         }
 
         [Test]

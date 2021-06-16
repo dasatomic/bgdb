@@ -14,7 +14,10 @@ namespace Instrumentation
         Error = 3,
     }
 
-    public class Logger : PageManager.InstrumentationInterface, LockManager.LockManagerInstrumentationInterface
+    public class Logger : 
+        PageManager.InstrumentationInterface,
+        LockManager.LockManagerInstrumentationInterface,
+        VideoProcessing.IVideoProcessingInstrumentationInterface
     {
         private readonly ILog eventLog;
 

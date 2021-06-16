@@ -5,6 +5,7 @@ using PageManager.Exceptions;
 using PageManager.LogManager;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,6 +23,7 @@ namespace LogManager
         private List<Releaser> myLocks = new List<Releaser>();
         private IsolationLevelEnum isolationLevel;
         private object lck = new object();
+        private Queue<DirectoryInfo> tempDirectoriesToCleanUp = new Queue<DirectoryInfo>();
 
         public Transaction(ILogManager logManager, IPageManager pageManager, ulong transactionId, string name)
             : this(logManager, pageManager, transactionId, name, IsolationLevelEnum.ReadCommitted) { }
@@ -112,6 +114,11 @@ namespace LogManager
                 throw new TranHoldingLockDuringDispose();
             }
 
+            foreach (DirectoryInfo dir in this.tempDirectoriesToCleanUp)
+            {
+                Directory.Delete(dir.FullName, true);
+            }
+
             this.pageManager.GetLockManager().ReleaseOwner(this.transactionId);
         }
 
@@ -130,6 +137,12 @@ namespace LogManager
             if (this.myLocks.Any())
             {
                 throw new TranHoldingLockDuringDispose();
+            }
+
+            while (this.tempDirectoriesToCleanUp.Any())
+            {
+                DirectoryInfo dir = this.tempDirectoriesToCleanUp.Dequeue();
+                Directory.Delete(dir.FullName, true);
             }
 
             this.pageManager.GetLockManager().ReleaseOwner(this.transactionId);
@@ -246,6 +259,11 @@ namespace LogManager
         public IEnumerable<ulong> LockedPages()
         {
             throw new NotImplementedException();
+        }
+
+        public void RegisterTempFolder(DirectoryInfo tempFolder)
+        {
+            this.tempDirectoriesToCleanUp.Enqueue(tempFolder);
         }
     }
 }

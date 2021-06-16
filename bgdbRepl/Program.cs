@@ -1,13 +1,16 @@
 ﻿using bgdbRepl;
 using CommandLine;
 using DataStructures;
+using ImageProcessing;
 using PageManager;
 using QueryProcessing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using VideoProcessing;
 
 namespace atomicdbstarter
 {
@@ -21,6 +24,9 @@ namespace atomicdbstarter
 
             [Option("rep_load_count", Required = false, Default = 1)]
             public int RepCount { get; set; }
+
+            [Option("use_list_format", Required = false, Default = false)]
+            public bool UseListFormat { get; set; }
         }
 
         static int GetColumnWidth(ColumnInfo ci)
@@ -43,7 +49,7 @@ namespace atomicdbstarter
             }
         }
 
-        static string GetColumnString(ColumnInfo ci, int tableWidth, RowHolder row, int columnPosition)
+        static string GetValAsString(ColumnInfo ci, RowHolder row, int columnPosition)
         {
             string strVal = null;
             if (ci.ColumnType == ColumnType.Double)
@@ -61,19 +67,112 @@ namespace atomicdbstarter
                 strVal = new string(row.GetStringField(columnPosition));
             }
 
+            return strVal;
+        }
+
+        static string GetColumnString(ColumnInfo ci, int tableWidth, RowHolder row, int columnPosition)
+        {
+            string strVal = GetValAsString(ci, row, columnPosition);
+
             int missingWhiteSpace = Math.Max(tableWidth - strVal.Length, 0);
             char[] ws =Enumerable.Repeat(' ', missingWhiteSpace).ToArray();
             return (new string(ws)) + strVal;
+        }
+
+        static async Task PrintResultsFormatList(RowProvider rowProvider)
+        {
+            Console.WriteLine("---------------------");
+            int totalCount = 0;
+            await foreach (var row in rowProvider.Enumerator)
+            {
+                totalCount++;
+                for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
+                {
+                    ColumnInfo columnInfo = rowProvider.ColumnInfo[i].ColumnType;
+                    string lineToPrint = rowProvider.ColumnInfo[i].ColumnName + " -> " + GetValAsString(columnInfo, row, i);
+                    Console.WriteLine(lineToPrint);
+                }
+
+                Console.WriteLine("---------------------");
+            }
+        }
+
+        static async Task PrintResultsFormatTable(RowProvider rowProvider)
+        {
+                int totalWidth = 0;
+                foreach (var ci in rowProvider.ColumnInfo)
+                {
+                    int width = GetColumnWidth(ci.ColumnType);
+
+                    int whitespaceCount = width - ci.ColumnName.Length;
+                    totalWidth += width + whitespaceCount + 2;
+                    Console.Write("|");
+
+                    for (int i = 0; i < whitespaceCount; i++)
+                    {
+                        Console.Write(" ");
+                    }
+
+                    Console.Write(ci.ColumnName);
+                    Console.Write(" ");
+                }
+
+                Console.Write("|");
+
+                Console.WriteLine();
+                Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
+
+                int totalCount = 0;
+                await foreach (var row in rowProvider.Enumerator)
+                {
+                    totalCount++;
+
+                    int columnPos = 0;
+                    for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
+                    {
+                        ColumnInfo columnInfo = rowProvider.ColumnInfo[i].ColumnType;
+                        int width = GetColumnWidth(columnInfo);
+                        string valToPrint = GetColumnString(columnInfo, width, row, columnPos);
+
+                        Console.Write("|");
+                        Console.Write(valToPrint);
+                        Console.Write(" ");
+
+                        columnPos++;
+                    }
+
+                    Console.Write("|");
+
+                    Console.WriteLine();
+                    Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
+                }
+
+                Console.WriteLine();
+                Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
+
+                Console.WriteLine($"Total rows returned {totalCount}");
+        }
+
+        private static string GetTempFolderPath()
+        {
+            FileInfo dataRoot = new FileInfo(typeof(Program).Assembly.Location);
+            string assemblyFolderPath = dataRoot.Directory.FullName;
+
+            string path = Path.Combine(assemblyFolderPath, "temp");
+            Directory.CreateDirectory(path);
+            return path;
         }
 
         static async Task Main(string[] args)
         {
             string datasetPathToLoad = null;
             int repCount = 1;
+            bool useListFormat = false;
             Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
                 datasetPathToLoad = o.TitanicSetPath;
                 repCount = o.RepCount;
+                useListFormat = o.UseListFormat;
             });
 
             string fileName = "repl.db";
@@ -98,7 +197,13 @@ namespace atomicdbstarter
             var metadataManager = new MetadataManager.MetadataManager(pageManager, stringHeap, pageManager, logManager);
             Console.WriteLine($"Booted Metadata Manager.");
 
-            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager);
+            var videoChunker = new FfmpegVideoChunker(GetTempFolderPath(), new VideoProcessing.NoOpLogging());
+            var videoProbe = new FfmpegProbeWrapper(new VideoProcessing.NoOpLogging());
+            var videoChunkerCallback = SourceRegistration.VideoChunkerCallback(videoChunker, videoProbe);
+
+            var videoToImage = new FfmpegFrameExtractor(GetTempFolderPath(), new VideoProcessing.NoOpLogging());
+            var videoToImageCallback = SourceRegistration.VideoToImageCallback(videoToImage);
+            AstToOpTreeBuilder treeBuilder = new AstToOpTreeBuilder(metadataManager, videoChunkerCallback, videoToImageCallback);
 
             var queryEntryGate = new QueryEntryGate(
                 statementHandlers: new ISqlStatement[]
@@ -107,6 +212,9 @@ namespace atomicdbstarter
                     new InsertIntoTableStatement(treeBuilder),
                     new SelectStatement(treeBuilder),
                 });
+
+            IFunctionMappingHandler mappingHandler = new ImageObjectClassificationFuncMappingHandler();
+            queryEntryGate.RegisterExternalFunction("CLASSIFY_IMAGE", mappingHandler);
 
             Console.WriteLine($"Query entry gate ready.");
 
@@ -142,7 +250,6 @@ namespace atomicdbstarter
                 }
 
                 Console.WriteLine("Loaded {0} rows.", insertCount);
-
             }
 
             Console.WriteLine("====================");
@@ -155,64 +262,26 @@ namespace atomicdbstarter
                     Console.Write(">");
                     string queryText = Console.ReadLine();
 
+                    Stopwatch sw = Stopwatch.StartNew();
+
                     await using (ITransaction tran = logManager.CreateTransaction(pageManager))
                     {
                         RowProvider rowProvider = await queryEntryGate.BuildExecutionTree(queryText, tran);
                         Console.WriteLine();
                         Console.ForegroundColor = ConsoleColor.Blue;
 
-                        int totalWidth = 0;
-                        foreach (var ci in rowProvider.ColumnInfo)
+                        if (useListFormat)
                         {
-                            int width = GetColumnWidth(ci.ColumnType);
-
-                            int whitespaceCount = width - ci.ColumnName.Length;
-                            totalWidth += width + whitespaceCount + 2;
-                            Console.Write("|");
-
-                            for (int i = 0; i < whitespaceCount; i++)
-                            {
-                                Console.Write(" ");
-                            }
-
-                            Console.Write(ci.ColumnName);
-                            Console.Write(" ");
+                            await PrintResultsFormatList(rowProvider);
+                        }
+                        else
+                        {
+                            await PrintResultsFormatTable(rowProvider);
                         }
 
-                        Console.Write("|");
-
-                        Console.WriteLine();
-                        Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
-
-                        int totalCount = 0;
-                        await foreach (var row in rowProvider.Enumerator)
-                        {
-                            totalCount++;
-
-                            int columnPos = 0;
-                            for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
-                            {
-                                ColumnInfo columnInfo = rowProvider.ColumnInfo[i].ColumnType;
-                                int width = GetColumnWidth(columnInfo);
-                                string valToPrint = GetColumnString(columnInfo, width, row, columnPos);
-
-                                Console.Write("|");
-                                Console.Write(valToPrint);
-                                Console.Write(" ");
-
-                                columnPos++;
-                            }
-
-                            Console.Write("|");
-
-                            Console.WriteLine();
-                            Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
-                        }
-
-                        Console.WriteLine();
-                        Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
-
-                        Console.WriteLine($"Total rows returned {totalCount}");
+                        Console.WriteLine($"Total running time {sw.Elapsed.TotalSeconds}s");
+                        Console.WriteLine("Press any key to commit the transaction");
+                        Console.ReadLine();
 
                         await tran.Commit();
                     }
