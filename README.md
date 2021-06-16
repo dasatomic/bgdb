@@ -153,6 +153,116 @@ dotnet run --set_load_path .\datasets\titanic-passengers.csv --rep_load_count 10
 
 Will load ~800k rows.
 
+# Working with non structured data
+Bgdb also supports accessing row file system:
+
+```
+SELECT Extension, SUM(FileSize) FROM FILESYSTEM('./assets') GROUP BY Extension"
+```
+
+```
+Hint: For file system operation start bgdbrepl with format_list option. This way querying long strings is more readable:
+cd bgdbRepl
+dotnet run --use_list_format
+```
+
+One idea for the future of BgDb is support for extracting information from data types such as image, video and audio.
+
+## Video operations
+
+Currently there is a support for basic video querying. You can either list info about video file or split it in chunks for future processing:
+```
+SELECT * FROM VIDEO_CHUNKER(300, SELECT * FROM FILESYSTEM('E:/bgdb_video_examples') WHERE Extension = '.mkv')
+```
+
+This example will split all the *.mkv files in 300 second chunks:
+```
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+Extension -> .mkv
+FileSize -> 313687893
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+NbStreams -> 2
+NbPrograms -> 0
+StartTimeInSeconds -> 0.067
+DurationInSeconds -> 304.337
+FormatName -> matroska,webm
+---------------------
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+Extension -> .mkv
+FileSize -> 313687893
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special001.mkv
+NbStreams -> 2
+NbPrograms -> 0
+StartTimeInSeconds -> 304.28
+DurationInSeconds -> 602.101
+FormatName -> matroska,webm
+---------------------
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+Extension -> .mkv
+FileSize -> 313687893
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special002.mkv
+NbStreams -> 2
+NbPrograms -> 0
+StartTimeInSeconds -> 602.05
+DurationInSeconds -> 900.967
+FormatName -> matroska,webm
+...
+```
+
+Note that all the temporary files (e.g. video chunks) will leave as long as transaction is opened. On commit/rollback all the files will be purged.
+
+## Image operations
+Bgdb supports image classification through CLASSIFY_IMAGE function:
+
+```
+SELECT CLASSIFY_IMAGE(FilePath), FilePath, FileName FROM FILESYSTEM('../tests/E2EQueryExecutionTests/assets/pics') WHERE EXTENSION = '.jpg' OR EXTENSION = '.jfif'
+```
+
+```
+---------------------
+Object_Classification_Result -> basketball
+FilePath -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\tests\E2EQueryExecutionTests\assets\pics\basketball.jpg
+FileName -> basketball.jpg
+---------------------
+Object_Classification_Result -> hippopotamus
+FilePath -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\tests\E2EQueryExecutionTests\assets\pics\hippo.jfif
+FileName -> hippo.jfif
+---------------------
+```
+
+You can also combine image classification with video operations.
+Following example will print classification result for every frame, extracted every 60s of video chunked into 300s pieces:
+
+```
+SELECT chunk_path, FilePath, frame_path, CLASSIFY_IMAGE(frame_path) 
+FROM VIDEO_TO_IMAGE(
+    1, 60, SELECT * FROM VIDEO_CHUNKER(300, SELECT * FROM FILESYSTEM('E:/bgdb_video_examples')))
+```
+
+Output:
+```
+---------------------
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000001.bmp
+Object_Classification_Result -> panpipe
+---------------------
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000002.bmp
+Object_Classification_Result -> oboe
+---------------------
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000003.bmp
+Object_Classification_Result -> American lobster
+---------------------
+...
+```
+
 ## From code init
 
 Repl is currently pretty limited. There is also no support for transactions in parser layer (transactions are implicit and linked to single command, `BEGIN/COMMIT/ROLLBACK TRAN` support will be added). To get a feeling how things are working under the hood it is best to take a look at end to end tests.
@@ -203,6 +313,9 @@ At this point list of features is rather limited but, hopefully, the list will k
 8) Support for JOIN clause (only `INNER JOIN` for now)
 9) Support for functions (`SELECT CONCAT(str1, str2) FROM WHERE ADD(x, y) > 10`)
 10) Support for nested subqueries (`SELECT * FROM (SELECT a, b FROM T) WHERE b > 42`)
+11) Support for filesystem operations (`SELECT * FROM FILESYSTEM('./assets') WHERE Extension = '.txt'`)
+12) Support for image classification (`SELECT CLASSIFY_IMAGE(FilePath), FilePath, FileName FROM FILESYSTEM('./assets/pics') WHERE EXTENSION = '.jpg' OR EXTENSION = '.jfif'`)
+13) Support for video operations (`SELECT * FROM VIDEO_CHUNKER(10, SELECT * FROM FILESYSTEM('./assets/videos') WHERE Extension = '.mkv')`)
 
 ## Supported types
 1) `TYPE_INT` (32bit signed)
