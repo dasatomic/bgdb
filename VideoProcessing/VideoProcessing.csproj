@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Xabe.FFmpeg" Version="5.0.2" />
   </ItemGroup>
 
   <ItemGroup>
