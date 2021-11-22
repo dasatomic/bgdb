@@ -137,6 +137,95 @@ namespace PageManager
             }
         }
 
+        public int InsertRowOrdered(RowHolder rowHolderToInsert, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        {
+            // find the first element that is bigger than one to insert.
+            // TODO: this can be logn.
+            int positionToInsert = -1;
+            for (int i = 0; i < this.maxRowCount; i++)
+            {
+                if (BitArray.IsSet(i, this.storage.Span))
+                {
+                    RowHolder rowHolder = new RowHolder(columnTypes);
+                    GetRow(i, ref rowHolder);
+                    if (comparer(rowHolderToInsert, rowHolder) != 1)
+                    {
+                        // I am smaller than you, I should be at your place.
+                        positionToInsert = i;
+                        break;
+                    }
+                }
+                else 
+                {
+                    if (positionToInsert == -1)
+                    {
+                        positionToInsert = i;
+                    }
+                }
+            }
+
+            if (BitArray.IsSet(positionToInsert, this.storage.Span))
+            {
+                int firstFreeElement = -1;
+                // need to shift everything.
+                // Try first to find free element on the right.
+                for (int i = positionToInsert + 1; i < this.maxRowCount; i++)
+                {
+                    if (!BitArray.IsSet(i, this.storage.Span))
+                    {
+                        firstFreeElement = i;
+                        break;
+                    }
+                }
+
+                if (firstFreeElement == -1)
+                {
+                    // Search on the left.
+                    for (int i = positionToInsert - 1; i >= 0; i--)
+                    {
+                        if (!BitArray.IsSet(i, this.storage.Span))
+                        {
+                            firstFreeElement = i;
+                            break;
+                        }
+                    }
+
+                    if (firstFreeElement == -1)
+                    {
+                        // No free space.
+                        return -1;
+                    }
+                }
+
+                int numOfElemToCopy = Math.Abs(positionToInsert - firstFreeElement);
+
+                if (positionToInsert < firstFreeElement)
+                {
+                    // shift right.
+                    ByteSliceOperations.ShiftSlice<byte>(
+                        this.storage,
+                        this.dataStartPosition + positionToInsert * this.rowSize, // Source.
+                        this.dataStartPosition + positionToInsert * this.rowSize + this.rowSize, // Destination.
+                        numOfElemToCopy * this.rowSize);
+                }
+                else
+                {
+                    // shift left.
+                    ByteSliceOperations.ShiftSlice<byte>(
+                        this.storage,
+                        this.dataStartPosition + positionToInsert * this.rowSize, // Source.
+                        this.dataStartPosition + firstFreeElement * this.rowSize - this.rowSize, // Destination.
+                        numOfElemToCopy * this.rowSize);
+                }
+                BitArray.Set(firstFreeElement, this.storage.Span);
+            }
+
+            this.SetRow(positionToInsert, rowHolderToInsert);
+            BitArray.Set(positionToInsert, this.storage.Span);
+            this.rowCount++;
+            return positionToInsert;
+        }
+
         public void DeleteRow(int position)
         {
             BitArray.Unset(position, this.storage.Span);

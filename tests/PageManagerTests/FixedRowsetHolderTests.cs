@@ -307,5 +307,210 @@ namespace PageManagerTests
             Assert.AreEqual(22, rhfMerged.GetField<int>(3));
             Assert.AreEqual("TESTN".ToCharArray(), rhfMerged.GetStringField(4));
         }
+
+        [Test]
+        public void InsertOrderedSingleElem()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new System.Memory<byte>(new byte[4096]);
+
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+            var rhf = new RowHolder(schema);
+
+            rhf.SetField(0, 1);
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            rs.InsertRowOrdered(rhf, schema, comp);
+
+            Assert.AreEqual(1, rs.GetRowGeneric<int>(0, 1));
+        }
+
+        [Test]
+        public void InsertOrderedMultipleSeq()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            for (int i = 0; i < 100; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i);
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                rs.InsertRowOrdered(rhf, schema, comp);
+            }
+
+            Assert.AreEqual(100, rs.GetRowCount());
+
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
+            }
+        }
+
+        [Test]
+        public void InsertOrderedMultipleSeqReverse()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            for (int i = 99; i >= 0; i--)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i);
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                int pos = rs.InsertRowOrdered(rhf, schema, comp);
+
+                // It should always end up on the beginning.
+                Assert.AreEqual(0, pos);
+            }
+
+            Assert.AreEqual(100, rs.GetRowCount());
+
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
+            }
+        }
+
+        [Test]
+        public void InsertOrderedMultipleSeqReverseMultiColumn()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Double),
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            for (int i = 99; i >= 0; i--)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i);
+                rhf.SetField(1, i * 1.1);
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                rs.InsertRowOrdered(rhf, schema, comp);
+            }
+
+            Assert.AreEqual(100, rs.GetRowCount());
+
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
+                Assert.AreEqual(i * 1.1, rs.GetRowGeneric<double>(i, 1));
+            }
+        }
+
+        [Test]
+        [Repeat(10)]
+        public void InsertOrderedRandom()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            int maxRowCount = rs.MaxRowCount();
+            int[] elemsToInsert = new int[maxRowCount];
+
+            Random r = new Random();
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                elemsToInsert[i] = r.Next();
+            }
+
+            int[] sortedArray = elemsToInsert.OrderBy(x => x).ToArray();
+
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, elemsToInsert[i]);
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                rs.InsertRowOrdered(rhf, schema, comp);
+            }
+
+            Assert.AreEqual(maxRowCount, rs.GetRowCount());
+
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                Assert.AreEqual(sortedArray[i], rs.GetRowGeneric<int>(i, 0));
+            }
+        }
+
+        [Test]
+        [Repeat(10)]
+        public void InsertOrderedRandomMultipleColumns()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int),
+                new ColumnInfo(ColumnType.Double),
+                new ColumnInfo(ColumnType.String, 10),
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            int maxRowCount = rs.MaxRowCount();
+            int[] elemsToInsert = new int[maxRowCount];
+
+            Random r = new Random();
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                elemsToInsert[i] = r.Next();
+            }
+
+            int[] sortedArray = elemsToInsert.OrderBy(x => x).ToArray();
+
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, elemsToInsert[i]);
+                rhf.SetField(1, elemsToInsert[i] * 1.1);
+                rhf.SetField(2, elemsToInsert[i].ToString().ToCharArray());
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                rs.InsertRowOrdered(rhf, schema, comp);
+            }
+
+            Assert.AreEqual(maxRowCount, rs.GetRowCount());
+
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                var rhf = new RowHolder(schema);
+                rs.GetRow(i, ref rhf);
+                Assert.AreEqual(sortedArray[i], rhf.GetField<int>(0));
+                Assert.AreEqual(sortedArray[i] * 1.1, rhf.GetField<double>(1));
+                Assert.AreEqual(sortedArray[i].ToString(), new string(rhf.GetStringField(2)));
+            }
+        }
     }
 }

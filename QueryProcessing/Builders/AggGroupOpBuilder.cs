@@ -29,7 +29,6 @@ namespace QueryProcessing
                 GroupByFunctors groupByFunctors = GroupByStatementBuilder.EvalGroupBy(groupByColumns, columns, source.GetOutputColumns());
                 IPhysicalOperator<RowHolder> phyOpGroupBy = new PhyOpGroupBy(source, groupByFunctors);
                 return Task.FromResult(phyOpGroupBy);
-
             } else
             {
                 return Task.FromResult(source);
