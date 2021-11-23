@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: apt update
+      run: sudo apt-get update
     - name: Install libc6-dev
       run: sudo apt-get install libc6-dev
     - name: Install libgdiplus
