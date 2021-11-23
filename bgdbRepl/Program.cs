@@ -1,5 +1,6 @@
 ﻿using bgdbRepl;
 using CommandLine;
+using ConsoleTables;
 using DataStructures;
 using ImageProcessing;
 using PageManager;
@@ -29,26 +30,6 @@ namespace atomicdbstarter
             public bool UseListFormat { get; set; }
         }
 
-        static int GetColumnWidth(ColumnInfo ci)
-        {
-            if (ci.ColumnType == ColumnType.Double)
-            {
-                return 10;
-            }
-            else if (ci.ColumnType == ColumnType.Int)
-            {
-                return 10;
-            }
-            else if (ci.ColumnType == ColumnType.String)
-            {
-                return ci.RepCount + 2;
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-        }
-
         static string GetValAsString(ColumnInfo ci, RowHolder row, int columnPosition)
         {
             string strVal = null;
@@ -68,15 +49,6 @@ namespace atomicdbstarter
             }
 
             return strVal;
-        }
-
-        static string GetColumnString(ColumnInfo ci, int tableWidth, RowHolder row, int columnPosition)
-        {
-            string strVal = GetValAsString(ci, row, columnPosition);
-
-            int missingWhiteSpace = Math.Max(tableWidth - strVal.Length, 0);
-            char[] ws =Enumerable.Repeat(' ', missingWhiteSpace).ToArray();
-            return (new string(ws)) + strVal;
         }
 
         static async Task PrintResultsFormatList(RowProvider rowProvider)
@@ -99,58 +71,31 @@ namespace atomicdbstarter
 
         static async Task PrintResultsFormatTable(RowProvider rowProvider)
         {
-                int totalWidth = 0;
-                foreach (var ci in rowProvider.ColumnInfo)
+            var table = new ConsoleTable(rowProvider.ColumnInfo.Select(ci => ci.ColumnName).ToArray());
+
+            int totalCount = 0;
+            await foreach (var row in rowProvider.Enumerator)
+            {
+                totalCount++;
+                List<string> tableRow = new List<string>();
+
+                for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
                 {
-                    int width = GetColumnWidth(ci.ColumnType);
-
-                    int whitespaceCount = width - ci.ColumnName.Length;
-                    totalWidth += width + whitespaceCount + 2;
-                    Console.Write("|");
-
-                    for (int i = 0; i < whitespaceCount; i++)
-                    {
-                        Console.Write(" ");
-                    }
-
-                    Console.Write(ci.ColumnName);
-                    Console.Write(" ");
+                    ColumnInfo columnInfo = rowProvider.ColumnInfo[i].ColumnType;
+                    string val = GetValAsString(columnInfo, row, i);
+                    tableRow.Add(val);
                 }
 
-                Console.Write("|");
+                table.AddRow(tableRow.ToArray());
+            }
 
-                Console.WriteLine();
-                Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
+            if (table.Rows.Count > 0)
+            {
+                table.Write();
+            }
 
-                int totalCount = 0;
-                await foreach (var row in rowProvider.Enumerator)
-                {
-                    totalCount++;
-
-                    int columnPos = 0;
-                    for (int i = 0; i < rowProvider.ColumnInfo.Length; i++)
-                    {
-                        ColumnInfo columnInfo = rowProvider.ColumnInfo[i].ColumnType;
-                        int width = GetColumnWidth(columnInfo);
-                        string valToPrint = GetColumnString(columnInfo, width, row, columnPos);
-
-                        Console.Write("|");
-                        Console.Write(valToPrint);
-                        Console.Write(" ");
-
-                        columnPos++;
-                    }
-
-                    Console.Write("|");
-
-                    Console.WriteLine();
-                    Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
-                }
-
-                Console.WriteLine();
-                Console.WriteLine(new string(Enumerable.Repeat('-', totalWidth).ToArray()));
-
-                Console.WriteLine($"Total rows returned {totalCount}");
+            Console.WriteLine("----------------------");
+            Console.WriteLine($"Total rows returned {totalCount}");
         }
 
         private static string GetTempFolderPath()
