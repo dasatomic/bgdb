@@ -232,6 +232,36 @@ namespace PageManager
             this.rowCount--;
         }
 
+        /// <summary>
+        /// Split in the middle.
+        /// </summary>
+        /// <returns>Returns right side of the split + split value.</returns>
+        public void SplitPage(Memory<byte> newPage, ref RowHolder splitValue, int elemNumForSplit)
+        {
+            if (this.rowCount % 2 != 1)
+            {
+                throw new ArgumentException("Page needs to have uneven number of elements to make the split.");
+            }
+
+            this.storage.CopyTo(newPage);
+
+            for (int i = 0; i < elemNumForSplit + 1; i++)
+            {
+                // Unset presence in the first half of new page.
+                BitArray.Unset(i, newPage.Span);
+            }
+
+            this.GetRow(elemNumForSplit, ref splitValue);
+
+            for (int i = elemNumForSplit; i < this.maxRowCount; i++)
+            {
+                // Unset presence in the second half of this page.
+                BitArray.Unset(i, this.storage.Span);
+            }
+
+            this.rowCount /= 2;
+        }
+
         // TODO: This is not performant and it is not natural to pass column type here.
         public IEnumerable<RowHolder> Iterate(ColumnInfo[] columnTypes)
         {

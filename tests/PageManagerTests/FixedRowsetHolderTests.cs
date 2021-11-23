@@ -512,5 +512,52 @@ namespace PageManagerTests
                 Assert.AreEqual(sortedArray[i].ToString(), new string(rhf.GetStringField(2)));
             }
         }
+
+        [Test]
+        public void PageSplit()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            int maxRowCount = rs.MaxRowCount();
+            if (maxRowCount % 2 != 1)
+            {
+                maxRowCount--;
+            }
+
+            for (int i = 0; i < maxRowCount; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i);
+                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+                int pos = rs.InsertRowOrdered(rhf, schema, comp);
+            }
+
+            Memory<byte> newPageContent = new Memory<byte>(new byte[4096]);
+            var rhSplit = new RowHolder(schema);
+            rs.SplitPage(newPageContent, ref rhSplit, maxRowCount / 2);
+            RowsetHolder rowsetSplit = new RowsetHolder(schema, newPageContent, false);
+
+            Assert.AreEqual(maxRowCount / 2, rs.GetRowCount());
+            Assert.AreEqual(maxRowCount / 2, rowsetSplit.GetRowCount());
+            // Split value.
+            Assert.AreEqual(maxRowCount / 2, rhSplit.GetField<int>(0));
+
+            RowHolder[] firstPageContent = rs.Iterate(schema).ToArray();
+            RowHolder[] secondPageContent = rowsetSplit.Iterate(schema).ToArray();
+
+            for (int i = 0; i < maxRowCount / 2; i++)
+            {
+                Assert.AreEqual(i, firstPageContent[i].GetField<int>(0));
+                Assert.AreEqual(maxRowCount / 2 + i + 1, secondPageContent[i].GetField<int>(0));
+            }
+        }
     }
 }
