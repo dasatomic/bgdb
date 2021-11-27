@@ -19,7 +19,7 @@ namespace Test.Common
 
         public static IPageEvictionPolicy RestrictiveEviction = new FifoEvictionPolicy(1, 1);
 
-        public static PersistedStream DefaultPersistedStream
+        public static IPersistedStream DefaultPersistedStream
         {
             get
             {

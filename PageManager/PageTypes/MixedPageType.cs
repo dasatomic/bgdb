@@ -89,6 +89,16 @@ namespace PageManager
             }
         }
 
+        public IEnumerable<RowHolder> FetchReverse(ITransaction tran)
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return  this.items.IterateReverse(this.columnTypes);
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
@@ -111,6 +121,47 @@ namespace PageManager
 
                 return position;
             }
+        }
+
+        public override int InsertOrdered(RowHolder item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+
+            lock (this.lockObject)
+            {
+                int position = this.items.InsertRowOrdered(item, columnTypes, comparer);
+
+                if (position == -1)
+                {
+                    return position;
+                }
+
+                this.rowCount++;
+
+                // TODO: Ordered insert may result in shift operations.
+                // We need to log that as well to keep things consistent.
+                ILogRecord rc = new InsertRowRecord(this.pageId, (ushort)(position), item.Storage, transaction.TranscationId(), this.columnTypes, this.PageType());
+                transaction.AddRecord(rc);
+
+                this.isDirty = true;
+
+                return position;
+            }
+        }
+
+        public override void SplitPage(MixedPage newPage, ref RowHolder splitValue, int elemNumForSplit, ITransaction transaction)
+        {
+            transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
+            transaction.VerifyLock(newPage.pageId, LockManager.LockTypeEnum.Exclusive);
+
+            lock (this.lockObject)
+            {
+                this.items.SplitPage(newPage.inMemoryStorage, ref splitValue, elemNumForSplit);
+            }
+
+            this.rowCount = (uint)this.items.GetRowCount();
+            newPage.items.UpdateRowCount();
+            newPage.rowCount = (uint)newPage.items.GetRowCount();
         }
 
         public override uint MaxRowCount() => this.items.MaxRowCount();

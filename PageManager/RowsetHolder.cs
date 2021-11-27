@@ -81,6 +81,11 @@ namespace PageManager
             maxRowCount = (ushort)((storage.Length - dataStartPosition) / rowSize);
         }
 
+        public void UpdateRowCount()
+        {
+            this.rowCount = BitArray.CountSet(storage.Span.Slice(0, this.reservedPresenceBitmaskCount));
+        }
+
         public T GetRowGeneric<T>(int row, int col) where T : unmanaged
         {
             System.Diagnostics.Debug.Assert(IsPresent(row));
@@ -153,6 +158,10 @@ namespace PageManager
                         // I am smaller than you, I should be at your place.
                         positionToInsert = i;
                         break;
+                    } else
+                    {
+                        // Bigger than everyone else. Go at the end.
+                        positionToInsert = -1;
                     }
                 }
                 else 
@@ -162,6 +171,12 @@ namespace PageManager
                         positionToInsert = i;
                     }
                 }
+            }
+
+            if (positionToInsert == -1)
+            {
+                // insert at the end.
+                positionToInsert = this.maxRowCount - 1;
             }
 
             if (BitArray.IsSet(positionToInsert, this.storage.Span))
@@ -201,11 +216,11 @@ namespace PageManager
 
                 if (positionToInsert < firstFreeElement)
                 {
-                    // shift right.
+                    // shift right one element.
                     ByteSliceOperations.ShiftSlice<byte>(
                         this.storage,
                         this.dataStartPosition + positionToInsert * this.rowSize, // Source.
-                        this.dataStartPosition + positionToInsert * this.rowSize + this.rowSize, // Destination.
+                        this.dataStartPosition + (positionToInsert + 1) * this.rowSize, // Destination.
                         numOfElemToCopy * this.rowSize);
                 }
                 else
@@ -213,10 +228,11 @@ namespace PageManager
                     // shift left.
                     ByteSliceOperations.ShiftSlice<byte>(
                         this.storage,
-                        this.dataStartPosition + positionToInsert * this.rowSize, // Source.
-                        this.dataStartPosition + firstFreeElement * this.rowSize - this.rowSize, // Destination.
+                        this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
+                        this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
                         numOfElemToCopy * this.rowSize);
                 }
+
                 BitArray.Set(firstFreeElement, this.storage.Span);
             }
 
@@ -253,19 +269,33 @@ namespace PageManager
 
             this.GetRow(elemNumForSplit, ref splitValue);
 
+            // Caller will have to refresh row count in this item with UpdateRowCount call.
+            // we can't do it here since we are operating on row memory.
             for (int i = elemNumForSplit; i < this.maxRowCount; i++)
             {
-                // Unset presence in the second half of this page.
                 BitArray.Unset(i, this.storage.Span);
             }
 
-            this.rowCount /= 2;
+            this.UpdateRowCount();
         }
 
         // TODO: This is not performant and it is not natural to pass column type here.
         public IEnumerable<RowHolder> Iterate(ColumnInfo[] columnTypes)
         {
             for (int i = 0; i < this.maxRowCount; i++)
+            {
+                if (BitArray.IsSet(i, this.storage.Span))
+                {
+                    RowHolder rowHolder = new RowHolder(columnTypes);
+                    GetRow(i, ref rowHolder);
+                    yield return rowHolder;
+                }
+            }
+        }
+
+        public IEnumerable<RowHolder> IterateReverse(ColumnInfo[] columnTypes)
+        {
+            for (int i = this.maxRowCount - 1; i >= 0; i--)
             {
                 if (BitArray.IsSet(i, this.storage.Span))
                 {

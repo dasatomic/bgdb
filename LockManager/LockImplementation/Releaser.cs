@@ -23,6 +23,14 @@ namespace LockManager.LockImplementation
             this.isDisposed = false;
         }
 
+        public static Releaser FakeReleaser
+        {
+            get
+            {
+                return new Releaser(null, false, 0, 0);
+            }
+        }
+
         internal bool IsWriter() => writer;
 
         public void SetReleaseCallback(Action callback)

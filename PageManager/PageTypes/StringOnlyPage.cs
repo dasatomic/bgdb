@@ -321,5 +321,15 @@ namespace PageManager
         {
             throw new NotImplementedException();
         }
+
+        public override int InsertOrdered(char[] item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SplitPage(MixedPage newPage, ref RowHolder splitValue, int elemNumForSplit, ITransaction transaction)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
