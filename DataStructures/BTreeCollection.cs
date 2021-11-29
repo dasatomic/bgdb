@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using static PageManager.ProjectExtendInfo;
 
 namespace DataStructures
@@ -28,9 +27,9 @@ namespace DataStructures
 
         private Func<MixedPage, string> debugPrintPage;
 
-        private Func<RowHolder, string> debugPrintRow;
+        private int indexPosition;
 
-        public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer)
+        public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition)
         {
             if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0 || tran == null)
             {
@@ -39,6 +38,7 @@ namespace DataStructures
 
             this.pageAllocator = pageAllocator;
             this.columnTypes = columnTypes;
+            this.indexPosition = indexPosition;
 
             // Add PagePointer to the end of each row.
             // Page pointer will be used as pointer in btree.
@@ -131,11 +131,6 @@ namespace DataStructures
                         int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
                         Debug.Assert(pos >= 0);
 
-                        if (currPage.PageId() != this.collectionRootPageId)
-                        {
-                            Debug.Assert(pos >= this.maxElemsPerPage / 2 - 1);
-                        }
-
                         // all done.
                         insertFinished = true;
                     }
@@ -152,21 +147,11 @@ namespace DataStructures
                         {
                             // left.
                             int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
-
-                            if (currPage.PageId() != this.collectionRootPageId)
-                            {
-                                Debug.Assert(pos >= this.maxElemsPerPage / 2 - 1);
-                            }
                         }
                         else
                         {
                             // right.
                             int pos = newPageForSplit.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
-
-                            if (currPage.PageId() != this.collectionRootPageId)
-                            {
-                                Debug.Assert(pos >= this.maxElemsPerPage / 2 - 1);
-                            }
                         }
 
                         insertFinished = true;
@@ -409,9 +394,57 @@ namespace DataStructures
             this.debugPrintPage = debugPagePrint;
         }
 
-        public void SetDebugRowPrint(Func<RowHolder, string> debugRowPrint)
+        public bool SupportsSeek() => true;
+
+        public async IAsyncEnumerable<RowHolder> Seek<K>(K seekVal, ITransaction tran)
+            where K : unmanaged, IComparable<K>
         {
-            this.debugPrintRow = debugRowPrint;
+            ulong currPageId = this.collectionRootPageId;
+            while (true)
+            {
+                using Releaser lck = await tran.AcquireLock(currPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false);
+                MixedPage currPage = await pageAllocator.GetMixedPage(currPageId, tran, this.btreeColumnTypes).ConfigureAwait(false);
+
+                ulong prevPointer = currPage.PrevPageId();
+                foreach (RowHolder rh in currPage.Fetch(tran))
+                {
+                    K val = rh.GetField<K>(this.indexPosition);
+                    ulong pagePointer = rh.GetField<ulong>(this.pagePointerRowPosition);
+
+                    int compResult = seekVal.CompareTo(val);
+                    if (compResult == -1)
+                    {
+                        // seek val is bigger.
+                        // go down
+                        // Seek val is smaller. Need to go left.
+                        if (prevPointer == PageManagerConstants.NullPageId)
+                        {
+                            throw new KeyNotFound();
+                        }
+                        else
+                        {
+                            currPageId = prevPointer;
+                        }
+
+                        break;
+                    }
+                    else if (compResult == 0)
+                    {
+                        // found the val.
+                        // For now we don't support key duplication.
+                        RowHolder rhWithoutPointer = rh.ProjectAndExtend(this.projectionRemoveIndexCol);
+                        yield return rhWithoutPointer;
+                        yield break;
+                    }
+                    else
+                    {
+                        prevPointer = pagePointer;
+                    }
+                }
+
+                // Reached the end. The val is bigger than anything else
+                currPageId = prevPointer;
+            }
         }
     }
 }

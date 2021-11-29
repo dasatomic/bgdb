@@ -30,7 +30,7 @@ namespace QueryProcessing
         public IAsyncEnumerable<RowHolder> Enumerator { get; }
         public MetadataColumn[] ColumnInfo { get; }
 
-        public T GetValue<T>(RowHolder rh, string columnName) where T : unmanaged
+        public T GetValue<T>(RowHolder rh, string columnName) where T : unmanaged, IComparable<T>
         {
             if (columnPositions.TryGetValue(columnName, out int position))
             {

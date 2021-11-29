@@ -111,7 +111,7 @@ namespace PageManager
             arr.CopyTo(this.Storage);
         }
 
-        public T GetField<T>(int col) where T : unmanaged
+        public T GetField<T>(int col) where T : unmanaged, IComparable<T>
         {
             fixed (byte* ptr = this.Storage)
             {

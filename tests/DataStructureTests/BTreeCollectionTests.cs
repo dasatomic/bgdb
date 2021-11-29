@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Test.Common;
+using DataStructures.Exceptions;
 
 namespace DataStructureTests
 {
@@ -58,7 +59,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp);
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
             var row = new RowHolder(schema);
 
@@ -97,7 +98,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp);
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
             var rootPage = this.pagePointersOrdered[0];
 
@@ -150,7 +151,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp);
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
             var rootPage = this.pagePointersOrdered[0];
 
@@ -243,7 +244,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp);
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
             Func<MixedPage, string> debugPrint = (page) =>
             {
@@ -281,6 +282,189 @@ namespace DataStructureTests
                 int item = rh.GetField<int>(0);
                 Assert.AreEqual(pos, item);
                 pos++;
+            }
+        }
+
+        [Test]
+        public async Task IterateInsertReverse()
+        {
+            using ITransaction tran = new DummyTran();
+
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            BTreeCollection collection =
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+
+            const int rowCount = 10000;
+
+            for (int i = rowCount - 1; i >= 0; i--)
+            {
+                var row = new RowHolder(schema);
+
+                row.SetField(0, i);
+                await collection.Add(row, tran);
+            }
+
+            int pos = 0;
+            await foreach (RowHolder rh in collection.Iterate(tran))
+            {
+                int item = rh.GetField<int>(0);
+                Assert.AreEqual(pos, item);
+                pos++;
+            }
+        }
+
+        [Test]
+        public async Task IterateInsertRandom()
+        {
+            using ITransaction tran = new DummyTran();
+
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            BTreeCollection collection =
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+
+            const int rowCount = 10000;
+            int[] rowsToInsert = Enumerable.Range(0, rowCount).ToArray();
+
+            Random rnd = new Random();
+            int[] randomPermutation = rowsToInsert.OrderBy(x => rnd.Next()).ToArray();
+
+            for (int i = 0; i < rowCount; i++)
+            {
+                var row = new RowHolder(schema);
+
+                row.SetField(0, i);
+                await collection.Add(row, tran);
+            }
+
+            int pos = 0;
+            await foreach (RowHolder rh in collection.Iterate(tran))
+            {
+                int item = rh.GetField<int>(0);
+                Assert.AreEqual(pos, item);
+                pos++;
+            }
+        }
+
+        [Test]
+        public async Task SeekValueExists()
+        {
+            using ITransaction tran = new DummyTran();
+
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            BTreeCollection collection =
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+
+            const int rowCount = 10000;
+            for (int i = 0; i < rowCount; i++)
+            {
+                var row = new RowHolder(schema);
+
+                row.SetField(0, i);
+                await collection.Add(row, tran);
+            }
+
+            Random rnd = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                int valToSeek = rnd.Next(0, rowCount - 1);
+                await foreach (RowHolder rh in collection.Seek<int>(valToSeek, tran))
+                {
+                    int item = rh.GetField<int>(0);
+                    Assert.AreEqual(valToSeek, item);
+                }
+            }
+        }
+
+        [Test]
+        public async Task SeekValueRandom()
+        {
+            using ITransaction tran = new DummyTran();
+
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            BTreeCollection collection =
+                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+
+            Random rnd = new Random();
+            const int rowCount = 10000;
+            List<int> insertedValues = new List<int>();
+
+            // exclude 10 ids.
+            List<int> excludedValues = new List<int>();
+            for (int i = 0; i < 10; i++)
+            {
+                excludedValues.Add(rnd.Next(0, rowCount));
+            }
+
+
+            for (int i = 0; i < rowCount; i++)
+            {
+                var row = new RowHolder(schema);
+                int valToInsert = rnd.Next(0, rowCount * 2);
+                if (i < 10)
+                {
+                    insertedValues.Add(valToInsert);
+                }
+
+                row.SetField(0, valToInsert);
+                try
+                {
+                    if (!excludedValues.Contains(valToInsert))
+                    {
+                        await collection.Add(row, tran);
+                    }
+                }
+                catch (KeyAlreadyExists)
+                {
+                    // Just ignore
+                }
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                int valToSeek = insertedValues.ElementAt(i);
+                await foreach (RowHolder rh in collection.Seek<int>(valToSeek, tran))
+                {
+                    int item = rh.GetField<int>(0);
+                    Assert.AreEqual(valToSeek, item);
+                }
+            }
+
+            foreach (int val in excludedValues)
+            {
+                Assert.ThrowsAsync<KeyNotFound>(async () =>
+                {
+                    await foreach (RowHolder rh in collection.Seek<int>(val, tran))
+                    {
+                    }
+                });
             }
         }
     }
