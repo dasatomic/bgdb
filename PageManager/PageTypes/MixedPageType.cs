@@ -159,9 +159,11 @@ namespace PageManager
                 this.items.SplitPage(newPage.inMemoryStorage, ref splitValue, elemNumForSplit);
             }
 
+            this.isDirty = true;
             this.rowCount = (uint)this.items.GetRowCount();
             newPage.items.UpdateRowCount();
             newPage.rowCount = (uint)newPage.items.GetRowCount();
+            newPage.isDirty = true;
         }
 
         public override uint MaxRowCount() => this.items.MaxRowCount();

@@ -138,7 +138,7 @@ namespace DataStructureTests
         }
 
         [Test]
-        public async Task PageSplit()
+        public async Task InsertDuplicate()
         {
             using ITransaction tran = new DummyTran();
 
@@ -153,85 +153,45 @@ namespace DataStructureTests
             BTreeCollection collection =
                 new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
-            var rootPage = this.pagePointersOrdered[0];
+            var row = new RowHolder(schema);
 
-            uint maxRowCountPerPage = rootPage.MaxRowCount();
+            row.SetField(0, 42);
+            await collection.Add(row, tran);
+            Assert.ThrowsAsync<KeyAlreadyExists>(async () => await collection.Add(row, tran));
+        }
 
-            if (maxRowCountPerPage % 2 == 0)
+        public enum GenerationStrategy
+        {
+            Seq,
+            Rev,
+            Rand,
+            FromFile,
+        }
+
+        private List<int> GenerateItems(GenerationStrategy strat, int itemNum)
+        {
+            switch (strat)
             {
-                maxRowCountPerPage--;
+                case GenerationStrategy.Seq:
+                    return Enumerable.Range(0, itemNum).ToList();
+                case GenerationStrategy.Rev:
+                    return Enumerable.Range(0, itemNum).Reverse().ToList();
+                case GenerationStrategy.Rand:
+                    Random rnd = new Random();
+                    return Enumerable.Range(0, itemNum).OrderBy(x => rnd.Next()).Distinct().ToList();
+                case GenerationStrategy.FromFile:
+                    // used to repo issues.
+                    // return File.ReadAllLines("D:\\temp.txt").Select(ln => Int32.Parse(ln)).ToList();
+                default:
+                    throw new ArgumentException();
             }
-
-            for (int i = 0; i < maxRowCountPerPage + 1; i++)
-            {
-                var row = new RowHolder(schema);
-
-                row.SetField(0, i);
-                await collection.Add(row, tran);
-            }
-
-            // There should be three pages.
-            Assert.AreEqual(3, this.pagePointersOrdered.Count);
-
-            MixedPage page0 = this.pagePointersOrdered[0];
-            MixedPage page1 = this.pagePointersOrdered[1];
-            MixedPage page2 = this.pagePointersOrdered[2];
-
-            // Initial page will host first half of the rows.
-            RowHolder[] rhs = page0.Fetch(tran).ToArray();
-            Assert.AreEqual(maxRowCountPerPage / 2, rhs.Length);
-            for (int i = 0; i < maxRowCountPerPage / 2; i++)
-            {
-                int data = rhs[i].GetField<int>(0);
-                Assert.AreEqual(i, data);
-
-                ulong pointer = rhs[0].GetField<ulong>(1);
-                // No child elements at this moment.
-                Assert.AreEqual(PageManagerConstants.NullPageId, pointer);
-            }
-
-            Assert.AreEqual(PageManagerConstants.NullPageId, page0.PrevPageId());
-            bool isLeaf = (page0.NextPageId() & 1UL) == 1;
-            Assert.AreEqual(true, isLeaf);
-
-            // second page will host second half of the rows.
-            rhs = page1.Fetch(tran).ToArray();
-            Assert.AreEqual(maxRowCountPerPage / 2 + 1, rhs.Length);
-            int rhsPos = 0;
-            for (int i = (int)maxRowCountPerPage / 2 + 1; i < maxRowCountPerPage + 1; i++)
-            {
-                int data = rhs[rhsPos].GetField<int>(0);
-                Assert.AreEqual(i, data);
-
-                ulong pointer = rhs[rhsPos].GetField<ulong>(1);
-                // No child elements at this moment.
-                Assert.AreEqual(PageManagerConstants.NullPageId, pointer);
-                rhsPos++;
-            }
-
-            Assert.AreEqual(PageManagerConstants.NullPageId, page1.PrevPageId());
-            isLeaf = (page1.NextPageId() & 1UL) == 1;
-            Assert.AreEqual(true, isLeaf);
-
-            // third page is new root.
-            // second page will host second half of the rows.
-            rhs = page2.Fetch(tran).ToArray();
-            Assert.AreEqual(1, rhs.Length);
-
-            int rootData = rhs[0].GetField<int>(0);
-            Assert.AreEqual(maxRowCountPerPage / 2, rootData);
-
-            ulong rootRightPointer = rhs[0].GetField<ulong>(1);
-            Assert.AreEqual(page1.PageId(), rootRightPointer);
-            ulong rootLeftPointer = page2.PrevPageId();
-            Assert.AreEqual(page0.PageId(), rootLeftPointer);
-
-            isLeaf = (page2.NextPageId() & 1UL) == 1;
-            Assert.AreEqual(false, isLeaf);
         }
 
         [Test]
-        public async Task IterateInsertSequential()
+        [TestCase(GenerationStrategy.Seq)]
+        [TestCase(GenerationStrategy.Rev)]
+        [TestCase(GenerationStrategy.Rand)]
+        public async Task IterateInsertSequential(GenerationStrategy strat)
         {
             using ITransaction tran = new DummyTran();
 
@@ -246,6 +206,9 @@ namespace DataStructureTests
             BTreeCollection collection =
                 new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
 
+            const int rowCount = 10000;
+
+            // used for debugging.
             Func<MixedPage, string> debugPrint = (page) =>
             {
                 string info = $"pageId {page.PageId()}, prev: {page.PrevPageId()}\n";
@@ -260,101 +223,23 @@ namespace DataStructureTests
                 return info;
             };
 
-            Func<RowHolder, string> debugRowPrint = (rh) =>
-            {
-                string info = $"data = {rh.GetField<int>(0)}, key = {rh.GetField<ulong>(1)}";
-                return info;
-            };
-
-            const int rowCount = 10000;
-
-            for (int i = 0; i < rowCount; i++)
+            int[] generatedItems = GenerateItems(strat, rowCount).ToArray();
+            foreach (int item in generatedItems)
             {
                 var row = new RowHolder(schema);
 
-                row.SetField(0, i);
+                row.SetField(0, item);
                 await collection.Add(row, tran);
             }
+
+            // sort for verification.
+            Array.Sort(generatedItems);
 
             int pos = 0;
             await foreach (RowHolder rh in collection.Iterate(tran))
             {
                 int item = rh.GetField<int>(0);
-                Assert.AreEqual(pos, item);
-                pos++;
-            }
-        }
-
-        [Test]
-        public async Task IterateInsertReverse()
-        {
-            using ITransaction tran = new DummyTran();
-
-            var schema = new ColumnInfo[]
-            {
-                new ColumnInfo(ColumnType.Int)
-            };
-
-            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-
-            BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
-
-            const int rowCount = 10000;
-
-            for (int i = rowCount - 1; i >= 0; i--)
-            {
-                var row = new RowHolder(schema);
-
-                row.SetField(0, i);
-                await collection.Add(row, tran);
-            }
-
-            int pos = 0;
-            await foreach (RowHolder rh in collection.Iterate(tran))
-            {
-                int item = rh.GetField<int>(0);
-                Assert.AreEqual(pos, item);
-                pos++;
-            }
-        }
-
-        [Test]
-        public async Task IterateInsertRandom()
-        {
-            using ITransaction tran = new DummyTran();
-
-            var schema = new ColumnInfo[]
-            {
-                new ColumnInfo(ColumnType.Int)
-            };
-
-            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-
-            BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
-
-            const int rowCount = 10000;
-            int[] rowsToInsert = Enumerable.Range(0, rowCount).ToArray();
-
-            Random rnd = new Random();
-            int[] randomPermutation = rowsToInsert.OrderBy(x => rnd.Next()).ToArray();
-
-            for (int i = 0; i < rowCount; i++)
-            {
-                var row = new RowHolder(schema);
-
-                row.SetField(0, i);
-                await collection.Add(row, tran);
-            }
-
-            int pos = 0;
-            await foreach (RowHolder rh in collection.Iterate(tran))
-            {
-                int item = rh.GetField<int>(0);
-                Assert.AreEqual(pos, item);
+                Assert.AreEqual(generatedItems[pos], item);
                 pos++;
             }
         }

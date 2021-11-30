@@ -1,6 +1,7 @@
 ﻿using PageManager.UtilStructures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -147,6 +148,8 @@ namespace PageManager
             // find the first element that is bigger than one to insert.
             // TODO: this can be logn.
             int positionToInsert = -1;
+            bool insertAtEnd = false;
+
             for (int i = 0; i < this.maxRowCount; i++)
             {
                 if (BitArray.IsSet(i, this.storage.Span))
@@ -155,28 +158,25 @@ namespace PageManager
                     GetRow(i, ref rowHolder);
                     if (comparer(rowHolderToInsert, rowHolder) != 1)
                     {
-                        // I am smaller than you, I should be at your place.
+                        // I am bigger than you, I should be at your place.
                         positionToInsert = i;
                         break;
-                    } else
-                    {
-                        // Bigger than everyone else. Go at the end.
-                        positionToInsert = -1;
-                    }
-                }
-                else 
-                {
-                    if (positionToInsert == -1)
-                    {
-                        positionToInsert = i;
                     }
                 }
             }
 
             if (positionToInsert == -1)
             {
-                // insert at the end.
-                positionToInsert = this.maxRowCount - 1;
+                // either I am bigger than everyone or this is an empty collection.
+                if (this.rowCount == 0)
+                {
+                    positionToInsert = 0;
+                }
+                else
+                {
+                    insertAtEnd = true;
+                    positionToInsert = this.maxRowCount - 1;
+                }
             }
 
             if (BitArray.IsSet(positionToInsert, this.storage.Span))
@@ -208,6 +208,7 @@ namespace PageManager
                     if (firstFreeElement == -1)
                     {
                         // No free space.
+                        Debug.Assert(false, "No free space");
                         return -1;
                     }
                 }
@@ -225,12 +226,25 @@ namespace PageManager
                 }
                 else
                 {
-                    // shift left.
-                    ByteSliceOperations.ShiftSlice<byte>(
-                        this.storage,
-                        this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
-                        this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
-                        numOfElemToCopy * this.rowSize);
+                    if (insertAtEnd)
+                    {
+                        // shift left. We are at the end.
+                        ByteSliceOperations.ShiftSlice<byte>(
+                            this.storage,
+                            this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
+                            this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
+                            numOfElemToCopy * this.rowSize);
+                    }
+                    else
+                    {
+                        // shift prev elements to the left.
+                        ByteSliceOperations.ShiftSlice<byte>(
+                            this.storage,
+                            this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
+                            this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
+                            (numOfElemToCopy - 1) * this.rowSize);
+                        positionToInsert--;
+                    }
                 }
 
                 BitArray.Set(firstFreeElement, this.storage.Span);
@@ -256,10 +270,23 @@ namespace PageManager
         {
             if (this.rowCount % 2 != 1)
             {
-                throw new ArgumentException("Page needs to have uneven number of elements to make the split.");
+                throw new ArgumentException("Page needs to have odd number of elements to make the split.");
             }
 
             this.storage.CopyTo(newPage);
+
+            if (!BitArray.IsSet(elemNumForSplit, this.storage.Span))
+            {
+                for (int i = elemNumForSplit + 1; i < this.maxRowCount; i++)
+                {
+                    // try to find optimal element.
+                    if (BitArray.IsSet(i, this.storage.Span))
+                    {
+                        elemNumForSplit = i;
+                        break;
+                    }
+                }
+            }
 
             for (int i = 0; i < elemNumForSplit + 1; i++)
             {

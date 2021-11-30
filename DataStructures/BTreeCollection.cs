@@ -128,8 +128,24 @@ namespace DataStructures
 
                     if (currPage.RowCount() < this.maxElemsPerPage)
                     {
+                        // check if element exists.
+                        foreach (RowHolder rh in currPage.Fetch(tran))
+                        {
+                            int compareResult = this.indexComparer(itemToInsert, rh);
+
+                            if (compareResult == 0)
+                            {
+                                throw new KeyAlreadyExists();
+                            }
+                        }
+
                         int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
                         Debug.Assert(pos >= 0);
+
+                        if (debugPrintPage != null)
+                        {
+                            string debugInfo = debugPrintPage(currPage);
+                        }
 
                         // all done.
                         insertFinished = true;
@@ -160,7 +176,6 @@ namespace DataStructures
                 else
                 {
                     // non leaf
-                    // If row count is = maxElemsPerPage - 2 then split and continue traversal.
                     if (currPage.RowCount() < this.maxElemsPerPage - 2)
                     {
                         // Just iterate.
@@ -271,7 +286,6 @@ namespace DataStructures
                     // Just testing validity.
                     RowHolder rowHolder = currPage.Fetch(tran).ElementAt(posInPage);
                     RowHolder rhWithoutPointer = rowHolder.ProjectAndExtend(this.projectionRemoveIndexCol);
-                    yield return rhWithoutPointer;
 
                     ulong childPointer = rowHolder.GetField<ulong>(this.pagePointerRowPosition);
 
@@ -290,6 +304,8 @@ namespace DataStructures
                         // Done with this page.
                         releaser.Dispose();
                     }
+
+                    yield return rhWithoutPointer;
                 }
             }
         }
@@ -350,16 +366,18 @@ namespace DataStructures
 
             this.SetLeaf(newPageForSplit, this.IsLeaf(currPage));
 
+            if (this.debugPrintPage != null)
+            {
+                string info1 = this.debugPrintPage(currPage);
+                string info2 = this.debugPrintPage(newPageForSplit);
+            }
+
             if (prevPage != null)
             {
                 int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexComparer);
 
-                // We know that there will be enough place since we proactivly clean parent nodes.
+                // We know that there will be enough space since we proactivly clean parent nodes.
                 Debug.Assert(pos >= 0);
-                if (prevPage.PageId() != this.collectionRootPageId)
-                {
-                    Debug.Assert(pos >= this.maxElemsPerPage / 2 - 1);
-                }
             }
             else
             {
@@ -395,6 +413,32 @@ namespace DataStructures
         }
 
         public bool SupportsSeek() => true;
+
+        public async Task<bool> Validate<K>(ITransaction tran)
+            where K : unmanaged, IComparable<K>
+        {
+            K prevValue = default(K);
+            bool firstCheck = true;
+            await foreach (RowHolder rh in this.Iterate(tran))
+            {
+                K val = rh.GetField<K>(this.indexPosition);
+
+                if (firstCheck)
+                {
+                    prevValue = val;
+                    firstCheck = false;
+                }
+                else
+                {
+                    if (val.CompareTo(prevValue) != 1)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
 
         public async IAsyncEnumerable<RowHolder> Seek<K>(K seekVal, ITransaction tran)
             where K : unmanaged, IComparable<K>
