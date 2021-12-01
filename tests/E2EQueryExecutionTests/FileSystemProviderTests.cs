@@ -125,6 +125,7 @@ namespace E2EQueryExecutionTests
         }
 
         [Test]
+        [Ignore("Takes 20s. Use it only in full runs")]
         public async Task VideoImageExtraction()
         {
             await using ITransaction tran = this.logManager.CreateTransaction(pageManager, "GET_ROWS");

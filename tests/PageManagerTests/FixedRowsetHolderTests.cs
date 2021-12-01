@@ -353,9 +353,10 @@ namespace PageManagerTests
 
             Assert.AreEqual(100, rs.GetRowCount());
 
-            for (int i = 0; i < 100; i++)
+            int expected = 0;
+            foreach (RowHolder rh in rs.Iterate(schema))
             {
-                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
+                Assert.AreEqual(expected++, rh.GetField<int>(0));
             }
         }
 
@@ -385,9 +386,10 @@ namespace PageManagerTests
 
             Assert.AreEqual(100, rs.GetRowCount());
 
-            for (int i = 0; i < 100; i++)
+            int expected = 0;
+            foreach (RowHolder rh in rs.Iterate(schema))
             {
-                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
+                Assert.AreEqual(expected++, rh.GetField<int>(0));
             }
         }
 
@@ -416,10 +418,12 @@ namespace PageManagerTests
 
             Assert.AreEqual(100, rs.GetRowCount());
 
-            for (int i = 0; i < 100; i++)
+            int expected = 0;
+            foreach (RowHolder rh in rs.Iterate(schema))
             {
-                Assert.AreEqual(i, rs.GetRowGeneric<int>(i, 0));
-                Assert.AreEqual(i * 1.1, rs.GetRowGeneric<double>(i, 1));
+                Assert.AreEqual(expected, rh.GetField<int>(0));
+                Assert.AreEqual(expected * 1.1, rh.GetField<double>(1));
+                expected++;
             }
         }
 
@@ -458,9 +462,11 @@ namespace PageManagerTests
 
             Assert.AreEqual(maxRowCount, rs.GetRowCount());
 
-            for (int i = 0; i < maxRowCount; i++)
+            int pos = 0;
+            foreach (RowHolder rh in rs.Iterate(schema))
             {
-                Assert.AreEqual(sortedArray[i], rs.GetRowGeneric<int>(i, 0));
+                Assert.AreEqual(sortedArray[pos], rh.GetField<int>(0));
+                pos++;
             }
         }
 
@@ -503,13 +509,13 @@ namespace PageManagerTests
 
             Assert.AreEqual(maxRowCount, rs.GetRowCount());
 
-            for (int i = 0; i < maxRowCount; i++)
+            int pos = 0;
+            foreach (RowHolder rh in rs.Iterate(schema))
             {
-                var rhf = new RowHolder(schema);
-                rs.GetRow(i, ref rhf);
-                Assert.AreEqual(sortedArray[i], rhf.GetField<int>(0));
-                Assert.AreEqual(sortedArray[i] * 1.1, rhf.GetField<double>(1));
-                Assert.AreEqual(sortedArray[i].ToString(), new string(rhf.GetStringField(2)));
+                Assert.AreEqual(sortedArray[pos], rh.GetField<int>(0));
+                Assert.AreEqual(sortedArray[pos] * 1.1, rh.GetField<double>(1));
+                Assert.AreEqual(sortedArray[pos].ToString(), new string(rh.GetStringField(2)));
+                pos++;
             }
         }
 
