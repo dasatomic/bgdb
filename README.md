@@ -181,7 +181,7 @@ FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holid
 FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
 Extension -> .mkv
 FileSize -> 313687893
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
 NbStreams -> 2
 NbPrograms -> 0
 StartTimeInSeconds -> 0.067
@@ -192,7 +192,7 @@ FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holid
 FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
 Extension -> .mkv
 FileSize -> 313687893
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special001.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special001.mkv
 NbStreams -> 2
 NbPrograms -> 0
 StartTimeInSeconds -> 304.28
@@ -203,7 +203,7 @@ FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holid
 FileName -> Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
 Extension -> .mkv
 FileSize -> 313687893
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special002.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\d8ec89d7-50a9-41d0-8a94-091e12934cab\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special002.mkv
 NbStreams -> 2
 NbPrograms -> 0
 StartTimeInSeconds -> 602.05
@@ -245,19 +245,19 @@ FROM VIDEO_TO_IMAGE(
 Output:
 ```
 ---------------------
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
 FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
-frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000001.bmp
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000001.bmp
 Object_Classification_Result -> panpipe
 ---------------------
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
 FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
-frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000002.bmp
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000002.bmp
 Object_Classification_Result -> oboe
 ---------------------
-chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
+chunk_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\ff4862cd-97fa-445a-b42b-2b5762336314\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000.mkv
 FilePath -> E:\bgdb_video_examples\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special.mkv
-frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\netcoreapp3.1\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000003.bmp
+frame_path -> C:\Users\Aleksandar\projects\bgdb_github\bgdb\bgdbRepl\bin\Debug\net6.0\temp\f3b4bb86-c687-4560-957a-d5065e45c985\Anthony.Bourdain.No.Reservations.S04E00.Holiday.Special000003.bmp
 Object_Classification_Result -> American lobster
 ---------------------
 ...
