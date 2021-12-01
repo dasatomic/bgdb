@@ -14,7 +14,9 @@ namespace DataStructures
         Task<U> Max<U>(Func<T, U> projector, U startMin, ITransaction tran) where U : IComparable;
         Task<bool> IsEmpty(ITransaction tran);
         IAsyncEnumerable<T> Iterate(ITransaction tran);
-        public ColumnInfo[] GetColumnTypes();
+        ColumnInfo[] GetColumnTypes();
+        bool SupportsSeek();
+        IAsyncEnumerable<T> Seek<K>(K seekVal, ITransaction tran) where K : unmanaged, IComparable<K>;
     }
 
     public class PageListCollection : IPageCollection<RowHolder>
@@ -169,5 +171,12 @@ namespace DataStructures
         }
 
         public ColumnInfo[] GetColumnTypes() => this.columnTypes;
+
+        public bool SupportsSeek() => false;
+
+        public IAsyncEnumerable<RowHolder> Seek<K>(K seekVal, ITransaction tran) where K : unmanaged, IComparable<K>
+        {
+            throw new NotImplementedException();
+        }
     }
 }

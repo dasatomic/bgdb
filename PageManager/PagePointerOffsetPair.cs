@@ -1,9 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace PageManager
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct PagePointerOffsetPair
+    public struct PagePointerOffsetPair : IComparable<PagePointerOffsetPair>
     {
         public const uint Size = sizeof(long) + sizeof(int);
 
@@ -14,6 +16,12 @@ namespace PageManager
         {
             this.PageId = pageId;
             this.OffsetInPage = offsetInPage;
+        }
+
+        public int CompareTo([AllowNull] PagePointerOffsetPair other)
+        {
+            // For now not supported.
+            throw new NotImplementedException();
         }
     }
 }

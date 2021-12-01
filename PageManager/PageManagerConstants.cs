@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PageManager
+﻿namespace PageManager
 {
     public static class PageManagerConstants
     {
