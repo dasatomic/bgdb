@@ -2,9 +2,9 @@ name: .NET
 
 on:
   push:
-    branches: [ master, video_processing ]
+    branches: [ master ,switch_to_net_6 ]
   pull_request:
-    branches: [ master, video_processing ]
+    branches: [ master ,switch_to_net_6 ]
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: '6.0.x'
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
