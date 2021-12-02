@@ -13,8 +13,18 @@ namespace QueryProcessingTests
 {
     public class PhyOpScanTests
     {
+        public enum IndexState
+        {
+            NoIndex,
+            IndexCol0,
+            IndexCol2,
+        }
+
         [Test]
-        public async Task ValidateScan()
+        [TestCase(IndexState.NoIndex)]
+        [TestCase(IndexState.IndexCol0)]
+        [TestCase(IndexState.IndexCol2)]
+        public async Task ValidateScan(IndexState indexState)
         {
             var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
@@ -23,6 +33,23 @@ namespace QueryProcessingTests
             MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
+            int[] clusteredIndexPosition = null;
+
+            switch (indexState)
+            {
+                case IndexState.NoIndex:
+                    clusteredIndexPosition = new int[0];
+                    break;
+                case IndexState.IndexCol0:
+                    clusteredIndexPosition = new int[] { 0 };
+                    break;
+                case IndexState.IndexCol2:
+                    clusteredIndexPosition = new int[] { 2 };
+                    break;
+                default:
+                    Assert.Fail();
+                    break;
+            }
 
             ITransaction tran = logManager.CreateTransaction(allocator);
             var columnInfos = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) };
@@ -31,7 +58,7 @@ namespace QueryProcessingTests
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnInfos, 
-                ClusteredIndexPositions = new int[] { }
+                ClusteredIndexPositions = clusteredIndexPosition,
             }, tran);
 
             await tran.Commit();

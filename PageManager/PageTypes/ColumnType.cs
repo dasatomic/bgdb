@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection.Metadata.Ecma335;
 
 namespace PageManager
 {
@@ -117,5 +116,57 @@ namespace PageManager
                 _ => throw new ArgumentException()
             };
         }
+    }
+
+    public interface ColumnTypeHandlerAllSingle<T>
+    {
+        T HandleInt();
+        T HandleDouble();
+        T HandleString();
+        T HandleStringPointer();
+        T HandlePagePointer();
+    }
+
+    public interface ColumnTypeHandlerBasicSingle<T>
+    {
+        T HandleInt();
+        T HandleDouble();
+        T HandleString();
+    }
+
+    public interface ColumnTypeHandlerAllDouble<T>
+    {
+        T HandleInt();
+        T HandleDouble();
+        T HandleString();
+        T HandleStringPointer();
+        T HandlePagePointer();
+    }
+
+    public interface ColumnTypeHandlerBasicDouble<T>
+    {
+        T HandleInt();
+        T HandleDouble();
+        T HandleString();
+    }
+
+    public static class ColumnTypeHandlerRouter<T>
+    {
+        public static T Route(ColumnTypeHandlerBasicDouble<T> handler, ColumnType columnType)
+        {
+            switch (columnType)
+            {
+                case ColumnType.Int:
+                    return handler.HandleInt();
+                case ColumnType.Double:
+                    return handler.HandleDouble();
+                case ColumnType.String:
+                    return handler.HandleString();
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        // TODO: Add other handlers when needed.
     }
 }

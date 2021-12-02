@@ -1,7 +1,9 @@
 ﻿using DataStructures;
+using MetadataManager.Exceptions;
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,7 +19,6 @@ namespace MetadataManager
         public ulong RootPage;
         public MetadataColumn[] Columns;
 
-        // Virtual fields.
         public IPageCollection<RowHolder> Collection;
     }
 
@@ -160,7 +161,49 @@ namespace MetadataManager
 
                 mdObj.Columns = columns.ToArray();
 
-                mdObj.Collection = new PageListCollection(this.pageAllocator, mdObj.Columns.Select(ci => ci.ColumnType).ToArray(), mdObj.RootPage);
+                // TODO: Add some better way to make distinction between btrees and heaps.
+                if (mdObj.Columns.Any(col => col.ClusteredIndexPart != MetadataColumn.NotPartOfClusteredIndex))
+                {
+                    // Find the column that has the index.
+                    MetadataColumn[] clusteredIndexPositionsOrdered =
+                        mdObj.Columns.Where(cl => cl.ClusteredIndexPart != MetadataColumn.NotPartOfClusteredIndex).OrderBy(cl => cl.ClusteredIndexPart).ToArray();
+
+                    if (clusteredIndexPositionsOrdered.Length > 1)
+                    {
+                        throw new OnlyOneClusteredIndexSupportedException();
+                    }
+
+                    MetadataColumn clusteredIndexColumn = clusteredIndexPositionsOrdered[0];
+
+                    // find this column in parent table.
+                    int columnPos = 0;
+                    for (; columnPos < mdObj.Columns.Length; columnPos++)
+                    {
+                        if (clusteredIndexColumn.ColumnId == mdObj.Columns[columnPos].ColumnId)
+                        {
+                            break;
+                        }
+                    }
+
+                    Debug.Assert(clusteredIndexColumn.ClusteredIndexPart == 0);
+
+                    Func<RowHolder, RowHolder, int> indexComparer = ColumnTypeHandlerRouter<Func<RowHolder, RowHolder, int>>.Route(
+                        new BtreeCompareFunctionCreator() { IndexColumnPosition = columnPos },
+                        clusteredIndexColumn.ColumnType.ColumnType);
+
+                    mdObj.Collection = new BTreeCollection(
+                        this.pageAllocator,
+                        mdObj.Columns.Select(ci => ci.ColumnType).ToArray(),
+                        indexComparer,
+                        columnPos,
+                        mdObj.RootPage,
+                        tran);
+                }
+                else
+                {
+                    // Just heap/page list.
+                    mdObj.Collection = new PageListCollection(this.pageAllocator, mdObj.Columns.Select(ci => ci.ColumnType).ToArray(), mdObj.RootPage);
+                }
 
                 yield return mdObj;
             }
@@ -204,6 +247,35 @@ namespace MetadataManager
             }
 
             throw new KeyNotFoundException();
+        }
+    }
+
+    public class BtreeCompareFunctionCreator : ColumnTypeHandlerBasicDouble<Func<RowHolder, RowHolder, int>>
+    {
+        public int IndexColumnPosition { get; init; }
+
+        public Func<RowHolder, RowHolder, int> HandleDouble()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return rh1.GetField<double>(this.IndexColumnPosition).CompareTo(rh2.GetField<double>(this.IndexColumnPosition));
+            };
+        }
+
+        public Func<RowHolder, RowHolder, int> HandleInt()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return rh1.GetField<int>(this.IndexColumnPosition).CompareTo(rh2.GetField<int>(this.IndexColumnPosition));
+            };
+        }
+
+        public Func<RowHolder, RowHolder, int> HandleString()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return (new string(rh1.GetStringField(this.IndexColumnPosition))).CompareTo(new string(rh2.GetStringField(this.IndexColumnPosition)));
+            };
         }
     }
 }
