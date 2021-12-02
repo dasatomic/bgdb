@@ -8,6 +8,8 @@ namespace MetadataManager
 {
     public struct MetadataColumn
     {
+        public const int NotPartOfClusteredIndex = -1;
+
         public const int ColumnIdColumnPos = 0;
         public readonly int ColumnId;
         public const int TableIdColumnPos = 1;
@@ -15,20 +17,23 @@ namespace MetadataManager
         public const int ColumnNameColumnPos = 2;
         public readonly string ColumnName;
         public const int ColumnTypeColumnPos = 3;
-        public const int ColumnTypeLength = 4;
         public readonly ColumnInfo ColumnType;
+        public const int ColumnTypeLength = 4;
+        public const int ClusteredIndexPartPos = 5;
+        public readonly int ClusteredIndexPart;
 
-        public MetadataColumn(int columnId, int tableId, string columnName, ColumnInfo columnInfo)
+        public MetadataColumn(int columnId, int tableId, string columnName, ColumnInfo columnInfo, int clusteredIndexPart = NotPartOfClusteredIndex)
         {
             this.ColumnId = columnId;
             this.TableId = tableId;
             this.ColumnName = columnName;
             this.ColumnType = columnInfo;
+            this.ClusteredIndexPart = clusteredIndexPart;
         }
 
         public MetadataColumn SetNewColumnPosition(int columnId)
         {
-            return new MetadataColumn(columnId, this.TableId, this.ColumnName, this.ColumnType);
+            return new MetadataColumn(columnId, this.TableId, this.ColumnName, this.ColumnType, this.ClusteredIndexPart);
         }
     }
 
@@ -38,12 +43,13 @@ namespace MetadataManager
     /// </summary>
     public struct ColumnCreateDefinition
     {
-        public ColumnCreateDefinition(int tableId, string columnName, ColumnInfo columnInfo, int columnId)
+        public ColumnCreateDefinition(int tableId, string columnName, ColumnInfo columnInfo, int columnId, int clusteredIndexPosition)
         {
             this.TableId = tableId;
             this.ColumnName = columnName;
             this.ColumnType = columnInfo;
             this.ColumnId = columnId;
+            this.ClusteredIndexPosition = clusteredIndexPosition;
         }
 
         /// <summary>
@@ -65,6 +71,12 @@ namespace MetadataManager
         /// Column position in table.
         /// </summary>
         public int ColumnId { get; }
+
+        /// <summary>
+        /// Position in clustered index, if this column is part of it.
+        /// -1 otherwise.
+        /// </summary>
+        public int ClusteredIndexPosition { get; }
     }
 
     public class MetadataColumnsManager : IMetadataObjectManager<MetadataColumn, ColumnCreateDefinition, Tuple<int, int> /* column id - table id */>
@@ -83,6 +95,7 @@ namespace MetadataManager
             new ColumnInfo(ColumnType.String, MAX_NAME_LENGTH), // pointer to name
             new ColumnInfo(ColumnType.Int), // column type
             new ColumnInfo(ColumnType.Int), // column type length
+            new ColumnInfo(ColumnType.Int), // clustered index position.
         };
 
         public static ColumnInfo[] GetSchemaDefinition() => columnDefinitions;
@@ -109,7 +122,8 @@ namespace MetadataManager
                     rh.GetField<int>(MetadataColumn.ColumnIdColumnPos),
                         rh.GetField<int>(MetadataColumn.TableIdColumnPos),
                         new string(columnName),
-                        new ColumnInfo((ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos), rh.GetField<int>(MetadataColumn.ColumnTypeLength)));
+                        new ColumnInfo((ColumnType)rh.GetField<int>(MetadataColumn.ColumnTypeColumnPos), rh.GetField<int>(MetadataColumn.ColumnTypeLength)),
+                        rh.GetField<int>(MetadataColumn.ClusteredIndexPartPos));
             }
         }
 
@@ -123,11 +137,12 @@ namespace MetadataManager
             RowHolder rh = new RowHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.ColumnName.ToCharArray(), tran);
 
-            rh.SetField<int>(0, def.ColumnId);
-            rh.SetField<int>(1, def.TableId);
-            rh.SetField<PagePointerOffsetPair>(2, namePointer);
-            rh.SetField<int>(3, (int)def.ColumnType.ColumnType);
-            rh.SetField<int>(4, def.ColumnType.RepCount);
+            rh.SetField<int>(MetadataColumn.ColumnIdColumnPos, def.ColumnId);
+            rh.SetField<int>(MetadataColumn.TableIdColumnPos, def.TableId);
+            rh.SetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos, namePointer);
+            rh.SetField<int>(MetadataColumn.ColumnTypeColumnPos, (int)def.ColumnType.ColumnType);
+            rh.SetField<int>(MetadataColumn.ColumnTypeLength, def.ColumnType.RepCount);
+            rh.SetField<int>(MetadataColumn.ClusteredIndexPartPos, def.ClusteredIndexPosition);
 
             await pageListCollection.Add(rh, tran);
 

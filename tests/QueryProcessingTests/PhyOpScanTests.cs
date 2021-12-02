@@ -31,6 +31,7 @@ namespace QueryProcessingTests
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnInfos, 
+                ClusteredIndexPositions = new int[] { }
             }, tran);
 
             await tran.Commit();

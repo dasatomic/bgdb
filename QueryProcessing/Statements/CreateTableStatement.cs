@@ -57,6 +57,7 @@ namespace QueryProcessing
                 }
                 else throw new ArgumentException();
             }).ToArray();
+            tableCreateDefinition.ClusteredIndexPositions = new int[] { };
 
             await tableManager.CreateObject(tableCreateDefinition, tran).ConfigureAwait(false);
 

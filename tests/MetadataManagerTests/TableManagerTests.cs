@@ -30,7 +30,8 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                ClusteredIndexPositions = new int[] { }
             }, tran);
 
             await tran.Commit();
@@ -77,7 +78,8 @@ namespace MetadataManagerTests
                 {
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
-                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                    ClusteredIndexPositions = new int[] { }
                 }, tran);
                 await tran.Commit();
             }
@@ -108,7 +110,8 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                ClusteredIndexPositions = new int[] { }
             }, tran);
             await tran.Commit();
 
@@ -119,7 +122,8 @@ namespace MetadataManagerTests
                 {
                     TableName = "A",
                     ColumnNames = new[] { "a" },
-                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int) }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int) },
+                    ClusteredIndexPositions = new int[] { }
                 }, tran);
             });
         }

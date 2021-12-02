@@ -26,6 +26,7 @@ namespace MetadataManager
         public string TableName;
         public string[] ColumnNames;
         public ColumnInfo[] ColumnTypes;
+        public int[] ClusteredIndexPositions;
     }
 
     public class MetadataTablesManager : IMetadataObjectManager<MetadataTable, TableCreateDefinition, int>
@@ -90,9 +91,9 @@ namespace MetadataManager
             }
 
             int id = 1;
-            if (!(await pageListCollection.IsEmpty(tran)))
+            if (!(await this.pageListCollection.IsEmpty(tran)))
             {
-                int maxId = await pageListCollection.Max<int>(rh => rh.GetField<int>(0), startMin: 0, tran);
+                int maxId = await this.pageListCollection.Max<int>(rh => rh.GetField<int>(0), startMin: 0, tran);
                 id = maxId + 1;
             }
 
@@ -108,7 +109,24 @@ namespace MetadataManager
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
             {
-                ColumnCreateDefinition ccd = new ColumnCreateDefinition(id, def.ColumnNames[i], def.ColumnTypes[i], i);
+                int posInClusteredIndex = -1;
+
+                {
+                    int currClusteredIndexIter = 0;
+                    foreach (int clusteredIndex in def.ClusteredIndexPositions)
+                    {
+                        if (clusteredIndex == i)
+                        {
+                            // this column is part of clustered index.
+                            posInClusteredIndex = currClusteredIndexIter;
+                            break;
+                        }
+
+                        currClusteredIndexIter++;
+                    }
+                }
+
+                ColumnCreateDefinition ccd = new ColumnCreateDefinition(id, def.ColumnNames[i], def.ColumnTypes[i], i, posInClusteredIndex);
                 await columnManager.CreateObject(ccd, tran);
             }
 
