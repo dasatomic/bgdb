@@ -88,6 +88,23 @@ namespace ParserLexerTests
         }
 
         [Test]
+        public void CreateTableWithIndexTest()
+        {
+            string query = "CREATE TABLE mytable (TYPE_INT A, TYPE_INT B, TYPE_STRING(10) C) CLUSTERED_INDEX (A, C)";
+
+            var createStatement = GetCreateTableStatement(query);
+
+            Assert.AreEqual("mytable", createStatement.Table);
+            Assert.IsTrue(createStatement.ColumnList[0].Item1.IsIntCType);
+            Assert.IsTrue(createStatement.ColumnList[1].Item1.IsIntCType);
+            Assert.IsTrue(createStatement.ColumnList[2].Item1.IsStringCType);
+            Assert.AreEqual(10, createStatement.ColumnList[2].Item2);
+            Assert.AreEqual(new string[] { "A", "B", "C" }, createStatement.ColumnList.Select(cl => cl.Item3).ToArray());
+
+            Assert.AreEqual(new string[] { "A", "C", }, createStatement.ClusteredIndexList.ToArray());
+        }
+
+        [Test]
         public void InsertStatementTests()
         {
             string query = "INSERT INTO mytable VALUES (17,'11','TST')";
