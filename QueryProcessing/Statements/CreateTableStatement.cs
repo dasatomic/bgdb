@@ -1,7 +1,6 @@
 ﻿using MetadataManager;
 using PageManager;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,6 +29,7 @@ namespace QueryProcessing
             Sql.DmlDdlSqlStatement.Create createStatement = (Sql.DmlDdlSqlStatement.Create)statement;
             string tableName = createStatement.Item.Table;
             var columns = createStatement.Item.ColumnList.ToList();
+            string[] clusteredIndexes = createStatement.Item.ClusteredIndexList.ToArray();
 
             MetadataTablesManager tableManager = this.metadataManager.GetTableManager();
 
@@ -57,7 +57,25 @@ namespace QueryProcessing
                 }
                 else throw new ArgumentException();
             }).ToArray();
-            tableCreateDefinition.ClusteredIndexPositions = new int[] { };
+
+            int[] clusteredIndexPositions = new int[clusteredIndexes.Length];
+            int posIndex = 0;
+            foreach (string clusteredIndexName in clusteredIndexes)
+            {
+                int posColumn = 0;
+                foreach (string columnName in tableCreateDefinition.ColumnNames)
+                {
+                    if (columnName == clusteredIndexName)
+                    {
+                        clusteredIndexPositions[posIndex] = posColumn;
+                    }
+                    posColumn++;
+                }
+
+                posIndex++;
+            }
+
+            tableCreateDefinition.ClusteredIndexPositions = clusteredIndexPositions;
 
             await tableManager.CreateObject(tableCreateDefinition, tran).ConfigureAwait(false);
 
