@@ -227,10 +227,11 @@ namespace MetadataManager
 
         public async Task<MetadataTable> GetByName(string name, ITransaction tran)
         {
+            string lookupName = name.ToUpper();
             lock (this.cacheLock)
             {
                 MetadataTable md;
-                if (this.nameTableCache.TryGetValue(name, out md))
+                if (this.nameTableCache.TryGetValue(lookupName, out md))
                 {
                     return md;
                 }
@@ -243,7 +244,7 @@ namespace MetadataManager
                     this.nameTableCache[table.TableName] = table;
                 }
 
-                if (table.TableName == name)
+                if (table.TableName == lookupName)
                 {
                     return table;
                 }

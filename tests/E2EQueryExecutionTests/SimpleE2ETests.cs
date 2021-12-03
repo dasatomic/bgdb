@@ -1,3 +1,4 @@
+using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using PageManager.Exceptions;
@@ -26,6 +27,29 @@ namespace E2EQueryExecutionTests
             {
                 await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
                 await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(this.pageManager, "GET_TABLE"))
+            {
+                MetadataTable mdT = await this.metadataManager.GetTableManager().GetByName("MyTable", tran);
+                Assert.IsFalse(mdT.Collection.SupportsSeek());
+            }
+        }
+
+        [Test]
+        public async Task CreateTableWithIndex()
+        {
+            string query = @"CREATE TABLE MyTable (TYPE_INT a, TYPE_DOUBLE b, TYPE_STRING(10) c) CLUSTERED_INDEX(a)";
+            await using (ITransaction tran = this.logManager.CreateTransaction(this.pageManager, "CREATE_TABLE"))
+            {
+                await this.queryEntryGate.Execute(query, tran).ToArrayAsync();
+                await tran.Commit();
+            }
+
+            await using (ITransaction tran = this.logManager.CreateTransaction(this.pageManager, "GET_TABLE"))
+            {
+                MetadataTable mdT = await this.metadataManager.GetTableManager().GetByName("MyTable", tran);
+                Assert.IsTrue(mdT.Collection.SupportsSeek());
             }
         }
 
