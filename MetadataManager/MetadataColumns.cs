@@ -159,7 +159,8 @@ namespace MetadataManager
                 {
                     PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(MetadataColumn.ColumnNameColumnPos);
 
-                    if (def.ColumnName == new string(await stringHeap.Fetch(stringPointer, tran)))
+                    char[] strContent = await stringHeap.Fetch(stringPointer, tran);
+                    if (CharrArray.Compare(strContent, def.ColumnName) == 0)
                     {
                         return true;
                     }

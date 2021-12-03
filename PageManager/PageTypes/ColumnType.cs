@@ -238,5 +238,68 @@ namespace PageManager
 
             return 0;
         }
+
+        public int CompareToString(string other)
+        {
+            for (int i = 0; i < this.Array.Length; i++)
+            {
+                if (i >= other.Length)
+                {
+                    // I am bigger.
+                    return 1;
+                }
+
+                if (this.Array[i] < other[i])
+                {
+                    return -1;
+                }
+
+                if (this.Array[i] > other[i])
+                {
+                    return 1;
+                }
+            }
+
+            if (this.Array.Length < other.Length)
+            {
+                // I am smaller.
+                return -1;
+            }
+
+            return 0;
+        }
+
+        public static int Compare(IEnumerable<char> str1, IEnumerable<char> str2)
+        {
+            using (IEnumerator<char> str1Iter = str1.GetEnumerator())
+            using (IEnumerator<char> str2Iter = str2.GetEnumerator())
+            {
+                while (str1Iter.MoveNext() && str2Iter.MoveNext())
+                {
+                    if (str1Iter.Current < str2Iter.Current)
+                    {
+                        return -1;
+                    }
+
+                    if (str1Iter.Current > str2Iter.Current)
+                    {
+                        return 1;
+                    }
+                }
+
+                if (str1Iter.MoveNext())
+                {
+                    // first one is longer, hance it is bigger.
+                    return 1;
+                }
+
+                if (str2Iter.MoveNext())
+                {
+                    return -1;
+                }
+
+                return 0;
+            }
+        }
     }
 }

@@ -70,7 +70,7 @@ namespace MetadataManager
             {
                 PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(1);
 
-                if (def.TableName == new string(await stringHeap.Fetch(stringPointer, tran)))
+                if (CharrArray.Compare(def.TableName, await stringHeap.Fetch(stringPointer, tran)) == 0)
                 {
                     return true;
                 }
@@ -277,7 +277,7 @@ namespace MetadataManager
         {
             return (RowHolder rh1, RowHolder rh2) =>
             {
-                return (new string(rh1.GetStringField(this.IndexColumnPosition))).CompareTo(new string(rh2.GetStringField(this.IndexColumnPosition)));
+                return CharrArray.Compare(rh1.GetStringField(this.IndexColumnPosition), rh2.GetStringField(this.IndexColumnPosition));
             };
         }
     }
