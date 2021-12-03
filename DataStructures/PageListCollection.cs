@@ -6,6 +6,39 @@ using PageManager;
 
 namespace DataStructures
 {
+    public enum CollectionType
+    {
+        PageList,
+        BTree,
+    }
+
+    public static class CollectionHandler
+    {
+        public static async Task<MixedPage> CreateInitialPage(CollectionType collectionType, ColumnInfo[] columnInfos, IAllocateMixedPage pageAllocator, ITransaction tran)
+        {
+            ArgumentNullException.ThrowIfNull(collectionType);
+            ArgumentNullException.ThrowIfNull(pageAllocator);
+            ArgumentNullException.ThrowIfNull(tran);
+
+            if (collectionType == CollectionType.PageList)
+            {
+                return await pageAllocator.AllocateMixedPage(columnInfos, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            }
+            else if (collectionType == CollectionType.BTree)
+            {
+                // Need to extend it to add page pointers.
+                ColumnInfo[] btreeColumnTypes = new ColumnInfo[columnInfos.Length + 1];
+                Array.Copy(columnInfos, btreeColumnTypes, columnInfos.Length);
+                btreeColumnTypes[columnInfos.Length] = new ColumnInfo(ColumnType.PagePointer);
+                return await pageAllocator.AllocateMixedPage(btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+    }
+
     public interface IPageCollection<T>
     {
         Task<ulong> Count(ITransaction tran);

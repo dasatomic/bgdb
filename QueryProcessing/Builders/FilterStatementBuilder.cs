@@ -2,7 +2,6 @@
 using Microsoft.FSharp.Core;
 using PageManager;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace QueryProcessing

@@ -98,7 +98,10 @@ namespace MetadataManager
                 id = maxId + 1;
             }
 
-            MixedPage rootPage = await this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            bool isClusteredIndexCollection = def.ClusteredIndexPositions.Any(pos => pos != -1);
+            CollectionType collectionType = isClusteredIndexCollection ? CollectionType.BTree : CollectionType.PageList;
+
+            MixedPage rootPage = await CollectionHandler.CreateInitialPage(collectionType, def.ColumnTypes, this.pageAllocator, tran);
 
             RowHolder rh = new RowHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.TableName.ToCharArray(), tran);
