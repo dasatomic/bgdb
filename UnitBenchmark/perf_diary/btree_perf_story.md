@@ -89,3 +89,5 @@ With this fix these are the new values:
 | InsertIntoBTreeSingleIntColumnRandomData |            200000 | 3,622.4 ms | 42.50 ms | 39.76 ms |
 
 which is ~2x improvement.
+
+Given that here we are working with concrete types we don't have the luxury of comparing RowHolder. Instead we need to resolve each template.

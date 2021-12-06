@@ -28,6 +28,7 @@ namespace DataStructures
         private Func<MixedPage, string> debugPrintPage;
 
         private int indexPosition;
+        private Action<MixedPage, RowHolder, ITransaction> rowUniqueCheckPageLevel = null;
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition)
         {
@@ -74,6 +75,9 @@ namespace DataStructures
             }
 
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
+            this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
+                new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition, ulong initialPageId, ITransaction tran)
@@ -122,6 +126,10 @@ namespace DataStructures
             }
 
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
+
+            this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
+                new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
         public async Task Add(RowHolder item, ITransaction tran)
@@ -176,28 +184,7 @@ namespace DataStructures
 
                     if (currPage.RowCount() < this.maxElemsPerPage)
                     {
-                        if (this.columnTypes[this.indexPosition].ColumnType == ColumnType.Int)
-                        {
-                            int itemToInsertInt = itemToInsert.GetField<int>(this.indexPosition);
-                            if (currPage.ElementExists<int>(tran, itemToInsertInt, this.indexPosition))
-                            {
-                                throw new KeyAlreadyExists();
-                            }
-                        }
-                        else
-                        {
-                            // check if element exists.
-                            foreach (RowHolder rh in currPage.Fetch(tran))
-                            {
-                                int compareResult = this.indexComparer(itemToInsert, rh);
-
-                                if (compareResult == 0)
-                                {
-                                    throw new KeyAlreadyExists();
-                                }
-                            }
-                        }
-
+                        this.rowUniqueCheckPageLevel(currPage, itemToInsert, tran);
 
                         int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
                         Debug.Assert(pos >= 0);
@@ -548,6 +535,40 @@ namespace DataStructures
 
                 // Reached the end. The val is bigger than anything else
                 currPageId = prevPointer;
+            }
+        }
+
+        private class BTreeUniqueCheckCreator : ColumnTypeHandlerBasicSingle<Action<MixedPage, RowHolder, ITransaction>>
+        {
+            public int IndexPosition { get; init; }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleDouble()
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    double itemToInsertInt = rhToInsert.GetField<double>(this.IndexPosition);
+                    if (page.ElementExists<double>(tran, itemToInsertInt, this.IndexPosition))
+                    {
+                        throw new KeyAlreadyExists();
+                    }
+                };
+            }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleInt()
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    int itemToInsertInt = rhToInsert.GetField<int>(this.IndexPosition);
+                    if (page.ElementExists<int>(tran, itemToInsertInt, this.IndexPosition))
+                    {
+                        throw new KeyAlreadyExists();
+                    }
+                };
+            }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleString()
+            {
+                throw new NotImplementedException();
             }
         }
     }
