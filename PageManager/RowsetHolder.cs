@@ -333,6 +333,33 @@ namespace PageManager
             }
         }
 
+        public bool ElemExists<T>(ColumnInfo[] columnTypes, T elem, int columnPos) where T : unmanaged, IComparable
+        {
+            ushort colPosition = 0;
+            for (int i = 0; i < columnPos; i++)
+            {
+                colPosition += columnTypes[i].GetSize();
+            }
+
+            for (int i = 0; i < this.maxRowCount; i++)
+            {
+                if (BitArray.IsSet(i, this.storage.Span))
+                {
+                    ushort position = (ushort)(i * this.rowSize + this.dataStartPosition);
+
+                    fixed (byte* ptr = this.storage.Span)
+                    {
+                        if ((*(T*)(ptr + position + colPosition)).CompareTo(elem) == 0)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public ushort MaxRowCount() => this.maxRowCount;
 
         public int FreeSpaceForItems()

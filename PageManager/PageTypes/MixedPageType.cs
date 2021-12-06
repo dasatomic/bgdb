@@ -99,6 +99,16 @@ namespace PageManager
             }
         }
 
+        public bool ElementExists<T>(ITransaction tran, T elem, int columnPosition) where T : unmanaged, IComparable
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return  this.items.ElemExists(this.columnTypes, elem, columnPosition);
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);

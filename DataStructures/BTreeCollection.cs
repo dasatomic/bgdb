@@ -128,16 +128,28 @@ namespace DataStructures
 
                     if (currPage.RowCount() < this.maxElemsPerPage)
                     {
-                        // check if element exists.
-                        foreach (RowHolder rh in currPage.Fetch(tran))
+                        if (this.columnTypes[this.indexPosition].ColumnType == ColumnType.Int)
                         {
-                            int compareResult = this.indexComparer(itemToInsert, rh);
-
-                            if (compareResult == 0)
+                            int itemToInsertInt = itemToInsert.GetField<int>(this.indexPosition);
+                            if (currPage.ElementExists<int>(tran, itemToInsertInt, this.indexPosition))
                             {
                                 throw new KeyAlreadyExists();
                             }
                         }
+                        else
+                        {
+                            // check if element exists.
+                            foreach (RowHolder rh in currPage.Fetch(tran))
+                            {
+                                int compareResult = this.indexComparer(itemToInsert, rh);
+
+                                if (compareResult == 0)
+                                {
+                                    throw new KeyAlreadyExists();
+                                }
+                            }
+                        }
+
 
                         int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
                         Debug.Assert(pos >= 0);
