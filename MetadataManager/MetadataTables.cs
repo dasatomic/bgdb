@@ -1,7 +1,9 @@
 ﻿using DataStructures;
+using MetadataManager.Exceptions;
 using PageManager;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,7 +19,6 @@ namespace MetadataManager
         public ulong RootPage;
         public MetadataColumn[] Columns;
 
-        // Virtual fields.
         public IPageCollection<RowHolder> Collection;
     }
 
@@ -26,6 +27,7 @@ namespace MetadataManager
         public string TableName;
         public string[] ColumnNames;
         public ColumnInfo[] ColumnTypes;
+        public int[] ClusteredIndexPositions;
     }
 
     public class MetadataTablesManager : IMetadataObjectManager<MetadataTable, TableCreateDefinition, int>
@@ -68,7 +70,7 @@ namespace MetadataManager
             {
                 PagePointerOffsetPair stringPointer = rh.GetField<PagePointerOffsetPair>(1);
 
-                if (def.TableName == new string(await stringHeap.Fetch(stringPointer, tran)))
+                if (CharrArray.Compare(def.TableName, await stringHeap.Fetch(stringPointer, tran)) == 0)
                 {
                     return true;
                 }
@@ -90,13 +92,16 @@ namespace MetadataManager
             }
 
             int id = 1;
-            if (!(await pageListCollection.IsEmpty(tran)))
+            if (!(await this.pageListCollection.IsEmpty(tran)))
             {
-                int maxId = await pageListCollection.Max<int>(rh => rh.GetField<int>(0), startMin: 0, tran);
+                int maxId = await this.pageListCollection.Max<int>(rh => rh.GetField<int>(0), startMin: 0, tran);
                 id = maxId + 1;
             }
 
-            MixedPage rootPage = await this.pageAllocator.AllocateMixedPage(def.ColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+            bool isClusteredIndexCollection = def.ClusteredIndexPositions.Any(pos => pos != -1);
+            CollectionType collectionType = isClusteredIndexCollection ? CollectionType.BTree : CollectionType.PageList;
+
+            MixedPage rootPage = await CollectionHandler.CreateInitialPage(collectionType, def.ColumnTypes, this.pageAllocator, tran);
 
             RowHolder rh = new RowHolder(columnDefinitions);
             PagePointerOffsetPair namePointer =  await this.stringHeap.Add(def.TableName.ToCharArray(), tran);
@@ -108,7 +113,24 @@ namespace MetadataManager
 
             for (int i = 0; i < def.ColumnNames.Length; i++)
             {
-                ColumnCreateDefinition ccd = new ColumnCreateDefinition(id, def.ColumnNames[i], def.ColumnTypes[i], i);
+                int posInClusteredIndex = -1;
+
+                {
+                    int currClusteredIndexIter = 0;
+                    foreach (int clusteredIndex in def.ClusteredIndexPositions)
+                    {
+                        if (clusteredIndex == i)
+                        {
+                            // this column is part of clustered index.
+                            posInClusteredIndex = currClusteredIndexIter;
+                            break;
+                        }
+
+                        currClusteredIndexIter++;
+                    }
+                }
+
+                ColumnCreateDefinition ccd = new ColumnCreateDefinition(id, def.ColumnNames[i], def.ColumnTypes[i], i, posInClusteredIndex);
                 await columnManager.CreateObject(ccd, tran);
             }
 
@@ -142,7 +164,49 @@ namespace MetadataManager
 
                 mdObj.Columns = columns.ToArray();
 
-                mdObj.Collection = new PageListCollection(this.pageAllocator, mdObj.Columns.Select(ci => ci.ColumnType).ToArray(), mdObj.RootPage);
+                // TODO: Add some better way to make distinction between btrees and heaps.
+                if (mdObj.Columns.Any(col => col.ClusteredIndexPart != MetadataColumn.NotPartOfClusteredIndex))
+                {
+                    // Find the column that has the index.
+                    MetadataColumn[] clusteredIndexPositionsOrdered =
+                        mdObj.Columns.Where(cl => cl.ClusteredIndexPart != MetadataColumn.NotPartOfClusteredIndex).OrderBy(cl => cl.ClusteredIndexPart).ToArray();
+
+                    if (clusteredIndexPositionsOrdered.Length > 1)
+                    {
+                        throw new OnlyOneClusteredIndexSupportedException();
+                    }
+
+                    MetadataColumn clusteredIndexColumn = clusteredIndexPositionsOrdered[0];
+
+                    // find this column in parent table.
+                    int columnPos = 0;
+                    for (; columnPos < mdObj.Columns.Length; columnPos++)
+                    {
+                        if (clusteredIndexColumn.ColumnId == mdObj.Columns[columnPos].ColumnId)
+                        {
+                            break;
+                        }
+                    }
+
+                    Debug.Assert(clusteredIndexColumn.ClusteredIndexPart == 0);
+
+                    Func<RowHolder, RowHolder, int> indexComparer = ColumnTypeHandlerRouter<Func<RowHolder, RowHolder, int>>.Route(
+                        new BtreeCompareFunctionCreator() { IndexColumnPosition = columnPos },
+                        clusteredIndexColumn.ColumnType.ColumnType);
+
+                    mdObj.Collection = new BTreeCollection(
+                        this.pageAllocator,
+                        mdObj.Columns.Select(ci => ci.ColumnType).ToArray(),
+                        indexComparer,
+                        columnPos,
+                        mdObj.RootPage,
+                        tran);
+                }
+                else
+                {
+                    // Just heap/page list.
+                    mdObj.Collection = new PageListCollection(this.pageAllocator, mdObj.Columns.Select(ci => ci.ColumnType).ToArray(), mdObj.RootPage);
+                }
 
                 yield return mdObj;
             }
@@ -163,10 +227,11 @@ namespace MetadataManager
 
         public async Task<MetadataTable> GetByName(string name, ITransaction tran)
         {
+            string lookupName = name.ToUpper();
             lock (this.cacheLock)
             {
                 MetadataTable md;
-                if (this.nameTableCache.TryGetValue(name, out md))
+                if (this.nameTableCache.TryGetValue(lookupName, out md))
                 {
                     return md;
                 }
@@ -179,13 +244,42 @@ namespace MetadataManager
                     this.nameTableCache[table.TableName] = table;
                 }
 
-                if (table.TableName == name)
+                if (table.TableName == lookupName)
                 {
                     return table;
                 }
             }
 
             throw new KeyNotFoundException();
+        }
+    }
+
+    public class BtreeCompareFunctionCreator : ColumnTypeHandlerBasicDouble<Func<RowHolder, RowHolder, int>>
+    {
+        public int IndexColumnPosition { get; init; }
+
+        public Func<RowHolder, RowHolder, int> HandleDouble()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return rh1.GetField<double>(this.IndexColumnPosition).CompareTo(rh2.GetField<double>(this.IndexColumnPosition));
+            };
+        }
+
+        public Func<RowHolder, RowHolder, int> HandleInt()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return rh1.GetField<int>(this.IndexColumnPosition).CompareTo(rh2.GetField<int>(this.IndexColumnPosition));
+            };
+        }
+
+        public Func<RowHolder, RowHolder, int> HandleString()
+        {
+            return (RowHolder rh1, RowHolder rh2) =>
+            {
+                return CharrArray.Compare(rh1.GetStringField(this.IndexColumnPosition), rh2.GetStringField(this.IndexColumnPosition));
+            };
         }
     }
 }

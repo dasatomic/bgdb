@@ -29,6 +29,7 @@ open Sql
 %token STAR
 %token FILESYSTEM VIDEO_CHUNKER VIDEO_TO_IMAGE
 %token TOP
+%token CLUSTERED_INDEX
 
 %start startCT
 %type <Sql.DmlDdlSqlStatement> startCT
@@ -58,13 +59,23 @@ valueList:
     | valueList COMMA value { $3 :: $1 }
 
 CreateStatement:
-    TABLE ID OBRCK columnTypeList CBRCK
+    TABLE ID OBRCK columnTypeList CBRCK indexClause
     EOF {
         {
             Table = $2;
             ColumnList = List.rev $4
+            ClusteredIndexList = $6
+            // ClusteredIndexList = $6
         } 
     }
+
+indexClause:
+     | { [] }
+     | CLUSTERED_INDEX OBRCK indexColumnList CBRCK { List.rev $3 }
+
+indexColumnList:
+    | ID { [$1] }
+    | indexColumnList COMMA ID { $3 :: $1 }
 
 DropStatement:
     | TABLE ID { $2 }

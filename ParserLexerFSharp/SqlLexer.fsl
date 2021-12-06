@@ -38,6 +38,7 @@ let keywords =
         "COUNT", COUNT;
         "SUM", SUM;
         "TOP", TOP;
+        "CLUSTERED_INDEX", CLUSTERED_INDEX;
     ] |> Map.ofList
 
 let ops =

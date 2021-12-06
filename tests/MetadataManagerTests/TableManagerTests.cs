@@ -30,7 +30,8 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                ClusteredIndexPositions = new int[] { }
             }, tran);
 
             await tran.Commit();
@@ -55,6 +56,8 @@ namespace MetadataManagerTests
             {
                 Assert.Contains(c.ColumnName.ToString(), new[] { "a", "b", "c" });
             }
+
+            Assert.IsFalse(table.Collection.SupportsSeek());
         }
 
         [Test]
@@ -77,7 +80,8 @@ namespace MetadataManagerTests
                 {
                     TableName = "T" + i,
                     ColumnNames = new[] { "a", "b", "c" },
-                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                    ClusteredIndexPositions = new int[] { }
                 }, tran);
                 await tran.Commit();
             }
@@ -108,7 +112,8 @@ namespace MetadataManagerTests
             {
                 TableName = "A",
                 ColumnNames = new[] { "a", "b", "c" },
-                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) }
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                ClusteredIndexPositions = new int[] { }
             }, tran);
             await tran.Commit();
 
@@ -119,9 +124,55 @@ namespace MetadataManagerTests
                 {
                     TableName = "A",
                     ColumnNames = new[] { "a" },
-                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int) }
+                    ColumnTypes = new[] { new ColumnInfo(ColumnType.Int) },
+                    ClusteredIndexPositions = new int[] { }
                 }, tran);
             });
+        }
+
+        [Test]
+        public async Task CreateTableWithClusteredIndex()
+        {
+            var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
+            ITransaction setupTran = logManager.CreateTransaction(allocator);
+            StringHeapCollection stringHeap = new StringHeapCollection(allocator, setupTran);
+            var mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
+
+            var tm = mm.GetTableManager();
+            ITransaction tran = logManager.CreateTransaction(allocator);
+            int objId = await tm.CreateObject(new TableCreateDefinition()
+            {
+                TableName = "A",
+                ColumnNames = new[] { "a", "b", "c" },
+                ColumnTypes = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.StringPointer), new ColumnInfo(ColumnType.Double) },
+                ClusteredIndexPositions = new int[] { 2 }
+            }, tran);
+            await tran.Commit();
+
+            tran = logManager.CreateTransaction(allocator);
+
+            Assert.True(await tm.Exists(new TableCreateDefinition()
+            {
+                TableName = "A",
+            }, tran));
+
+            MetadataTable table = await tm.GetById(objId, tran);
+            Assert.AreEqual("A", table.TableName);
+
+            Assert.AreEqual(new[] { "a", "b", "c" }, table.Columns.Select(t => t.ColumnName));
+            Assert.AreEqual(new[] { ColumnType.Int, ColumnType.StringPointer, ColumnType.Double }, table.Columns.Select(c => c.ColumnType.ColumnType));
+            Assert.AreEqual(new[] { -1, -1, 0 }, table.Columns.Select(t => t.ClusteredIndexPart));
+
+            var cm = mm.GetColumnManager();
+
+            tran = logManager.CreateTransaction(allocator);
+            await foreach (var c in cm.Iterate(tran))
+            {
+                Assert.Contains(c.ColumnName.ToString(), new[] { "a", "b", "c" });
+            }
+
+            Assert.IsTrue(table.Collection.SupportsSeek());
         }
     }
 }

@@ -4,6 +4,7 @@ using MetadataManager;
 using NUnit.Framework;
 using PageManager;
 using QueryProcessing;
+using QueryProcessing.PhyOperators;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -11,20 +12,12 @@ using Test.Common;
 
 namespace QueryProcessingTests
 {
-    public class PhyOpScanTests
+    public class PhyOpSeekTests
     {
-        public enum IndexState
-        {
-            NoIndex,
-            IndexCol0,
-            IndexCol2,
-        }
-
         [Test]
-        [TestCase(IndexState.NoIndex)]
-        [TestCase(IndexState.IndexCol0)]
-        [TestCase(IndexState.IndexCol2)]
-        public async Task ValidateScan(IndexState indexState)
+        [TestCase(0)]
+        [TestCase(2)]
+        public async Task ValidateSeek(int clusteredIndexPosition)
         {
             var allocator =  new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
             ILogManager logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
@@ -33,23 +26,7 @@ namespace QueryProcessingTests
             MetadataManager.MetadataManager mm = new MetadataManager.MetadataManager(allocator, stringHeap, allocator, logManager);
 
             var tm = mm.GetTableManager();
-            int[] clusteredIndexPosition = null;
 
-            switch (indexState)
-            {
-                case IndexState.NoIndex:
-                    clusteredIndexPosition = new int[0];
-                    break;
-                case IndexState.IndexCol0:
-                    clusteredIndexPosition = new int[] { 0 };
-                    break;
-                case IndexState.IndexCol2:
-                    clusteredIndexPosition = new int[] { 2 };
-                    break;
-                default:
-                    Assert.Fail();
-                    break;
-            }
 
             ITransaction tran = logManager.CreateTransaction(allocator);
             var columnInfos = new[] { new ColumnInfo(ColumnType.Int), new ColumnInfo(ColumnType.String, 1), new ColumnInfo(ColumnType.Double) };
@@ -58,7 +35,7 @@ namespace QueryProcessingTests
                 TableName = "Table",
                 ColumnNames = new[] { "a", "b", "c" },
                 ColumnTypes = columnInfos, 
-                ClusteredIndexPositions = clusteredIndexPosition,
+                ClusteredIndexPositions = new int[] { clusteredIndexPosition },
             }, tran);
 
             await tran.Commit();
@@ -85,16 +62,54 @@ namespace QueryProcessingTests
             await tran.Commit();
 
             tran = logManager.CreateTransaction(allocator);
-            PhyOpScan scan = new PhyOpScan(table.Collection, tran, table.Columns, "Table");
+            List<RowHolder> seekValues = new List<RowHolder>();
+
+            var rowSeekSchema = new ColumnInfo[1];
+
+            if (clusteredIndexPosition == 0)
+            {
+                rowSeekSchema[0] = new ColumnInfo(ColumnType.Int);
+            }
+            else
+            {
+                rowSeekSchema[0] = new ColumnInfo(ColumnType.Double);
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                RowHolder rh = new RowHolder(rowSeekSchema);
+                if (clusteredIndexPosition == 0)
+                {
+                    rh.SetField<int>(0, i);
+                }
+                else
+                {
+                    rh.SetField<double>(0, i + 1.1);
+                }
+
+                seekValues.Add(rh);
+            }
+
+            PhyOpSeek seek = null;
+            if (clusteredIndexPosition == 0)
+            {
+                seek = new PhyOpSeek(table.Collection, tran, table.Columns, "Table", seekValues, ColumnType.Int);
+            }
+            else
+            {
+                seek = new PhyOpSeek(table.Collection, tran, table.Columns, "Table", seekValues, ColumnType.Double);
+            }
+
 
             List<RowHolder> result = new List<RowHolder>();
 
-            await foreach (var row in scan.Iterate(tran))
+            await foreach (var row in seek.Iterate(tran))
             {
                 result.Add(row);
             }
 
             Assert.AreEqual(source, result.ToArray());
+
         }
     }
 }

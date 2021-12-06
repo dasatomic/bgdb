@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using PageManager;
 using PageManager.UtilStructures;
 using System;
 
@@ -39,6 +40,36 @@ namespace PageManagerTests
             ByteSliceOperations.ShiftSlice(mem, 0, 1, 2);
 
             Assert.AreEqual(mem.ToArray(), new byte[] { 1, 1, 2, 4 });
+        }
+
+        [Test]
+        public void CharrArrayEq()
+        {
+            string abc = "abcd";
+            CharrArray cr = new CharrArray(abc.ToCharArray());
+
+            Assert.AreEqual(0, cr.CompareToString(abc));
+            Assert.AreEqual(0, CharrArray.Compare(abc.ToCharArray(), abc));
+        }
+
+        [Test]
+        public void CharrArrayBigger()
+        {
+            string abc = "abcd";
+            CharrArray cr = new CharrArray(abc.ToCharArray());
+
+            Assert.AreEqual(1, cr.CompareToString("aaaa"));
+            Assert.AreEqual(1, CharrArray.Compare(abc, "aaaa"));
+        }
+
+        [Test]
+        public void CharrArraySmaller()
+        {
+            string abc = "abcd";
+            CharrArray cr = new CharrArray(abc.ToCharArray());
+
+            Assert.AreEqual(-1, cr.CompareToString("abcf"));
+            Assert.AreEqual(-1, CharrArray.Compare(abc, "abcf"));
         }
     }
 }
