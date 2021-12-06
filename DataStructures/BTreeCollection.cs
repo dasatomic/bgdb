@@ -76,6 +76,54 @@ namespace DataStructures
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
         }
 
+        public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition, ulong initialPageId, ITransaction tran)
+        {
+            if (pageAllocator == null || columnTypes == null || columnTypes.Length == 0 || tran == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            this.pageAllocator = pageAllocator;
+            this.columnTypes = columnTypes;
+            this.indexPosition = indexPosition;
+
+            // Add PagePointer to the end of each row.
+            // Page pointer will be used as pointer in btree.
+            // Prev page pointer will point to the left side of the first key.
+            // Next page pointer is used to encode additional info.
+            // For now next page is used to encode whether the page is leaf.
+            this.btreeColumnTypes = new ColumnInfo[columnTypes.Length + 1];
+            Array.Copy(columnTypes, this.btreeColumnTypes, columnTypes.Length);
+            this.btreeColumnTypes[columnTypes.Length] = new ColumnInfo(ColumnType.PagePointer);
+            this.collectionRootPageId = initialPageId;
+
+            using Releaser lck = tran.AcquireLock(initialPageId, LockManager.LockTypeEnum.Shared).ConfigureAwait(false).GetAwaiter().GetResult();
+            MixedPage rootPage = pageAllocator.GetMixedPage(this.collectionRootPageId, tran, columnTypes).Result;
+            uint maxRowCount = rootPage.MaxRowCount();
+
+            // In btree we can fit max 2*t + 1 elements.
+            // If we can fit even number we will keep the space unused.
+            this.maxElemsPerPage = (int)maxRowCount;
+            if (maxRowCount % 2 == 0)
+            {
+                this.maxElemsPerPage--;
+            }
+
+            this.indexComparer = indexComparer;
+
+            this.pagePointerRowPosition = this.columnTypes.Length;
+
+            MappingType[] mps = new MappingType[columnTypes.Length];
+            int[] prjs = new int[columnTypes.Length];
+            for (int i = 0; i < prjs.Length; i++)
+            {
+                mps[i] = MappingType.Projection;
+                prjs[i] = i;
+            }
+
+            this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
+        }
+
         public async Task Add(RowHolder item, ITransaction tran)
         {
             // Extend RowHolder with page pointer.

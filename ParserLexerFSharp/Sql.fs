@@ -67,6 +67,7 @@ type createTableStatement =
     {
         Table: string;
         ColumnList: columndef list;
+        ClusteredIndexList: string list;
     }
 
 type dropTableStatement =
