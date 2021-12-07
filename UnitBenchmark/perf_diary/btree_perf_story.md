@@ -91,3 +91,14 @@ With this fix these are the new values:
 which is ~2x improvement.
 
 Given that here we are working with concrete types we don't have the luxury of comparing RowHolder. Instead we need to resolve each template.
+
+Tried to optimize RowsetHolder::InsertOrdered to avoid RowHolder alloc. Got ~10%.
+
+|                                   Method | RowsInTableNumber |        Mean |     Error |    StdDev |
+|----------------------------------------- |------------------ |------------:|----------:|----------:|
+| InsertIntoBTreeSingleIntColumnRandomData |             10000 |    90.98 ms |  1.795 ms |  3.000 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |             50000 |   556.63 ms |  6.904 ms |  5.391 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 | 1,379.85 ms | 27.219 ms | 39.036 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 | 3,208.92 ms | 36.132 ms | 32.030 ms |
+
+Next big chunks are for non-leaf iter and nlogn for insert into tree logic. Idea would be to always try to keep the page compact, without free space between the pages.

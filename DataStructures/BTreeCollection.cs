@@ -186,7 +186,7 @@ namespace DataStructures
                     {
                         this.rowUniqueCheckPageLevel(currPage, itemToInsert, tran);
 
-                        int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                        int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         Debug.Assert(pos >= 0);
 
                         if (debugPrintPage != null)
@@ -209,12 +209,12 @@ namespace DataStructures
                         if (compareResult < 0)
                         {
                             // left.
-                            int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                            int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         }
                         else
                         {
                             // right.
-                            int pos = newPageForSplit.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                            int pos = newPageForSplit.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         }
 
                         insertFinished = true;
@@ -421,7 +421,7 @@ namespace DataStructures
 
             if (prevPage != null)
             {
-                int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexComparer);
+                int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
 
                 // We know that there will be enough space since we proactivly clean parent nodes.
                 Debug.Assert(pos >= 0);
@@ -435,7 +435,7 @@ namespace DataStructures
                 MixedPage newRoot = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
                 this.SetLeaf(newRoot, false);
                 using Releaser newRootLock = await tran.AcquireLock(newPageForSplit.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
-                int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexComparer);
+                int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
                 Debug.Assert(pos == 0);
 
                 newRoot.SetPrevPageId(currPage.PageId());

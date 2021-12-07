@@ -322,10 +322,7 @@ namespace PageManagerTests
             var rhf = new RowHolder(schema);
 
             rhf.SetField(0, 1);
-            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-
-            rs.InsertRowOrdered(rhf, schema, comp);
+            rs.InsertRowOrdered(rhf, schema, 0);
 
             Assert.AreEqual(1, rs.GetRowGeneric<int>(0, 1));
         }
@@ -346,9 +343,7 @@ namespace PageManagerTests
                 var rhf = new RowHolder(schema);
 
                 rhf.SetField(0, i);
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                rs.InsertRowOrdered(rhf, schema, comp);
+                rs.InsertRowOrdered(rhf, schema, 0);
             }
 
             Assert.AreEqual(100, rs.GetRowCount());
@@ -376,9 +371,7 @@ namespace PageManagerTests
                 var rhf = new RowHolder(schema);
 
                 rhf.SetField(0, i);
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                int pos = rs.InsertRowOrdered(rhf, schema, comp);
+                int pos = rs.InsertRowOrdered(rhf, schema, 0);
 
                 // It should always end up on the beginning.
                 Assert.AreEqual(0, pos);
@@ -411,9 +404,7 @@ namespace PageManagerTests
 
                 rhf.SetField(0, i);
                 rhf.SetField(1, i * 1.1);
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                rs.InsertRowOrdered(rhf, schema, comp);
+                rs.InsertRowOrdered(rhf, schema, 0);
             }
 
             Assert.AreEqual(100, rs.GetRowCount());
@@ -455,9 +446,7 @@ namespace PageManagerTests
                 var rhf = new RowHolder(schema);
 
                 rhf.SetField(0, elemsToInsert[i]);
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                rs.InsertRowOrdered(rhf, schema, comp);
+                rs.InsertRowOrdered(rhf, schema, 0);
             }
 
             Assert.AreEqual(maxRowCount, rs.GetRowCount());
@@ -502,9 +491,7 @@ namespace PageManagerTests
                 rhf.SetField(0, elemsToInsert[i]);
                 rhf.SetField(1, elemsToInsert[i] * 1.1);
                 rhf.SetField(2, elemsToInsert[i].ToString().ToCharArray());
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                rs.InsertRowOrdered(rhf, schema, comp);
+                rs.InsertRowOrdered(rhf, schema, 0);
             }
 
             Assert.AreEqual(maxRowCount, rs.GetRowCount());
@@ -541,9 +528,7 @@ namespace PageManagerTests
                 var rhf = new RowHolder(schema);
 
                 rhf.SetField(0, i);
-                Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                    rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-                int pos = rs.InsertRowOrdered(rhf, schema, comp);
+                int pos = rs.InsertRowOrdered(rhf, schema, 0);
             }
 
             Memory<byte> newPageContent = new Memory<byte>(new byte[4096]);

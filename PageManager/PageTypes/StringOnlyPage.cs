@@ -322,7 +322,7 @@ namespace PageManager
             throw new NotImplementedException();
         }
 
-        public override int InsertOrdered(char[] item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        public override int InsertOrdered(char[] item, ITransaction transaction, ColumnInfo[] columnTypes, int comparisonField) 
         {
             throw new NotImplementedException();
         }

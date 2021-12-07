@@ -36,6 +36,8 @@ namespace PageManager
 
         private ushort rowCount;
 
+        private static readonly CompareWithRowHolderCreator compareWithRowHolderCreator = new CompareWithRowHolderCreator();
+
         public RowsetHolder(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
         {
             System.Diagnostics.Debug.Assert(BitConverter.IsLittleEndian, "Rowset holder fixed assumes that we are running on little endian");
@@ -106,6 +108,13 @@ namespace PageManager
             }
         }
 
+        public int CompareFieldWithRowHolder(int row, int col, RowHolder rh, ColumnInfo ci)
+        {
+            return ColumnTypeHandlerRouter<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>.Route(
+                compareWithRowHolderCreator,
+                ci.ColumnType)(row, col, rh, ci, this);
+        }
+
         public void GetRow(int row, ref RowHolder rowHolder)
         {
             System.Diagnostics.Debug.Assert(IsPresent(row));
@@ -143,9 +152,10 @@ namespace PageManager
             }
         }
 
-        public int InsertRowOrdered(RowHolder rowHolderToInsert, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        public int InsertRowOrdered(RowHolder rowHolderToInsert, ColumnInfo[] columnTypes, int comparisonField)
         {
             // find the first element that is bigger than one to insert.
+            // No need to keep free items. Try to compact every time.
             // TODO: this can be logn.
             int positionToInsert = -1;
             bool insertAtEnd = false;
@@ -154,11 +164,8 @@ namespace PageManager
             {
                 if (BitArray.IsSet(i, this.storage.Span))
                 {
-                    RowHolder rowHolder = new RowHolder(columnTypes);
-                    GetRow(i, ref rowHolder);
-                    if (comparer(rowHolderToInsert, rowHolder) != 1)
+                    if (this.CompareFieldWithRowHolder(i, comparisonField, rowHolderToInsert, columnTypes[comparisonField]) != -1)
                     {
-                        // I am bigger than you, I should be at your place.
                         positionToInsert = i;
                         break;
                     }
@@ -443,6 +450,36 @@ namespace PageManager
             int offsetInTouple = GetPositionInTuple(col);
 
             return tuplePosition + offsetInTouple;
+        }
+    }
+
+    public class CompareWithRowHolderCreator : ColumnTypeHandlerBasicSingle<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>
+    {
+        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleDouble()
+        {
+            return (row, col, rh, ci, rs) =>
+            {
+                double fieldRowsetHolder = rs.GetRowGeneric<double>(row, col);
+                double fieldFromRowHolder = rh.GetField<double>(col);
+
+                return fieldRowsetHolder.CompareTo(fieldFromRowHolder);
+            };
+        }
+
+        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleInt()
+        {
+            return (row, col, rh, ci, rs) =>
+            {
+                int fieldRowsetHolder = rs.GetRowGeneric<int>(row, col);
+                int fieldFromRowHolder = rh.GetField<int>(col);
+
+                return fieldRowsetHolder.CompareTo(fieldFromRowHolder);
+            };
+        }
+
+        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleString()
+        {
+            throw new NotImplementedException();
         }
     }
 }

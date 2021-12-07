@@ -133,13 +133,13 @@ namespace PageManager
             }
         }
 
-        public override int InsertOrdered(RowHolder item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        public override int InsertOrdered(RowHolder item, ITransaction transaction, ColumnInfo[] columnTypes, int comparisonField)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
             lock (this.lockObject)
             {
-                int position = this.items.InsertRowOrdered(item, columnTypes, comparer);
+                int position = this.items.InsertRowOrdered(item, columnTypes, comparisonField);
 
                 if (position == -1)
                 {
