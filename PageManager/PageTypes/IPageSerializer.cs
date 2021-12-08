@@ -66,7 +66,7 @@ namespace PageManager
 
         public abstract void Update(ST item, ushort position, ITransaction transaction);
         public abstract int Insert(ST item, ITransaction transaction);
-        public abstract int InsertOrdered(ST item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer);
+        public abstract int InsertOrdered(ST item, ITransaction transaction, ColumnInfo[] columnTypes, int comparisonField);
         public abstract void At(ushort position, ITransaction tran, ref ST item);
         public abstract void SplitPage(MixedPage newPage, ref RowHolder splitValue, int elemNumForSplit, ITransaction transaction);
 

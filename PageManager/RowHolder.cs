@@ -341,6 +341,7 @@ namespace PageManager
             return hash.ToHashCode();
         }
 
+        // Set of static 0 copy methods.
         public static ushort CalculateSizeNeeded(ColumnInfo[] columnInfos)
         {
             ushort sum = 0;

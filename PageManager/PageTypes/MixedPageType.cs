@@ -99,6 +99,16 @@ namespace PageManager
             }
         }
 
+        public bool ElementExists<T>(ITransaction tran, T elem, int columnPosition) where T : unmanaged, IComparable
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return  this.items.ElemExists(this.columnTypes, elem, columnPosition);
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
@@ -123,13 +133,13 @@ namespace PageManager
             }
         }
 
-        public override int InsertOrdered(RowHolder item, ITransaction transaction, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> comparer)
+        public override int InsertOrdered(RowHolder item, ITransaction transaction, ColumnInfo[] columnTypes, int comparisonField)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
 
             lock (this.lockObject)
             {
-                int position = this.items.InsertRowOrdered(item, columnTypes, comparer);
+                int position = this.items.InsertRowOrdered(item, columnTypes, comparisonField);
 
                 if (position == -1)
                 {

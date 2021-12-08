@@ -187,24 +187,18 @@ namespace DataStructureTests
             }
         }
 
-        [Test]
-        [TestCase(GenerationStrategy.Seq)]
-        [TestCase(GenerationStrategy.Rev)]
-        [TestCase(GenerationStrategy.Rand)]
-        public async Task IterateInsertSequential(GenerationStrategy strat)
+        [Test, Pairwise]
+        public async Task IterateInsert(
+            [Values(GenerationStrategy.Seq, GenerationStrategy.Rev, GenerationStrategy.Rand)] GenerationStrategy strat,
+            [Values(ColumnType.Int, ColumnType.Double)] ColumnType columnType)
         {
             using ITransaction tran = new DummyTran();
 
-            var schema = new ColumnInfo[]
-            {
-                new ColumnInfo(ColumnType.Int)
-            };
 
             Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
-                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
-
-            BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                columnType == ColumnType.Int ?
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0)) :
+                rh1.GetField<double>(0).CompareTo(rh2.GetField<double>(0));
 
             const int rowCount = 10000;
 
@@ -223,24 +217,64 @@ namespace DataStructureTests
                 return info;
             };
 
-            int[] generatedItems = GenerateItems(strat, rowCount).ToArray();
-            foreach (int item in generatedItems)
+            if (columnType == ColumnType.Int)
             {
-                var row = new RowHolder(schema);
+                var schema = new ColumnInfo[]
+                {
+                    new ColumnInfo(ColumnType.Int)
+                };
 
-                row.SetField(0, item);
-                await collection.Add(row, tran);
+                int[] generatedItems = GenerateItems(strat, rowCount).ToArray();
+                BTreeCollection collection =
+                    new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                foreach (int item in generatedItems)
+                {
+                    var row = new RowHolder(schema);
+
+                    row.SetField(0, item);
+                    await collection.Add(row, tran);
+                }
+
+                // sort for verification.
+                Array.Sort(generatedItems);
+
+                int pos = 0;
+                await foreach (RowHolder rh in collection.Iterate(tran))
+                {
+                    int item = rh.GetField<int>(0);
+                    Assert.AreEqual(generatedItems[pos], item);
+                    pos++;
+                }
             }
-
-            // sort for verification.
-            Array.Sort(generatedItems);
-
-            int pos = 0;
-            await foreach (RowHolder rh in collection.Iterate(tran))
+            else
             {
-                int item = rh.GetField<int>(0);
-                Assert.AreEqual(generatedItems[pos], item);
-                pos++;
+                var schema = new ColumnInfo[]
+                {
+                    new ColumnInfo(ColumnType.Double)
+                };
+
+                BTreeCollection collection =
+                    new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+
+                double[] generatedItems = GenerateItems(strat, rowCount).Select(x => x * 1.1).ToArray();
+                foreach (double item in generatedItems)
+                {
+                    var row = new RowHolder(schema);
+
+                    row.SetField(0, item);
+                    await collection.Add(row, tran);
+                }
+
+                // sort for verification.
+                Array.Sort(generatedItems);
+
+                int pos = 0;
+                await foreach (RowHolder rh in collection.Iterate(tran))
+                {
+                    double item = rh.GetField<double>(0);
+                    Assert.AreEqual(generatedItems[pos], item);
+                    pos++;
+                }
             }
         }
 

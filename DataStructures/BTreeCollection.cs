@@ -28,6 +28,7 @@ namespace DataStructures
         private Func<MixedPage, string> debugPrintPage;
 
         private int indexPosition;
+        private Action<MixedPage, RowHolder, ITransaction> rowUniqueCheckPageLevel = null;
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition)
         {
@@ -74,6 +75,9 @@ namespace DataStructures
             }
 
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
+            this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
+                new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition, ulong initialPageId, ITransaction tran)
@@ -122,6 +126,10 @@ namespace DataStructures
             }
 
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
+
+            this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
+                new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
         public async Task Add(RowHolder item, ITransaction tran)
@@ -176,18 +184,9 @@ namespace DataStructures
 
                     if (currPage.RowCount() < this.maxElemsPerPage)
                     {
-                        // check if element exists.
-                        foreach (RowHolder rh in currPage.Fetch(tran))
-                        {
-                            int compareResult = this.indexComparer(itemToInsert, rh);
+                        this.rowUniqueCheckPageLevel(currPage, itemToInsert, tran);
 
-                            if (compareResult == 0)
-                            {
-                                throw new KeyAlreadyExists();
-                            }
-                        }
-
-                        int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                        int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         Debug.Assert(pos >= 0);
 
                         if (debugPrintPage != null)
@@ -210,12 +209,12 @@ namespace DataStructures
                         if (compareResult < 0)
                         {
                             // left.
-                            int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                            int pos = currPage.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         }
                         else
                         {
                             // right.
-                            int pos = newPageForSplit.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexComparer);
+                            int pos = newPageForSplit.InsertOrdered(itemToInsert, tran, this.btreeColumnTypes, this.indexPosition);
                         }
 
                         insertFinished = true;
@@ -422,7 +421,7 @@ namespace DataStructures
 
             if (prevPage != null)
             {
-                int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexComparer);
+                int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
 
                 // We know that there will be enough space since we proactivly clean parent nodes.
                 Debug.Assert(pos >= 0);
@@ -436,7 +435,7 @@ namespace DataStructures
                 MixedPage newRoot = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
                 this.SetLeaf(newRoot, false);
                 using Releaser newRootLock = await tran.AcquireLock(newPageForSplit.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
-                int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexComparer);
+                int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
                 Debug.Assert(pos == 0);
 
                 newRoot.SetPrevPageId(currPage.PageId());
@@ -536,6 +535,40 @@ namespace DataStructures
 
                 // Reached the end. The val is bigger than anything else
                 currPageId = prevPointer;
+            }
+        }
+
+        private class BTreeUniqueCheckCreator : ColumnTypeHandlerBasicSingle<Action<MixedPage, RowHolder, ITransaction>>
+        {
+            public int IndexPosition { get; init; }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleDouble()
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    double itemToInsertInt = rhToInsert.GetField<double>(this.IndexPosition);
+                    if (page.ElementExists<double>(tran, itemToInsertInt, this.IndexPosition))
+                    {
+                        throw new KeyAlreadyExists();
+                    }
+                };
+            }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleInt()
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    int itemToInsertInt = rhToInsert.GetField<int>(this.IndexPosition);
+                    if (page.ElementExists<int>(tran, itemToInsertInt, this.IndexPosition))
+                    {
+                        throw new KeyAlreadyExists();
+                    }
+                };
+            }
+
+            public Action<MixedPage, RowHolder, ITransaction> HandleString()
+            {
+                throw new NotImplementedException();
             }
         }
     }
