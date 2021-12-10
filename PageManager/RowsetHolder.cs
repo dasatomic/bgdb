@@ -154,105 +154,41 @@ namespace PageManager
 
         public int InsertRowOrdered(RowHolder rowHolderToInsert, ColumnInfo[] columnTypes, int comparisonField)
         {
-            // find the first element that is bigger than one to insert.
-            // No need to keep free items. Try to compact every time.
-            // TODO: this can be logn.
-            int positionToInsert = -1;
-            bool insertAtEnd = false;
+#if DEBUG
+            // BTree page is guaranteed to be without gaps.
+            this.CheckNoGaps();
+#endif
 
-            for (int i = 0; i < this.maxRowCount; i++)
+            // find the first element that is bigger than one to insert.
+            // TODO: binary search here.
+            int positionToInsert = -1;
+
+            for (int i = 0; i < this.rowCount; i++)
             {
-                if (BitArray.IsSet(i, this.storage.Span))
+                if (this.CompareFieldWithRowHolder(i, comparisonField, rowHolderToInsert, columnTypes[comparisonField]) != -1)
                 {
-                    if (this.CompareFieldWithRowHolder(i, comparisonField, rowHolderToInsert, columnTypes[comparisonField]) != -1)
-                    {
-                        positionToInsert = i;
-                        break;
-                    }
+                    positionToInsert = i;
+                    break;
                 }
             }
 
             if (positionToInsert == -1)
             {
-                // either I am bigger than everyone or this is an empty collection.
-                if (this.rowCount == 0)
-                {
-                    positionToInsert = 0;
-                }
-                else
-                {
-                    insertAtEnd = true;
-                    positionToInsert = this.maxRowCount - 1;
-                }
+                positionToInsert = this.rowCount;
             }
 
             if (BitArray.IsSet(positionToInsert, this.storage.Span))
             {
-                int firstFreeElement = -1;
-                // need to shift everything.
-                // Try first to find free element on the right.
-                for (int i = positionToInsert + 1; i < this.maxRowCount; i++)
-                {
-                    if (!BitArray.IsSet(i, this.storage.Span))
-                    {
-                        firstFreeElement = i;
-                        break;
-                    }
-                }
+                int firstFreeElement = this.rowCount;
 
-                if (firstFreeElement == -1)
-                {
-                    // Search on the left.
-                    for (int i = positionToInsert - 1; i >= 0; i--)
-                    {
-                        if (!BitArray.IsSet(i, this.storage.Span))
-                        {
-                            firstFreeElement = i;
-                            break;
-                        }
-                    }
+                int numOfElemToCopy = firstFreeElement - positionToInsert;
 
-                    if (firstFreeElement == -1)
-                    {
-                        // No free space.
-                        Debug.Assert(false, "No free space");
-                        return -1;
-                    }
-                }
-
-                int numOfElemToCopy = Math.Abs(positionToInsert - firstFreeElement);
-
-                if (positionToInsert < firstFreeElement)
-                {
-                    // shift right one element.
-                    ByteSliceOperations.ShiftSlice<byte>(
-                        this.storage,
-                        this.dataStartPosition + positionToInsert * this.rowSize, // Source.
-                        this.dataStartPosition + (positionToInsert + 1) * this.rowSize, // Destination.
-                        numOfElemToCopy * this.rowSize);
-                }
-                else
-                {
-                    if (insertAtEnd)
-                    {
-                        // shift left. We are at the end.
-                        ByteSliceOperations.ShiftSlice<byte>(
-                            this.storage,
-                            this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
-                            this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
-                            numOfElemToCopy * this.rowSize);
-                    }
-                    else
-                    {
-                        // shift prev elements to the left.
-                        ByteSliceOperations.ShiftSlice<byte>(
-                            this.storage,
-                            this.dataStartPosition + (firstFreeElement + 1) * this.rowSize, // Source.
-                            this.dataStartPosition + firstFreeElement * this.rowSize, // Destination.
-                            (numOfElemToCopy - 1) * this.rowSize);
-                        positionToInsert--;
-                    }
-                }
+                // shift right one element.
+                ByteSliceOperations.ShiftSlice<byte>(
+                    this.storage,
+                    this.dataStartPosition + positionToInsert * this.rowSize, // Source.
+                    this.dataStartPosition + (positionToInsert + 1) * this.rowSize, // Destination.
+                    numOfElemToCopy * this.rowSize);
 
                 BitArray.Set(firstFreeElement, this.storage.Span);
             }
@@ -265,6 +201,7 @@ namespace PageManager
 
         public void DeleteRow(int position)
         {
+            // TODO: if this is compact page need to shift things
             BitArray.Unset(position, this.storage.Span);
             this.rowCount--;
         }
@@ -295,10 +232,28 @@ namespace PageManager
                 }
             }
 
-            for (int i = 0; i < elemNumForSplit + 1; i++)
+            // shift everything to the left.
             {
-                // Unset presence in the first half of new page.
-                BitArray.Unset(i, newPage.Span);
+                for (int i = 0; i < elemNumForSplit + 1; i++)
+                {
+                    // Unset presence in the first half of new page.
+                    BitArray.Unset(i, newPage.Span);
+                }
+
+                for (int i = elemNumForSplit + 1; i < this.maxRowCount; i++)
+                {
+                    if (BitArray.IsSet(i, newPage.Span))
+                    {
+                        BitArray.Set(i - (elemNumForSplit + 1), newPage.Span);
+                        BitArray.Unset(i, newPage.Span);
+                    }
+                }
+
+                ByteSliceOperations.ShiftSlice<byte>(
+                    newPage,
+                    this.dataStartPosition + (elemNumForSplit + 1) * this.rowSize, // source
+                    this.dataStartPosition, // destination
+                    (this.maxRowCount - (elemNumForSplit + 1)) * this.rowSize);
             }
 
             this.GetRow(elemNumForSplit, ref splitValue);
@@ -451,6 +406,23 @@ namespace PageManager
 
             return tuplePosition + offsetInTouple;
         }
+
+#if DEBUG
+        private void CheckNoGaps()
+        {
+
+            for (int i = 0; i < this.rowCount; i++)
+            {
+                Debug.Assert(BitArray.IsSet(i, this.storage.Span));
+            }
+
+            for (int i = this.rowCount; i < this.maxRowCount; i++)
+            {
+                Debug.Assert(!BitArray.IsSet(i, this.storage.Span));
+            }
+        }
+#endif
+
     }
 
     public class CompareWithRowHolderCreator : ColumnTypeHandlerBasicSingle<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>
