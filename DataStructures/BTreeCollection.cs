@@ -28,7 +28,10 @@ namespace DataStructures
         private Func<MixedPage, string> debugPrintPage;
 
         private int indexPosition;
+
         private Action<MixedPage, RowHolder, ITransaction> rowUniqueCheckPageLevel = null;
+
+        private Func<MixedPage, RowHolder, ITransaction, ulong> findChildNode = null;
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition)
         {
@@ -77,6 +80,10 @@ namespace DataStructures
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
             this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
                 new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
+
+            this.findChildNode = ColumnTypeHandlerRouter<Func<MixedPage, RowHolder, ITransaction, ulong>>.Route(
+                new FindChildNode{ IndexPosition = this.indexPosition, PagePointerRowPosition = this.pagePointerRowPosition },
                 this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
@@ -225,29 +232,8 @@ namespace DataStructures
                     // non leaf
                     if (currPage.RowCount() < this.maxElemsPerPage - 2)
                     {
-                        // Just iterate.
-                        ulong prevPagePointer = currPage.PrevPageId();
                         prevPageId = currPageId;
-                        foreach (RowHolder rh in currPage.Fetch(tran))
-                        {
-                            int compareResult = this.indexComparer(itemToInsert, rh);
-
-                            if (compareResult == 0)
-                            {
-                                throw new KeyAlreadyExists();
-                            }
-                            else if (compareResult < 0)
-                            {
-                                // follow the link.
-                                currPageId = prevPagePointer;
-                                break;
-                            }
-                            else
-                            {
-                                prevPagePointer = rh.GetField<ulong>(this.pagePointerRowPosition);
-                                currPageId = prevPagePointer;
-                            }
-                        }
+                        currPageId = this.findChildNode(currPage, itemToInsert, tran);
                     }
                     else
                     {
@@ -567,6 +553,61 @@ namespace DataStructures
             }
 
             public Action<MixedPage, RowHolder, ITransaction> HandleString()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class FindChildNode: ColumnTypeHandlerBasicSingle<Func<MixedPage, RowHolder, ITransaction, ulong /* curr page id */>>
+        {
+            public int IndexPosition { get; init; }
+            public int PagePointerRowPosition { get; init; }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleDouble()
+            {
+                return this.HandleGeneric<double>();
+            }
+
+            private Func<MixedPage, RowHolder, ITransaction, ulong> HandleGeneric<T>() where T: unmanaged, IComparable<T>
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    ulong pageIdToFollow = PageManagerConstants.NullPageId;
+
+                    ulong prevPagePointer = page.PrevPageId();
+                    ulong prevPageId = page.PageId();
+
+                    T fieldToCompare = rhToInsert.GetField<T>(this.IndexPosition);
+                    foreach ((T data, ulong pagePtr) in page.IterateInPlace<T, ulong>(this.IndexPosition, this.PagePointerRowPosition, tran))
+                    {
+                        int cmp = fieldToCompare.CompareTo(data);
+                        if (cmp == 0)
+                        {
+                            throw new KeyAlreadyExists();
+                        }
+                        else if (cmp == -1)
+                        {
+                            // follow the link.
+                            pageIdToFollow = prevPagePointer;
+                            break;
+                        }
+                        else
+                        {
+                            prevPagePointer = pagePtr;
+                            pageIdToFollow = prevPagePointer;
+                        }
+                    }
+
+                    return pageIdToFollow;
+                };
+            }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleInt()
+            {
+                return this.HandleGeneric<int>();
+            }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleString()
             {
                 throw new NotImplementedException();
             }

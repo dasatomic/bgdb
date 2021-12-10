@@ -295,6 +295,23 @@ namespace PageManager
             }
         }
 
+        public IEnumerable<Tuple<T1, T2>> IterateInPlace<T1, T2>(int columnPos1, int columnPos2) 
+            where T1 : unmanaged, IComparable<T1>
+            where T2 : unmanaged, IComparable<T2>
+        {
+#if DEBUG
+            CheckNoGaps();
+#endif
+
+            for (int i = 0; i < this.rowCount; i++)
+            {
+                T1 d1 = this.GetRowGeneric<T1>(i, columnPos1);
+                T2 d2 = this.GetRowGeneric<T2>(i, columnPos2);
+
+                yield return Tuple.Create(d1, d2);
+            }
+        }
+
         public bool ElemExists<T>(ColumnInfo[] columnTypes, T elem, int columnPos) where T : unmanaged, IComparable
         {
             ushort colPosition = 0;

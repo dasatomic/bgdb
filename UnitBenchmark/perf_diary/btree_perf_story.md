@@ -102,3 +102,16 @@ Tried to optimize RowsetHolder::InsertOrdered to avoid RowHolder alloc. Got ~10%
 | InsertIntoBTreeSingleIntColumnRandomData |            200000 | 3,208.92 ms | 36.132 ms | 32.030 ms |
 
 Next big chunks are for non-leaf iter and nlogn for insert into tree logic. Idea would be to always try to keep the page compact, without free space between the pages.
+
+Removed btree RowHolder fetch. Replaced with iteration and tuple fetch:
+
+|                                   Method | RowsInTableNumber |        Mean |     Error |    StdDev |
+|----------------------------------------- |------------------ |------------:|----------:|----------:|
+| InsertIntoBTreeSingleIntColumnRandomData |             10000 |    69.08 ms |  0.896 ms |  0.839 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |             50000 |   402.94 ms |  1.798 ms |  1.502 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 |   893.23 ms |  8.578 ms |  7.163 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 | 2,063.97 ms | 31.334 ms | 26.166 ms |
+
+Also removing 10000 rows from the measurement. Don't care about benchmarks that are <100ms.
+
+We are now at 100k/s. 10x to go.
