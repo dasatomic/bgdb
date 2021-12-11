@@ -532,8 +532,8 @@ namespace DataStructures
             {
                 return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
                 {
-                    double itemToInsertInt = rhToInsert.GetField<double>(this.IndexPosition);
-                    if (page.ElementExists<double>(tran, itemToInsertInt, this.IndexPosition))
+                    double itemToInsert = rhToInsert.GetField<double>(this.IndexPosition);
+                    if (page.BinarySearchElementPosition<double>(itemToInsert, this.IndexPosition, tran) != -1)
                     {
                         throw new KeyAlreadyExists();
                     }
@@ -544,8 +544,8 @@ namespace DataStructures
             {
                 return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
                 {
-                    int itemToInsertInt = rhToInsert.GetField<int>(this.IndexPosition);
-                    if (page.ElementExists<int>(tran, itemToInsertInt, this.IndexPosition))
+                    int itemToInsert = rhToInsert.GetField<int>(this.IndexPosition);
+                    if (page.BinarySearchElementPosition<int>(itemToInsert, this.IndexPosition, tran) != -1)
                     {
                         throw new KeyAlreadyExists();
                     }

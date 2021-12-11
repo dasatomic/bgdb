@@ -132,6 +132,17 @@ namespace PageManager
             }
         }
 
+        public int BinarySearchElementPosition<T>(T fieldToSearch, int columnPos, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return this.items.BinarySearchElementPosition(fieldToSearch, columnPos, 0, (int)(this.rowCount - 1));
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);

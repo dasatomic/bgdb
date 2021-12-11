@@ -122,3 +122,19 @@ After implementing binary search on btree traversal:
 | InsertIntoBTreeSingleIntColumnRandomData |             50000 |   346.4 ms |  5.63 ms |  4.39 ms |
 | InsertIntoBTreeSingleIntColumnRandomData |            100000 |   748.1 ms | 11.31 ms | 10.03 ms |
 | InsertIntoBTreeSingleIntColumnRandomData |            200000 | 1,676.4 ms | 24.03 ms | 18.76 ms |
+
+Let's see the flame graph now:
+
+![](flame_graph_v2.JPG)
+
+ElementsExists is taking a lot. It is still using just iteration so switching to binary search should help.
+InsertOrdered is another low hanging optimization in rowsetholder. Again switching to binary search should help.
+
+Interesting part is that RecordUsageAndEvict is also super slow.
+
+After ElementsExists optimization:
+|                                   Method | RowsInTableNumber |       Mean |   Error |  StdDev |
+|----------------------------------------- |------------------ |-----------:|--------:|--------:|
+| InsertIntoBTreeSingleIntColumnRandomData |             50000 |   219.4 ms | 4.38 ms | 4.68 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 |   487.0 ms | 3.34 ms | 2.79 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 | 1,200.3 ms | 5.32 ms | 4.45 ms |

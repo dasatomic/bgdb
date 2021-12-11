@@ -424,6 +424,33 @@ namespace PageManager
             return tuplePosition + offsetInTouple;
         }
 
+        public int BinarySearchElementPosition<T>(T fieldToSearch, int columnPos, int left, int right)
+            where T : unmanaged, IComparable<T>
+        {
+            if (right >= left)
+            {
+                int mid = left + (right - left) / 2;
+
+                T data = this.GetRowGeneric<T>(mid, columnPos);
+                int cmpRes = fieldToSearch.CompareTo(data);
+                if (cmpRes == 0)
+                {
+                    return mid;
+                }
+
+                if (cmpRes == -1)
+                {
+                    return BinarySearchElementPosition(fieldToSearch, columnPos, left, mid - 1);
+                }
+                else
+                {
+                    return BinarySearchElementPosition(fieldToSearch, columnPos, mid + 1, right);
+                }
+            }
+
+            return -1;
+        }
+
         /// <summary>
         /// Returns position of the biggest element that is smaller or equal than element we are searching for.
         /// </summary>
@@ -436,9 +463,6 @@ namespace PageManager
         public int BinarySearchFindOrBiggestSmaller<T>(T fieldToSearch, int columnPos, int left, int right)
             where T : unmanaged, IComparable<T>
         {
-            // int left = 0;
-            // int right = this.rowCount - 1;
-
             if (right >= left)
             {
                 int mid = left + (right - left) / 2;
