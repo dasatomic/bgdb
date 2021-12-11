@@ -14,7 +14,7 @@ namespace UnitBenchmark
     // [EtwProfiler(performExtraBenchmarksRun: true)]
     public class BTreeInsertPerf
     {
-        [Params(10_000, 50_000, 100_000, 200_000 /* 500_000, 1_000_000 */)]
+        [Params(50_000, 100_000, 200_000 /* 500_000, 1_000_000 */)]
         public int RowsInTableNumber;
 
         public enum GenerationStrategy

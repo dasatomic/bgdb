@@ -115,3 +115,10 @@ Removed btree RowHolder fetch. Replaced with iteration and tuple fetch:
 Also removing 10000 rows from the measurement. Don't care about benchmarks that are <100ms.
 
 We are now at 100k/s. 10x to go.
+
+After implementing binary search on btree traversal:
+|                                   Method | RowsInTableNumber |       Mean |    Error |   StdDev |
+|----------------------------------------- |------------------ |-----------:|---------:|---------:|
+| InsertIntoBTreeSingleIntColumnRandomData |             50000 |   346.4 ms |  5.63 ms |  4.39 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 |   748.1 ms | 11.31 ms | 10.03 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 | 1,676.4 ms | 24.03 ms | 18.76 ms |

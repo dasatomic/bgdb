@@ -572,33 +572,18 @@ namespace DataStructures
             {
                 return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
                 {
-                    ulong pageIdToFollow = PageManagerConstants.NullPageId;
-
-                    ulong prevPagePointer = page.PrevPageId();
-                    ulong prevPageId = page.PageId();
-
                     T fieldToCompare = rhToInsert.GetField<T>(this.IndexPosition);
-                    foreach ((T data, ulong pagePtr) in page.IterateInPlace<T, ulong>(this.IndexPosition, this.PagePointerRowPosition, tran))
-                    {
-                        int cmp = fieldToCompare.CompareTo(data);
-                        if (cmp == 0)
-                        {
-                            throw new KeyAlreadyExists();
-                        }
-                        else if (cmp == -1)
-                        {
-                            // follow the link.
-                            pageIdToFollow = prevPagePointer;
-                            break;
-                        }
-                        else
-                        {
-                            prevPagePointer = pagePtr;
-                            pageIdToFollow = prevPagePointer;
-                        }
-                    }
 
-                    return pageIdToFollow;
+                    int elemPos = page.BinarySearchFindOrBiggestSmaller<T>(fieldToCompare, this.IndexPosition, tran);
+
+                    if (elemPos == -1)
+                    {
+                        return page.PrevPageId();
+                    }
+                    else
+                    {
+                        return page.GetFieldAt<ulong>(elemPos, this.PagePointerRowPosition, tran);
+                    }
                 };
             }
 

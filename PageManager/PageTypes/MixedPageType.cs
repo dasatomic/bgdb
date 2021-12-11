@@ -121,6 +121,17 @@ namespace PageManager
             }
         }
 
+        public int BinarySearchFindOrBiggestSmaller<T>(T fieldToSearch, int columnPos, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return this.items.BinarySearchFindOrBiggestSmaller(fieldToSearch, columnPos, 0, (int)(this.rowCount - 1));
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
@@ -318,6 +329,16 @@ namespace PageManager
             lock (this.lockObject)
             {
                 this.items.GetRow(position, ref item);
+            }
+        }
+
+        public T GetFieldAt<T>(int row, int column, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+            lock (this.lockObject)
+            {
+                return this.items.GetRowGeneric<T>(row, column);
             }
         }
     }

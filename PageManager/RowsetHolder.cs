@@ -424,6 +424,67 @@ namespace PageManager
             return tuplePosition + offsetInTouple;
         }
 
+        /// <summary>
+        /// Returns position of the biggest element that is smaller or equal than element we are searching for.
+        /// </summary>
+        /// <typeparam name="T">Type of element.</typeparam>
+        /// <param name="fieldToSearch">Field to search against.</param>
+        /// <param name="columnPos">Column position of searched elem.</param>
+        /// <param name="left">Left part of search interval inside of this rowset holder.</param>
+        /// <param name="right">Right side.</param>
+        /// <returns></returns>
+        public int BinarySearchFindOrBiggestSmaller<T>(T fieldToSearch, int columnPos, int left, int right)
+            where T : unmanaged, IComparable<T>
+        {
+            // int left = 0;
+            // int right = this.rowCount - 1;
+
+            if (right >= left)
+            {
+                int mid = left + (right - left) / 2;
+
+                T data = this.GetRowGeneric<T>(mid, columnPos);
+                int cmpRes = fieldToSearch.CompareTo(data);
+                if (cmpRes == 0)
+                {
+                    return mid;
+                }
+
+                if (cmpRes == -1)
+                {
+                    if (left == right)
+                    {
+                        // I am the biggest smaller.
+                        return left - 1;
+                    }
+
+                    return BinarySearchFindOrBiggestSmaller(fieldToSearch, columnPos, left, mid - 1);
+                }
+                else
+                {
+                    if (left == right)
+                    {
+                        // I am bigger.
+                        // On the left is smaller guy.
+                        return left;
+                    }
+
+                    return BinarySearchFindOrBiggestSmaller(fieldToSearch, columnPos, mid + 1, right);
+                }
+            }
+
+            if (left == 0)
+            {
+                if (this.GetRowGeneric<T>(0, columnPos).CompareTo(fieldToSearch) == 1)
+                {
+                    // Elements we are searching for is smaller than everyone else.
+                    return -1;
+                }
+            }
+
+            return Math.Min(left, right);
+        }
+
 #if DEBUG
         private void CheckNoGaps()
         {
