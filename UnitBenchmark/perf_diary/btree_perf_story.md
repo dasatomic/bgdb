@@ -146,3 +146,10 @@ After insert with binary search:
 | InsertIntoBTreeSingleIntColumnRandomData |             50000 | 134.7 ms | 2.15 ms | 2.21 ms |
 | InsertIntoBTreeSingleIntColumnRandomData |            100000 | 315.2 ms | 5.77 ms | 5.12 ms |
 | InsertIntoBTreeSingleIntColumnRandomData |            200000 | 868.2 ms | 3.62 ms | 3.39 ms |
+
+At this point btree specific code is no longer top hitter on the flame graph:
+
+![](flame_graph_v3.JPG)
+
+At this point we wil need to optimize usage recorder in page manager. All in all we need ~5x improvement and we still have a chance to get a boost from concurrency.
+1M inserts per seconds seems pretty tangible. 
