@@ -36,7 +36,6 @@ namespace PageManager
 
         private ushort rowCount;
 
-        private static readonly CompareWithRowHolderCreator s_compareWithRowHolderCreator = new CompareWithRowHolderCreator();
         private static readonly GetRowOrderedPosition s_getRowOrderedPosition = new GetRowOrderedPosition();
 
         public RowsetHolder(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
@@ -107,13 +106,6 @@ namespace PageManager
                 BitArray.Set(row, ptr);
                 *(T*)(ptr + GetTuplePosition(row, col)) = val;
             }
-        }
-
-        public static int CompareFieldWithRowHolder(int row, int col, RowHolder rh, ColumnInfo ci, RowsetHolder rs)
-        {
-            return ColumnTypeHandlerRouter<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>.Route(
-                s_compareWithRowHolderCreator,
-                ci.ColumnType)(row, col, rh, ci, rs);
         }
 
         public static int InsertRowOrderedPosition(int col, RowHolder rh, ColumnInfo ci, RowsetHolder rs)
@@ -520,36 +512,6 @@ namespace PageManager
         }
 #endif
 
-    }
-
-    public class CompareWithRowHolderCreator : ColumnTypeHandlerBasicSingle<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>
-    {
-        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleDouble()
-        {
-            return (row, col, rh, ci, rs) =>
-            {
-                double fieldRowsetHolder = rs.GetRowGeneric<double>(row, col);
-                double fieldFromRowHolder = rh.GetField<double>(col);
-
-                return fieldRowsetHolder.CompareTo(fieldFromRowHolder);
-            };
-        }
-
-        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleInt()
-        {
-            return (row, col, rh, ci, rs) =>
-            {
-                int fieldRowsetHolder = rs.GetRowGeneric<int>(row, col);
-                int fieldFromRowHolder = rh.GetField<int>(col);
-
-                return fieldRowsetHolder.CompareTo(fieldFromRowHolder);
-            };
-        }
-
-        public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleString()
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class GetRowOrderedPosition: ColumnTypeHandlerBasicSingle<Func<int /* column */, RowHolder /* row holder to insert */, RowsetHolder, int>>
