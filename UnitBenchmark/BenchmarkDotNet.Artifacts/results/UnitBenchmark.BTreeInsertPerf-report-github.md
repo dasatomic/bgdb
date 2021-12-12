@@ -8,8 +8,8 @@ AMD Ryzen 5 1600X, 1 CPU, 12 logical and 6 physical cores
 
 
 ```
-|                                   Method | RowsInTableNumber |       Mean |   Error |  StdDev |
-|----------------------------------------- |------------------ |-----------:|--------:|--------:|
-| **InsertIntoBTreeSingleIntColumnRandomData** |             **50000** |   **219.4 ms** | **4.38 ms** | **4.68 ms** |
-| **InsertIntoBTreeSingleIntColumnRandomData** |            **100000** |   **487.0 ms** | **3.34 ms** | **2.79 ms** |
-| **InsertIntoBTreeSingleIntColumnRandomData** |            **200000** | **1,200.3 ms** | **5.32 ms** | **4.45 ms** |
+|                                   Method | RowsInTableNumber |     Mean |   Error |  StdDev |
+|----------------------------------------- |------------------ |---------:|--------:|--------:|
+| **InsertIntoBTreeSingleIntColumnRandomData** |             **50000** | **134.7 ms** | **2.15 ms** | **2.21 ms** |
+| **InsertIntoBTreeSingleIntColumnRandomData** |            **100000** | **315.2 ms** | **5.77 ms** | **5.12 ms** |
+| **InsertIntoBTreeSingleIntColumnRandomData** |            **200000** | **868.2 ms** | **3.62 ms** | **3.39 ms** |

@@ -36,7 +36,8 @@ namespace PageManager
 
         private ushort rowCount;
 
-        private static readonly CompareWithRowHolderCreator compareWithRowHolderCreator = new CompareWithRowHolderCreator();
+        private static readonly CompareWithRowHolderCreator s_compareWithRowHolderCreator = new CompareWithRowHolderCreator();
+        private static readonly GetRowOrderedPosition s_getRowOrderedPosition = new GetRowOrderedPosition();
 
         public RowsetHolder(ColumnInfo[] columnTypes, Memory<byte> storage, bool init)
         {
@@ -108,11 +109,18 @@ namespace PageManager
             }
         }
 
-        public int CompareFieldWithRowHolder(int row, int col, RowHolder rh, ColumnInfo ci)
+        public static int CompareFieldWithRowHolder(int row, int col, RowHolder rh, ColumnInfo ci, RowsetHolder rs)
         {
             return ColumnTypeHandlerRouter<Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int>>.Route(
-                compareWithRowHolderCreator,
-                ci.ColumnType)(row, col, rh, ci, this);
+                s_compareWithRowHolderCreator,
+                ci.ColumnType)(row, col, rh, ci, rs);
+        }
+
+        public static int InsertRowOrderedPosition(int col, RowHolder rh, ColumnInfo ci, RowsetHolder rs)
+        {
+            return ColumnTypeHandlerRouter<Func<int, RowHolder, RowsetHolder, int>>.Route(
+                s_getRowOrderedPosition,
+                ci.ColumnType)(col, rh, rs);
         }
 
         public void GetRow(int row, ref RowHolder rowHolder)
@@ -160,22 +168,9 @@ namespace PageManager
 #endif
 
             // find the first element that is bigger than one to insert.
-            // TODO: binary search here.
-            int positionToInsert = -1;
+            int positionToInsert = InsertRowOrderedPosition(comparisonField, rowHolderToInsert, columnTypes[comparisonField], this);
 
-            for (int i = 0; i < this.rowCount; i++)
-            {
-                if (this.CompareFieldWithRowHolder(i, comparisonField, rowHolderToInsert, columnTypes[comparisonField]) != -1)
-                {
-                    positionToInsert = i;
-                    break;
-                }
-            }
-
-            if (positionToInsert == -1)
-            {
-                positionToInsert = this.rowCount;
-            }
+            Debug.Assert(positionToInsert >= 0 && positionToInsert <= this.rowCount);
 
             if (BitArray.IsSet(positionToInsert, this.storage.Span))
             {
@@ -552,6 +547,42 @@ namespace PageManager
         }
 
         public Func<int, int, RowHolder, ColumnInfo, RowsetHolder, int> HandleString()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class GetRowOrderedPosition: ColumnTypeHandlerBasicSingle<Func<int /* column */, RowHolder /* row holder to insert */, RowsetHolder, int>>
+    {
+        public Func<int, RowHolder, RowsetHolder, int> HandleDouble()
+        {
+            return (col, rh, rs) =>
+            {
+                if (rs.GetRowCount() == 0)
+                {
+                    return 0;
+                }
+
+                double fieldFromRowHolder = rh.GetField<double>(col);
+                return rs.BinarySearchFindOrBiggestSmaller<double>(fieldFromRowHolder, col, 0, rs.GetRowCount() - 1) + 1;
+            };
+        }
+
+        public Func<int, RowHolder, RowsetHolder, int> HandleInt()
+        {
+            return (col, rh, rs) =>
+            {
+                if (rs.GetRowCount() == 0)
+                {
+                    return 0;
+                }
+
+                int fieldFromRowHolder = rh.GetField<int>(col);
+                return rs.BinarySearchFindOrBiggestSmaller<int>(fieldFromRowHolder, col, 0, rs.GetRowCount() - 1) + 1;
+            };
+        }
+
+        public Func<int, RowHolder, RowsetHolder, int> HandleString()
         {
             throw new NotImplementedException();
         }
