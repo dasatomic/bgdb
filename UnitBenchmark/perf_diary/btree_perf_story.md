@@ -185,3 +185,6 @@ Ok, actually the next offender was logging. There were a couple of log.Debug sta
 ![](flame_graph_v4.JPG)
 
 Interestingly page evict is still pretty high...
+
+
+Let's now start using real transactions.

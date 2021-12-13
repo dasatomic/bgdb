@@ -32,6 +32,8 @@ namespace UnitBenchmark
             new ColumnInfo(ColumnType.Int)
         };
 
+        IPageManager pageManager;
+
         private List<int> GenerateItems(GenerationStrategy strat, int itemNum)
         {
             switch (strat)
@@ -59,10 +61,15 @@ namespace UnitBenchmark
             }).ToList();
         }
 
+        [IterationSetup]
+        public void ITerationSetup()
+        {
+            this.pageManager =  new PageManager.PageManager(4096, new LruEvictionPolicy(100000, 5), TestGlobals.DefaultPersistedStream);
+        }
+
         [Benchmark]
         public async Task InsertIntoBTreeSingleIntColumnRandomData()
         {
-            var pageManager =  new PageManager.PageManager(4096, new LruEvictionPolicy(10000, 5), TestGlobals.DefaultPersistedStream);
             using ITransaction tran = new DummyTran();
 
             Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>

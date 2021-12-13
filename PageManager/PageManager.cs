@@ -143,7 +143,7 @@ namespace PageManager
         // Ideally page manager shouldn't keep track of in memory-disk mappings.
         private async Task RecordUsageAndEvict(ulong pageId, ITransaction tran)
         {
-            ulong[] pageIdsToEvict = this.bufferPool.GetEvictionPolicy().RecordUsageAndEvict(pageId).ToArray();
+            IEnumerable<ulong> pageIdsToEvict = this.bufferPool.GetEvictionPolicy().RecordUsageAndEvict(pageId);
 
             foreach (ulong pageIdToEvict in pageIdsToEvict)
             {
