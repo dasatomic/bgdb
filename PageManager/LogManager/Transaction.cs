@@ -246,11 +246,13 @@ namespace LogManager
                 {
                     if ((int)lockHeld < (int)expectedLock)
                     {
+                        System.Diagnostics.Debug.Assert(false);
                         throw new TranNotHoldingLock();
                     }
                 }
                 else
                 {
+                    System.Diagnostics.Debug.Assert(false);
                     throw new TranNotHoldingLock();
                 }
             }

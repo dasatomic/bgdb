@@ -88,7 +88,10 @@ namespace PageManager
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnInfo[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
         {
+
+#if DEBUG
             logger.LogDebug($"Allocating new page {pageId}");
+#endif
             IPage page;
 
             using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive).ConfigureAwait(false);

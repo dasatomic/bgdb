@@ -206,7 +206,9 @@ namespace DataStructures
                     }
                     else
                     {
-                        // need to split.
+                        // need to split. first upgrade prev page lock to ex since we will do an insert there.
+                        prevPageReleaser.Dispose();
+                        prevPageReleaser = await tran.AcquireLock(prevPageId, LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                         MixedPage newPageForSplit = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
                         RowHolder rowHolderForSplit = await this.SplitBtreePage(currPage, newPageForSplit, prevPage, tran);
@@ -238,6 +240,10 @@ namespace DataStructures
                     else
                     {
                         // Split the page.
+                        prevPageReleaser.Dispose();
+                        prevPageReleaser = await tran.AcquireLock(prevPageId, LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
+                        lck.Dispose();
+                        using Releaser writeLock = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                         MixedPage newPageForSplit = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
                         RowHolder rowHolderForSplit = await this.SplitBtreePage(currPage, newPageForSplit, prevPage, tran);
@@ -407,9 +413,10 @@ namespace DataStructures
 
             if (prevPage != null)
             {
+                // We know that there will be enough space since we proactivly clean parent nodes.
+                // TODO!: But at this point we need ex lock on prev page.
                 int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
 
-                // We know that there will be enough space since we proactivly clean parent nodes.
                 Debug.Assert(pos >= 0);
             }
             else
@@ -419,8 +426,8 @@ namespace DataStructures
                 Debug.Assert(currPage.PageId() == this.collectionRootPageId);
 
                 MixedPage newRoot = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                using Releaser newRootLock = await tran.AcquireLock(newRoot.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                 this.SetLeaf(newRoot, false);
-                using Releaser newRootLock = await tran.AcquireLock(newPageForSplit.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                 int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
                 Debug.Assert(pos == 0);
 

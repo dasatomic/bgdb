@@ -17,6 +17,14 @@ namespace Test.Common
             }
         }
 
+        public static IPageEvictionPolicy LruHugePoolEviction
+        {
+            get
+            {
+                return new LruEvictionPolicy(10_000, 5);
+            }
+        }
+
         public static IPageEvictionPolicy RestrictiveEviction = new LruEvictionPolicy(1, 1);
 
         public static IPersistedStream DefaultPersistedStream
