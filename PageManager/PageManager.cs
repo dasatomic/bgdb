@@ -216,7 +216,9 @@ namespace PageManager
 
         public async Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnInfo[] columnTypes)
         {
+#if DEBUG
             logger.LogDebug($"Fetching page {pageId}");
+#endif
             tran.VerifyLock(pageId, LockTypeEnum.Shared);
 
             IPage page = this.bufferPool.GetPage(pageId);
@@ -225,13 +227,17 @@ namespace PageManager
             {
                 // It is not sufficient to have shared lock here...
 
+#if DEBUG
                 logger.LogDebug($"Page {pageId} not present in buffer pool. Reading from disk.");
+#endif
                 page = await this.FetchPage(pageId, pageType, columnTypes).ConfigureAwait(false);
                 this.bufferPool.AddPage(page);
             }
             else
             {
+#if DEBUG
                 logger.LogDebug($"Page {pageId} present in buffer pool.");
+#endif
             }
 
             await RecordUsageAndEvict(pageId, tran).ConfigureAwait(false);

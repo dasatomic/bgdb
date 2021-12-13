@@ -153,3 +153,35 @@ At this point btree specific code is no longer top hitter on the flame graph:
 
 At this point we wil need to optimize usage recorder in page manager. All in all we need ~5x improvement and we still have a chance to get a boost from concurrency.
 1M inserts per seconds seems pretty tangible. 
+
+After page eviction policy optimizations:
+
+|                                   Method | RowsInTableNumber |     Mean |   Error |  StdDev |
+|----------------------------------------- |------------------ |---------:|--------:|--------:|
+| InsertIntoBTreeSingleIntColumnRandomData |             50000 | 115.5 ms | 1.84 ms | 1.81 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 | 260.5 ms | 2.38 ms | 2.11 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 | 614.5 ms | 4.29 ms | 4.01 ms |
+
+It's time to remove 50k test and add 1/2M test (which feels nice).
+
+|                                   Method | RowsInTableNumber |       Mean |    Error |   StdDev |
+|----------------------------------------- |------------------ |-----------:|---------:|---------:|
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 |   271.5 ms |  5.15 ms |  8.02 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 |   613.5 ms | 10.66 ms |  9.45 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            500000 | 1,802.1 ms | 12.71 ms | 11.89 ms |
+
+
+Also flame graph is now again different and it looks a bit harder to tackle from now on. PageManager still seems to be the main culprit.
+![](flame_graph_v4.JPG)
+
+Ok, actually the next offender was logging. There were a couple of log.Debug statements in pagemanager for fetching every page that took a lot of time.
+
+|                                   Method | RowsInTableNumber |       Mean |    Error |   StdDev |
+|----------------------------------------- |------------------ |-----------:|---------:|---------:|
+| InsertIntoBTreeSingleIntColumnRandomData |            100000 |   204.4 ms |  4.03 ms |  4.14 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            200000 |   466.1 ms |  3.73 ms |  3.31 ms |
+| InsertIntoBTreeSingleIntColumnRandomData |            500000 | 1,374.4 ms | 26.82 ms | 44.81 ms |
+
+![](flame_graph_v4.JPG)
+
+Interestingly page evict is still pretty high...
