@@ -59,8 +59,6 @@ namespace LogManager
 
         public ulong TranscationId() => 0;
 
-        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
-        {
-        }
+        public bool VerifyLock(ulong pageId, LockTypeEnum expectedLock) => true;
     }
 }
