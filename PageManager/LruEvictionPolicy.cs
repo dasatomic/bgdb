@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace PageManager
 {
-    public class FifoEvictionPolicy : IPageEvictionPolicy
+    public class LruEvictionPolicy : IPageEvictionPolicy
     {
         private class DoubleLinkedListNode
         {
@@ -101,7 +101,7 @@ namespace PageManager
         ulong count;
         Dictionary<ulong, DoubleLinkedListNode> nodeMap = new Dictionary<ulong, DoubleLinkedListNode>();
 
-        public FifoEvictionPolicy(ulong pageCountLimit, int evictCountOnReachingLimit)
+        public LruEvictionPolicy(ulong pageCountLimit, int evictCountOnReachingLimit)
             => (this.pageCountLimit, this.evictCountOnReachingLimit) = (pageCountLimit, evictCountOnReachingLimit);
 
         public ulong CurrentPageCount() => count;

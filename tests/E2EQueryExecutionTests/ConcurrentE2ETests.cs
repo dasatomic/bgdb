@@ -39,7 +39,7 @@ namespace E2EQueryExecutionTests
                 this.logger = new Instrumentation.Logger("ConcurrencyTestLog.txt", "concurrency", Instrumentation.LogLevel.Info);
             }
 
-            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(100, 10);
+            IPageEvictionPolicy evictionPolicy = new LruEvictionPolicy(100, 10);
             this.pageManager =  new PageManager.PageManager(
                 TestGlobals.DefaultPageSize,
                 TestGlobals.DefaultPersistedStream,

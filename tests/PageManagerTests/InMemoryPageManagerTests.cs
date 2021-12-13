@@ -109,7 +109,7 @@ namespace PageManagerTests
         [Test]
         public async Task VerifyAllocationMapMultiple()
         {
-            var pageManager =  new PageManager.PageManager(DefaultSize, new FifoEvictionPolicy(1000, 1), TestGlobals.DefaultPersistedStream);
+            var pageManager =  new PageManager.PageManager(DefaultSize, new LruEvictionPolicy(1000, 1), TestGlobals.DefaultPersistedStream);
             List<ulong> pageIds = new List<ulong>();
 
             for (int i = 2; i < 32 * 10 + 5; i++)
