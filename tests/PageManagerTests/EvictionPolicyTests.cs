@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
 using PageManager;
 using PageManager.Exceptions;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PageManagerTests
 {
