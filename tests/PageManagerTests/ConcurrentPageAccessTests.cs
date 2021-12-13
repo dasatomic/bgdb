@@ -21,7 +21,7 @@ namespace PageManagerTests
         public async Task ConcurrentWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
-            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(1, 1);
+            IPageEvictionPolicy evictionPolicy = new LruEvictionPolicy(1, 1);
             IBufferPool bp = new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
@@ -62,7 +62,7 @@ namespace PageManagerTests
         public async Task ConcurrentReadAndWriteTests()
         {
             PersistedStream persistedStream = new PersistedStream(1024 * 1024, "concurrent.data", createNew: true, TestGlobals.TestFileLogger);
-            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(1, 1);
+            IPageEvictionPolicy evictionPolicy = new LruEvictionPolicy(1, 1);
             IBufferPool bp = new BufferPool(evictionPolicy, TestGlobals.DefaultPageSize);
             ILockManager lm = new LockManager.LockManager();
             var lgm = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));

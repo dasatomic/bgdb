@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
 using PageManager;
 using PageManager.Exceptions;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PageManagerTests
 {
@@ -12,7 +10,7 @@ namespace PageManagerTests
         [Test]
         public void AddPagesNoEviction()
         {
-            FifoEvictionPolicy policy = new FifoEvictionPolicy(10, 5);
+            LruEvictionPolicy policy = new LruEvictionPolicy(10, 5);
 
             for (int i = 0; i < 10; i++)
             {
@@ -26,7 +24,7 @@ namespace PageManagerTests
         [Test]
         public void AddPagesWithEviction()
         {
-            FifoEvictionPolicy policy = new FifoEvictionPolicy(10, 5);
+            LruEvictionPolicy policy = new LruEvictionPolicy(10, 5);
 
             for (int i = 0; i < 10; i++)
             {
@@ -39,7 +37,7 @@ namespace PageManagerTests
         [Test]
         public void AddPagesWithEvictionNonSequentialAccess()
         {
-            FifoEvictionPolicy policy = new FifoEvictionPolicy(10, 5);
+            LruEvictionPolicy policy = new LruEvictionPolicy(10, 5);
 
             for (int i = 0; i < 10; i++)
             {
@@ -57,7 +55,7 @@ namespace PageManagerTests
         [Test]
         public void AddPagesWithEvictionAndAvoidPolicy()
         {
-            FifoEvictionPolicy policy = new FifoEvictionPolicy(10, 5);
+            LruEvictionPolicy policy = new LruEvictionPolicy(10, 5);
 
             for (int i = 0; i < 10; i++)
             {
@@ -70,7 +68,7 @@ namespace PageManagerTests
         [Test]
         public void AddPagesNoPoolSpace()
         {
-            FifoEvictionPolicy policy = new FifoEvictionPolicy(10, 5);
+            LruEvictionPolicy policy = new LruEvictionPolicy(10, 5);
 
             for (int i = 0; i < 10; i++)
             {

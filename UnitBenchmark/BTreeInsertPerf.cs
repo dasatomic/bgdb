@@ -11,7 +11,7 @@ using Test.Common;
 namespace UnitBenchmark
 {
     [RPlotExporter]
-    [EtwProfiler(performExtraBenchmarksRun: true)]
+    //[EtwProfiler(performExtraBenchmarksRun: true)]
     public class BTreeInsertPerf
     {
         [Params(50_000, 100_000, 200_000 /* 500_000, 1_000_000 */)]
@@ -62,7 +62,7 @@ namespace UnitBenchmark
         [Benchmark]
         public async Task InsertIntoBTreeSingleIntColumnRandomData()
         {
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(10000, 5), TestGlobals.DefaultPersistedStream);
+            var pageManager =  new PageManager.PageManager(4096, new LruEvictionPolicy(10000, 5), TestGlobals.DefaultPersistedStream);
             using ITransaction tran = new DummyTran();
 
             Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>

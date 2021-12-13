@@ -63,7 +63,7 @@ namespace PageManagerTests
             }
 
             PersistedStream persistedStream2 = new PersistedStream(1024 * 1024, "checkpoint.data", createNew: false);
-            var eviction = new FifoEvictionPolicy(10, 5);
+            var eviction = new LruEvictionPolicy(10, 5);
             using var pageManager2 =  new PageManager.PageManager(DefaultSize, eviction, persistedStream2);
 
             var readPage = await pageManager2.GetMixedPage(p1.PageId(), tran, types);
