@@ -15,9 +15,9 @@ namespace UnitBenchmark
 {
     public static class BenchmarkUtils
     {
-        public static async Task<(ILogManager, IPageManager, QueryEntryGate)> GetLogAndQueryEntryGate()
+        public static async Task<(ILogManager, IPageManager, QueryEntryGate)> GetLogAndQueryEntryGate(ulong bufferPoolNumPages = 1000)
         {
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(1000, 5), TestGlobals.DefaultPersistedStream);
+            var pageManager =  new PageManager.PageManager(4096, new LruEvictionPolicy(bufferPoolNumPages, 5), TestGlobals.DefaultPersistedStream);
             var logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
             StringHeapCollection stringHeap = null;
 

@@ -28,7 +28,7 @@ namespace LogManagerTests
         {
             await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Shared);
-            tran1.VerifyLock(1, LockTypeEnum.Shared);
+            Assert.IsTrue(tran1.VerifyLock(1, LockTypeEnum.Shared));
         }
 
         [Test]
@@ -36,16 +36,18 @@ namespace LogManagerTests
         {
             await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Exclusive);
-            tran1.VerifyLock(1, LockTypeEnum.Shared);
+            Assert.IsTrue(tran1.VerifyLock(1, LockTypeEnum.Shared));
         }
 
+#if DEBUG
         [Test]
         public async Task LockCheckUpgrade()
         {
             await using ITransaction tran1 = logManager.CreateTransaction(pageManager);
             using var releaser = await tran1.AcquireLock(1, LockTypeEnum.Shared);
-            Assert.Throws<TranNotHoldingLock>(() => tran1.VerifyLock(1, LockTypeEnum.Exclusive));
+            Assert.IsFalse(tran1.VerifyLock(1, LockTypeEnum.Exclusive));
         }
+#endif
 
         [Test]
         public async Task LockNotReleased()
@@ -63,7 +65,7 @@ namespace LogManagerTests
             for (int i = 0; i < 1000; i++)
             {
                 using var releaser = await tran1.AcquireLock((ulong)i, LockTypeEnum.Shared);
-                tran1.VerifyLock((ulong)i, LockTypeEnum.Shared);
+                Assert.IsTrue(tran1.VerifyLock((ulong)i, LockTypeEnum.Shared));
             }
         }
     }

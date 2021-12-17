@@ -15,7 +15,7 @@ namespace E2EQueryExecutionTests
         [Test]
         public async Task E2EBufferPoolExceed()
         {
-            IPageEvictionPolicy restrictiveEviction = new FifoEvictionPolicy(6, 1);
+            IPageEvictionPolicy restrictiveEviction = new LruEvictionPolicy(6, 1);
             BufferPool bp = new BufferPool(restrictiveEviction, TestGlobals.DefaultPageSize);
 
             ILockManager lm = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);

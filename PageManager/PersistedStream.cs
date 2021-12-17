@@ -142,7 +142,9 @@ namespace PageManager
 
                 // TODO: I am not sure in correctness of page flush.
                 // This needs to be revisited.
+#if DEBUG
                 this.logger.LogDebug($"Flushed at location {position} to disk.");
+#endif
             }
             finally
             {
@@ -171,7 +173,9 @@ namespace PageManager
             finally
             {
                 semaphore.Release();
+#if DEBUG
                 this.logger.LogDebug($"Read from location {position} in buffer pool.");
+#endif
             }
         }
 

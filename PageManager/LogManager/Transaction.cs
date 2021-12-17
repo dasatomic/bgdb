@@ -236,7 +236,7 @@ namespace LogManager
             return false;
         }
 
-        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        public bool VerifyLock(ulong pageId, LockTypeEnum expectedLock)
         {
             int lockId = this.pageManager.GetLockManager().LockIdForPage(pageId);
 
@@ -246,13 +246,21 @@ namespace LogManager
                 {
                     if ((int)lockHeld < (int)expectedLock)
                     {
-                        throw new TranNotHoldingLock();
+#if DEBUG
+                        System.Diagnostics.Debug.Assert(AssertOnNoLock);
+#endif
+                        return false;
                     }
                 }
                 else
                 {
-                    throw new TranNotHoldingLock();
+#if DEBUG
+                        System.Diagnostics.Debug.Assert(AssertOnNoLock);
+#endif
+                    return false;
                 }
+
+                return true;
             }
         }
 
@@ -265,5 +273,9 @@ namespace LogManager
         {
             this.tempDirectoriesToCleanUp.Enqueue(tempFolder);
         }
+
+#if DEBUG
+        public bool AssertOnNoLock = true;
+#endif
     }
 }

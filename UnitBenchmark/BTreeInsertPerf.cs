@@ -2,6 +2,7 @@
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using DataStructures;
 using PageManager;
+using QueryProcessing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,10 @@ using Test.Common;
 namespace UnitBenchmark
 {
     [RPlotExporter]
-    [EtwProfiler(performExtraBenchmarksRun: true)]
+    // [EtwProfiler(performExtraBenchmarksRun: true)]
     public class BTreeInsertPerf
     {
-        [Params(10_000, 50_000, 100_000, 200_000 /* 500_000, 1_000_000 */)]
+        [Params(100_000, 200_000, 500_000 /*, 1_000_000 */)]
         public int RowsInTableNumber;
 
         public enum GenerationStrategy
@@ -31,6 +32,10 @@ namespace UnitBenchmark
         {
             new ColumnInfo(ColumnType.Int)
         };
+
+        private QueryEntryGate queryEntryGate;
+        private LogManager.ILogManager logManager;
+        private IPageManager pageManager;
 
         private List<int> GenerateItems(GenerationStrategy strat, int itemNum)
         {
@@ -59,21 +64,71 @@ namespace UnitBenchmark
             }).ToList();
         }
 
-        [Benchmark]
-        public async Task InsertIntoBTreeSingleIntColumnRandomData()
+        [IterationSetup]
+        public void ITerationSetup()
         {
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(10000, 5), TestGlobals.DefaultPersistedStream);
-            using ITransaction tran = new DummyTran();
+            (this.logManager, this.pageManager, this.queryEntryGate) = BenchmarkUtils.GetLogAndQueryEntryGate(bufferPoolNumPages: 10000).Result;
+        }
 
+        [Benchmark]
+        public async Task InsertIntoBTreeSingleIntColumnRandomDataBulkSingleTran()
+        {
             Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
-            BTreeCollection collection =
-                new BTreeCollection(pageManager, this.schema, new DummyTran(), comp, 0);
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "btree_insert"))
+            {
+                BTreeCollection collection = new BTreeCollection(pageManager, this.schema, tran, comp, 0);
+
+                foreach (var item in this.itemsToInsertRand)
+                {
+                    await collection.Add(item, tran);
+                }
+            }
+        }
+
+        [Benchmark]
+        public async Task InsertIntoBTreeSingleIntColumnRandomDataTranPerInsert()
+        {
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+            BTreeCollection collection = null;
+            await using (ITransaction tran = logManager.CreateTransaction(pageManager, "btree_insert"))
+            {
+                collection = new BTreeCollection(pageManager, this.schema, tran, comp, 0);
+                await tran.Commit();
+            }
 
             foreach (var item in this.itemsToInsertRand)
             {
-                await collection.Add(item, tran);
+                await using (ITransaction tran = logManager.CreateTransaction(pageManager, "btree_insert"))
+                {
+                    await collection.Add(item, tran);
+                    await tran.Commit();
+                }
+            }
+        }
+
+        [Benchmark]
+        public async Task InsertIntoBTreeSingleIntColumnRandomDataDummyTran()
+        {
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+            BTreeCollection collection = null;
+            await using (ITransaction tran = new DummyTran())
+            {
+                collection = new BTreeCollection(pageManager, this.schema, tran, comp, 0);
+                await tran.Commit();
+            }
+
+                await using (ITransaction tran = new DummyTran())
+                {
+                    foreach (var item in this.itemsToInsertRand)
+                    {
+                        await collection.Add(item, tran);
+                    }
+
+                    await tran.Commit();
             }
         }
     }

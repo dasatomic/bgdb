@@ -109,6 +109,40 @@ namespace PageManager
             }
         }
 
+        public IEnumerable<Tuple<T1, T2>> IterateInPlace<T1, T2>(int columnPos1, int columnPos2, ITransaction tran) 
+            where T1 : unmanaged, IComparable<T1>
+            where T2 : unmanaged, IComparable<T2>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return  this.items.IterateInPlace<T1, T2>(columnPos1, columnPos2);
+            }
+        }
+
+        public int BinarySearchFindOrBiggestSmaller<T>(T fieldToSearch, int columnPos, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return this.items.BinarySearchFindOrBiggestSmaller(fieldToSearch, columnPos, 0, (int)(this.rowCount - 1));
+            }
+        }
+
+        public int BinarySearchElementPosition<T>(T fieldToSearch, int columnPos, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+
+            lock (this.lockObject)
+            {
+                return this.items.BinarySearchElementPosition(fieldToSearch, columnPos, 0, (int)(this.rowCount - 1));
+            }
+        }
+
         public override int Insert(RowHolder item, ITransaction transaction)
         {
             transaction.VerifyLock(this.pageId, LockManager.LockTypeEnum.Exclusive);
@@ -306,6 +340,16 @@ namespace PageManager
             lock (this.lockObject)
             {
                 this.items.GetRow(position, ref item);
+            }
+        }
+
+        public T GetFieldAt<T>(int row, int column, ITransaction tran)
+            where T : unmanaged, IComparable<T>
+        {
+            tran.VerifyLock(this.pageId, LockManager.LockTypeEnum.Shared);
+            lock (this.lockObject)
+            {
+                return this.items.GetRowGeneric<T>(row, column);
             }
         }
     }

@@ -65,8 +65,6 @@ namespace Test.Common
             return 42;
         }
 
-        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
-        {
-        }
+        public bool VerifyLock(ulong pageId, LockTypeEnum expectedLock) => true;
     }
 }

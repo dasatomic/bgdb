@@ -550,5 +550,86 @@ namespace PageManagerTests
                 Assert.AreEqual(maxRowCount / 2 + i + 1, secondPageContent[i].GetField<int>(0));
             }
         }
+
+        [Test]
+        public void BinarySearchFindOrBiggestSmallerFindElem()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            for (int i = 0; i < 100; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i);
+                rs.InsertRowOrdered(rhf, schema, 0);
+            }
+
+            Assert.AreEqual(100, rs.GetRowCount());
+
+            for (int i = 0; i < 100; i++)
+            {
+                int pos = rs.BinarySearchFindOrBiggestSmaller<int>(i, 0, 0, rs.GetRowCount() - 1);
+                Assert.AreEqual(i, pos);
+            }
+        }
+
+        [Test]
+        public void BinarySearchFindOrBiggestSmallerNoElem()
+        {
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Memory<byte> mem = new Memory<byte>(new byte[4096]);
+            RowsetHolder rs = new RowsetHolder(schema, mem, true);
+
+            for (int i = 0; i < 100; i++)
+            {
+                var rhf = new RowHolder(schema);
+
+                rhf.SetField(0, i * 2);
+                rs.InsertRowOrdered(rhf, schema, 0);
+            }
+
+            Assert.AreEqual(100, rs.GetRowCount());
+
+            for (int i =  -2; i < 204; i++)
+            {
+                int expected;
+                if (i < 0)
+                {
+                    expected = -1;
+                }
+                else if (i % 2 == 0 && i <= 198)
+                {
+                    expected = i;
+                }
+                else if (i % 2 == 1 && i < 200)
+                {
+                    expected = i - 1;
+                }
+                else
+                {
+                    expected = 198;
+                }
+
+                int pos = rs.BinarySearchFindOrBiggestSmaller<int>(i, 0, 0, rs.GetRowCount() - 1);
+                if (expected == -1)
+                {
+                    Assert.IsTrue(pos == -1);
+                }
+                else
+                {
+                    Assert.AreEqual(expected, rs.GetRowGeneric<int>(pos, 0));
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ using PageManager;
 using PageManager.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -111,20 +112,24 @@ namespace LogManager
 
         public ulong TranscationId() => this.transactionId;
 
-        public void VerifyLock(ulong pageId, LockTypeEnum expectedLock)
+        public bool VerifyLock(ulong pageId, LockTypeEnum expectedLock)
         {
             if (expectedLock == LockTypeEnum.Exclusive)
             {
-                throw new TranNotHoldingLock();
+                Debug.Assert(false);
+                return false;
             }
 
             lock (lck)
             {
                 if (!this.locksHeld.ContainsKey(this.lockManager.LockIdForPage(pageId)))
                 {
-                    throw new TranNotHoldingLock();
+                    Debug.Assert(false);
+                    return false;
                 }
             }
+
+            return true;
         }
 
         public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType)

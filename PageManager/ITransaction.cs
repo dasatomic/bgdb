@@ -24,7 +24,7 @@ namespace PageManager
         TransactionState GetTransactionState();
         Task<Releaser> AcquireLock(ulong pageId, LockTypeEnum lockType);
         Task<Releaser> AcquireLockWithCallerOwnership(ulong pageId, LockTypeEnum lockType);
-        void VerifyLock(ulong pageId, LockTypeEnum expectedLock);
+        bool VerifyLock(ulong pageId, LockTypeEnum expectedLock);
         public bool AmIHoldingALock(ulong pageId, out LockTypeEnum lockType);
         public void RegisterTempFolder(DirectoryInfo tempFolder);
     }

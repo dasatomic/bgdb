@@ -88,7 +88,10 @@ namespace PageManager
 
         public async Task<IPage> AllocatePage(PageType pageType, ColumnInfo[] columnTypes, ulong prevPageId, ulong nextPageId, ulong pageId, ITransaction tran)
         {
+
+#if DEBUG
             logger.LogDebug($"Allocating new page {pageId}");
+#endif
             IPage page;
 
             using Releaser releaser = await tran.AcquireLockWithCallerOwnership(pageId, LockTypeEnum.Exclusive).ConfigureAwait(false);
@@ -143,7 +146,7 @@ namespace PageManager
         // Ideally page manager shouldn't keep track of in memory-disk mappings.
         private async Task RecordUsageAndEvict(ulong pageId, ITransaction tran)
         {
-            ulong[] pageIdsToEvict = this.bufferPool.GetEvictionPolicy().RecordUsageAndEvict(pageId).ToArray();
+            IEnumerable<ulong> pageIdsToEvict = this.bufferPool.GetEvictionPolicy().RecordUsageAndEvict(pageId);
 
             foreach (ulong pageIdToEvict in pageIdsToEvict)
             {
@@ -216,7 +219,9 @@ namespace PageManager
 
         public async Task<IPage> GetPage(ulong pageId, ITransaction tran, PageType pageType, ColumnInfo[] columnTypes)
         {
+#if DEBUG
             logger.LogDebug($"Fetching page {pageId}");
+#endif
             tran.VerifyLock(pageId, LockTypeEnum.Shared);
 
             IPage page = this.bufferPool.GetPage(pageId);
@@ -225,13 +230,17 @@ namespace PageManager
             {
                 // It is not sufficient to have shared lock here...
 
+#if DEBUG
                 logger.LogDebug($"Page {pageId} not present in buffer pool. Reading from disk.");
+#endif
                 page = await this.FetchPage(pageId, pageType, columnTypes).ConfigureAwait(false);
                 this.bufferPool.AddPage(page);
             }
             else
             {
+#if DEBUG
                 logger.LogDebug($"Page {pageId} present in buffer pool.");
+#endif
             }
 
             await RecordUsageAndEvict(pageId, tran).ConfigureAwait(false);

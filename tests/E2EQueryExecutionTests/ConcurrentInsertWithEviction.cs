@@ -22,7 +22,7 @@ namespace E2EQueryExecutionTests
         public async Task ConcurrentInsertWithEvictionTest()
         {
             var lockManager = new LockManager.LockManager(new LockMonitor(), TestGlobals.TestFileLogger);
-            IPageEvictionPolicy evictionPolicy = new FifoEvictionPolicy(7, 2);
+            IPageEvictionPolicy evictionPolicy = new LruEvictionPolicy(7, 2);
             var pageManager =  new PageManager.PageManager(
                 4096, 
                 TestGlobals.DefaultPersistedStream,

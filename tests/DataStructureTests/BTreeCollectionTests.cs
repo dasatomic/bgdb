@@ -8,21 +8,24 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Test.Common;
 using DataStructures.Exceptions;
+using System.IO;
 
 namespace DataStructureTests
 {
     public class BTreeCollectionTests
     {
         private Mock<IAllocateMixedPage> pageManagerMock;
-        private IAllocateMixedPage mixedPageAlloc;
+        private PageManager.PageManager mixedPageAlloc;
         List<MixedPage> pagePointersOrdered = new List<MixedPage>();
+        private LogManager.LogManager logManager;
 
         [SetUp]
         public void Setup()
         {
             this.pagePointersOrdered.Clear();
             this.pageManagerMock = new Mock<IAllocateMixedPage>();
-            this.mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.DefaultEviction, TestGlobals.DefaultPersistedStream);
+            this.mixedPageAlloc = new PageManager.PageManager(4096, TestGlobals.LruHugePoolEviction, TestGlobals.DefaultPersistedStream);
+            this.logManager = new LogManager.LogManager(new BinaryWriter(new MemoryStream()));
 
             this.pageManagerMock.Setup(pm =>
                 pm.AllocateMixedPage(
@@ -48,7 +51,7 @@ namespace DataStructureTests
         [Test]
         public async Task InsertSingleElem()
         {
-            using ITransaction tran = new DummyTran();
+            using ITransaction tran = logManager.CreateTransaction(this.mixedPageAlloc);
 
             var schema = new ColumnInfo[]
             {
@@ -59,7 +62,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
 
             var row = new RowHolder(schema);
 
@@ -87,7 +90,7 @@ namespace DataStructureTests
         [Test]
         public async Task InsertTillSplit()
         {
-            using ITransaction tran = new DummyTran();
+            using ITransaction tran = logManager.CreateTransaction(this.mixedPageAlloc);
 
             var schema = new ColumnInfo[]
             {
@@ -98,7 +101,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
 
             var rootPage = this.pagePointersOrdered[0];
 
@@ -140,7 +143,7 @@ namespace DataStructureTests
         [Test]
         public async Task InsertDuplicate()
         {
-            using ITransaction tran = new DummyTran();
+            using ITransaction tran = logManager.CreateTransaction(this.mixedPageAlloc);
 
             var schema = new ColumnInfo[]
             {
@@ -151,7 +154,7 @@ namespace DataStructureTests
                 rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
 
             BTreeCollection collection =
-                new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
 
             var row = new RowHolder(schema);
 
@@ -187,13 +190,58 @@ namespace DataStructureTests
             }
         }
 
+        [Test]
+        public async Task InsertRandomPerTran()
+        {
+            using ITransaction tran = logManager.CreateTransaction(this.mixedPageAlloc);
+
+            var schema = new ColumnInfo[]
+            {
+                new ColumnInfo(ColumnType.Int)
+            };
+
+            Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
+                rh1.GetField<int>(0).CompareTo(rh2.GetField<int>(0));
+
+            BTreeCollection collection =
+                new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
+
+            await tran.Commit();
+
+            int[] generatedItems = GenerateItems(GenerationStrategy.Rand, 1000).ToArray();
+            int cnt = 0;
+            foreach (int item in generatedItems)
+            {
+                using ITransaction trInsert = logManager.CreateTransaction(this.mixedPageAlloc);
+                var row = new RowHolder(schema);
+
+                row.SetField(0, item);
+                await collection.Add(row, trInsert);
+                await trInsert.Commit();
+                cnt++;
+            }
+
+            // sort for verification.
+            Array.Sort(generatedItems);
+
+            int pos = 0;
+            using ITransaction trIterate = logManager.CreateTransaction(this.mixedPageAlloc);
+            await foreach (RowHolder rh in collection.Iterate(trIterate))
+            {
+                int item = rh.GetField<int>(0);
+                Assert.AreEqual(generatedItems[pos], item);
+                pos++;
+            }
+
+            await trIterate.Commit();
+        }
+
         [Test, Pairwise]
         public async Task IterateInsert(
             [Values(GenerationStrategy.Seq, GenerationStrategy.Rev, GenerationStrategy.Rand)] GenerationStrategy strat,
             [Values(ColumnType.Int, ColumnType.Double)] ColumnType columnType)
         {
-            using ITransaction tran = new DummyTran();
-
+            using ITransaction tran = logManager.CreateTransaction(this.mixedPageAlloc);
 
             Func<RowHolder, RowHolder, int> comp = (rh1, rh2) =>
                 columnType == ColumnType.Int ?
@@ -226,7 +274,7 @@ namespace DataStructureTests
 
                 int[] generatedItems = GenerateItems(strat, rowCount).ToArray();
                 BTreeCollection collection =
-                    new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                    new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
                 foreach (int item in generatedItems)
                 {
                     var row = new RowHolder(schema);
@@ -254,7 +302,7 @@ namespace DataStructureTests
                 };
 
                 BTreeCollection collection =
-                    new BTreeCollection(pageManagerMock.Object, schema, new DummyTran(), comp, 0);
+                    new BTreeCollection(pageManagerMock.Object, schema, tran, comp, 0);
 
                 double[] generatedItems = GenerateItems(strat, rowCount).Select(x => x * 1.1).ToArray();
                 foreach (double item in generatedItems)

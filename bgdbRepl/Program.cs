@@ -123,7 +123,7 @@ namespace atomicdbstarter
             string fileName = "repl.db";
             const int fileSize = 1024 * 1024 * 100;
 
-            var pageManager =  new PageManager.PageManager(4096, new FifoEvictionPolicy(200000, 5), new PersistedStream(fileSize, fileName, createNew: true)); ;
+            var pageManager =  new PageManager.PageManager(4096, new LruEvictionPolicy(200000, 5), new PersistedStream(fileSize, fileName, createNew: true)); ;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"Booted Page Manager with file name {fileName}. File size {fileSize / (1024 * 1024)}MB. Creating db file from scratch.");

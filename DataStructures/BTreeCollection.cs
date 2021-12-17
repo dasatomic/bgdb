@@ -28,7 +28,10 @@ namespace DataStructures
         private Func<MixedPage, string> debugPrintPage;
 
         private int indexPosition;
+
         private Action<MixedPage, RowHolder, ITransaction> rowUniqueCheckPageLevel = null;
+
+        private Func<MixedPage, RowHolder, ITransaction, ulong> findChildNode = null;
 
         public BTreeCollection(IAllocateMixedPage pageAllocator, ColumnInfo[] columnTypes, ITransaction tran, Func<RowHolder, RowHolder, int> indexComparer, int indexPosition)
         {
@@ -77,6 +80,10 @@ namespace DataStructures
             this.projectionRemoveIndexCol = new ProjectExtendInfo(mps, prjs, new ColumnInfo[0]);
             this.rowUniqueCheckPageLevel = ColumnTypeHandlerRouter<Action<MixedPage, RowHolder, ITransaction>>.Route(
                 new BTreeUniqueCheckCreator { IndexPosition = this.indexPosition },
+                this.btreeColumnTypes[this.indexPosition].ColumnType);
+
+            this.findChildNode = ColumnTypeHandlerRouter<Func<MixedPage, RowHolder, ITransaction, ulong>>.Route(
+                new FindChildNode{ IndexPosition = this.indexPosition, PagePointerRowPosition = this.pagePointerRowPosition },
                 this.btreeColumnTypes[this.indexPosition].ColumnType);
         }
 
@@ -199,7 +206,9 @@ namespace DataStructures
                     }
                     else
                     {
-                        // need to split.
+                        // need to split. first upgrade prev page lock to ex since we will do an insert there.
+                        prevPageReleaser.Dispose();
+                        prevPageReleaser = await tran.AcquireLock(prevPageId, LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                         MixedPage newPageForSplit = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
                         RowHolder rowHolderForSplit = await this.SplitBtreePage(currPage, newPageForSplit, prevPage, tran);
@@ -225,33 +234,16 @@ namespace DataStructures
                     // non leaf
                     if (currPage.RowCount() < this.maxElemsPerPage - 2)
                     {
-                        // Just iterate.
-                        ulong prevPagePointer = currPage.PrevPageId();
                         prevPageId = currPageId;
-                        foreach (RowHolder rh in currPage.Fetch(tran))
-                        {
-                            int compareResult = this.indexComparer(itemToInsert, rh);
-
-                            if (compareResult == 0)
-                            {
-                                throw new KeyAlreadyExists();
-                            }
-                            else if (compareResult < 0)
-                            {
-                                // follow the link.
-                                currPageId = prevPagePointer;
-                                break;
-                            }
-                            else
-                            {
-                                prevPagePointer = rh.GetField<ulong>(this.pagePointerRowPosition);
-                                currPageId = prevPagePointer;
-                            }
-                        }
+                        currPageId = this.findChildNode(currPage, itemToInsert, tran);
                     }
                     else
                     {
                         // Split the page.
+                        prevPageReleaser.Dispose();
+                        prevPageReleaser = await tran.AcquireLock(prevPageId, LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
+                        lck.Dispose();
+                        using Releaser writeLock = await tran.AcquireLock(currPage.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                         MixedPage newPageForSplit = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
 
                         RowHolder rowHolderForSplit = await this.SplitBtreePage(currPage, newPageForSplit, prevPage, tran);
@@ -421,9 +413,10 @@ namespace DataStructures
 
             if (prevPage != null)
             {
+                // We know that there will be enough space since we proactivly clean parent nodes.
+                // TODO!: But at this point we need ex lock on prev page.
                 int pos = prevPage.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
 
-                // We know that there will be enough space since we proactivly clean parent nodes.
                 Debug.Assert(pos >= 0);
             }
             else
@@ -433,8 +426,8 @@ namespace DataStructures
                 Debug.Assert(currPage.PageId() == this.collectionRootPageId);
 
                 MixedPage newRoot = await pageAllocator.AllocateMixedPage(this.btreeColumnTypes, PageManagerConstants.NullPageId, PageManagerConstants.NullPageId, tran);
+                using Releaser newRootLock = await tran.AcquireLock(newRoot.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                 this.SetLeaf(newRoot, false);
-                using Releaser newRootLock = await tran.AcquireLock(newPageForSplit.PageId(), LockManager.LockTypeEnum.Exclusive).ConfigureAwait(false);
                 int pos = newRoot.InsertOrdered(rowHolderForSplit, tran, this.btreeColumnTypes, this.indexPosition);
                 Debug.Assert(pos == 0);
 
@@ -546,8 +539,8 @@ namespace DataStructures
             {
                 return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
                 {
-                    double itemToInsertInt = rhToInsert.GetField<double>(this.IndexPosition);
-                    if (page.ElementExists<double>(tran, itemToInsertInt, this.IndexPosition))
+                    double itemToInsert = rhToInsert.GetField<double>(this.IndexPosition);
+                    if (page.BinarySearchElementPosition<double>(itemToInsert, this.IndexPosition, tran) != -1)
                     {
                         throw new KeyAlreadyExists();
                     }
@@ -558,8 +551,8 @@ namespace DataStructures
             {
                 return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
                 {
-                    int itemToInsertInt = rhToInsert.GetField<int>(this.IndexPosition);
-                    if (page.ElementExists<int>(tran, itemToInsertInt, this.IndexPosition))
+                    int itemToInsert = rhToInsert.GetField<int>(this.IndexPosition);
+                    if (page.BinarySearchElementPosition<int>(itemToInsert, this.IndexPosition, tran) != -1)
                     {
                         throw new KeyAlreadyExists();
                     }
@@ -567,6 +560,46 @@ namespace DataStructures
             }
 
             public Action<MixedPage, RowHolder, ITransaction> HandleString()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class FindChildNode: ColumnTypeHandlerBasicSingle<Func<MixedPage, RowHolder, ITransaction, ulong /* curr page id */>>
+        {
+            public int IndexPosition { get; init; }
+            public int PagePointerRowPosition { get; init; }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleDouble()
+            {
+                return this.HandleGeneric<double>();
+            }
+
+            private Func<MixedPage, RowHolder, ITransaction, ulong> HandleGeneric<T>() where T: unmanaged, IComparable<T>
+            {
+                return (MixedPage page, RowHolder rhToInsert, ITransaction tran) =>
+                {
+                    T fieldToCompare = rhToInsert.GetField<T>(this.IndexPosition);
+
+                    int elemPos = page.BinarySearchFindOrBiggestSmaller<T>(fieldToCompare, this.IndexPosition, tran);
+
+                    if (elemPos == -1)
+                    {
+                        return page.PrevPageId();
+                    }
+                    else
+                    {
+                        return page.GetFieldAt<ulong>(elemPos, this.PagePointerRowPosition, tran);
+                    }
+                };
+            }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleInt()
+            {
+                return this.HandleGeneric<int>();
+            }
+
+            public Func<MixedPage, RowHolder, ITransaction, ulong> HandleString()
             {
                 throw new NotImplementedException();
             }
