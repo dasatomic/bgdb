@@ -2,12 +2,14 @@
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 
 namespace PerfExperiments
 {
+    [SimpleJob(runtimeMoniker: RuntimeMoniker.Net60)]
     public class SimdSum
     {
-        [Params(100, 1000, 100_000, 1_000_000, 10_000_000)]
+        [Params(100_000, 1_000_000, 10_000_000)]
         public int ItemNum;
 
         public long[] ArrayItems;
@@ -26,7 +28,7 @@ namespace PerfExperiments
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         public void NaiveSum()
         {
             long result = 0;
@@ -106,7 +108,7 @@ namespace PerfExperiments
         [Benchmark]
         public unsafe long IntrinsicsInt()
         {
-            int vectorSize = 256 / 8 / 4;
+            int vectorSize = Vector256<int>.Count;
             var accVector = Vector256<int>.Zero;
 
             fixed (int* ptr = this.ArrayItemsInt)

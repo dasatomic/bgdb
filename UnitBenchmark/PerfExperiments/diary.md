@@ -79,3 +79,37 @@ Let's measure on Ints as well:
 
 On int on 10M there is 2.5X improvement. Again, I expected more than this.
 Again, this on x1600 let's try something else...
+
+On work machine:
+|        Method |  ItemNum |            Mean |         Error |        StdDev |            Median |
+|-------------- |--------- |----------------:|--------------:|--------------:|------------------:|
+|      NaiveSum |      100 |        65.62 ns |      27.92 ns |      80.56 ns |         0.0000 ns |
+|   NaiveSumInt |      100 |        32.00 ns |      19.81 ns |      58.40 ns |         0.0000 ns |
+|     VectorSum |      100 |        49.00 ns |      23.86 ns |      70.35 ns |         0.0000 ns |
+|    Intrinsics |      100 |       155.00 ns |      23.80 ns |      70.17 ns |       100.0000 ns |
+| IntrinsicsInt |      100 |        39.39 ns |      19.37 ns |      56.82 ns |         0.0000 ns |
+|      NaiveSum |     1000 |       479.80 ns |      48.46 ns |     142.13 ns |       400.0000 ns |
+|   NaiveSumInt |     1000 |       334.44 ns |      20.94 ns |      58.37 ns |       300.0000 ns |
+|     VectorSum |     1000 |       364.89 ns |      50.02 ns |     142.71 ns |       300.0000 ns |
+|    Intrinsics |     1000 |       215.56 ns |      23.39 ns |      65.19 ns |       200.0000 ns |
+| IntrinsicsInt |     1000 |       173.40 ns |      29.16 ns |      83.18 ns |       200.0000 ns |
+|      NaiveSum |   100000 |    49,357.00 ns |   4,212.94 ns |  12,421.95 ns |    48,650.0000 ns |
+|   NaiveSumInt |   100000 |    42,801.00 ns |   2,557.41 ns |   7,540.59 ns |    44,900.0000 ns |
+|     VectorSum |   100000 |    40,921.00 ns |   3,688.42 ns |  10,875.38 ns |    42,800.0000 ns |
+|    Intrinsics |   100000 |    33,129.29 ns |   2,708.17 ns |   7,942.60 ns |    33,400.0000 ns |
+| IntrinsicsInt |   100000 |    17,464.00 ns |   2,204.31 ns |   6,499.46 ns |    20,400.0000 ns |
+|      NaiveSum |  1000000 |   652,201.00 ns |  30,937.31 ns |  91,219.37 ns |   702,900.0000 ns |
+|   NaiveSumInt |  1000000 |   413,126.00 ns |  17,299.21 ns |  51,007.12 ns |   420,050.0000 ns |
+|     VectorSum |  1000000 |   564,582.00 ns |  29,520.90 ns |  87,043.03 ns |   606,800.0000 ns |
+|    Intrinsics |  1000000 |   480,801.00 ns |  32,447.18 ns |  95,671.24 ns |   489,350.0000 ns |
+| IntrinsicsInt |  1000000 |   222,339.00 ns |  20,650.21 ns |  60,887.62 ns |   264,650.0000 ns |
+|      NaiveSum | 10000000 | 7,424,726.67 ns | 109,699.79 ns | 102,613.25 ns | 7,410,900.0000 ns |
+|   NaiveSumInt | 10000000 | 4,559,930.00 ns |  86,161.37 ns |  80,595.40 ns | 4,568,650.0000 ns |
+|     VectorSum | 10000000 | 6,603,115.38 ns |  47,076.08 ns |  39,310.66 ns | 6,607,600.0000 ns |
+|    Intrinsics | 10000000 | 6,249,561.54 ns |  74,947.06 ns |  62,584.19 ns | 6,255,800.0000 ns |
+| IntrinsicsInt | 10000000 | 3,001,692.31 ns |  26,720.73 ns |  22,313.02 ns | 3,004,200.0000 ns |
+
+
+Which is slower?
+
+I still can't say that I understand why do I get only 2x improvement.
