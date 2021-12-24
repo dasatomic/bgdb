@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>PerfExperiments.SimdSum-20211224-163957</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1415 (21H1/May2021Update)
+AMD Ryzen 5 1600X, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=6.0.101
+  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+  Job-FWIMZJ : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+</code></pre>
+<pre><code>InvocationCount=1  UnrollFactor=1  
+</code></pre>
+
+<table>
+<thead><tr><th> Method</th><th>ItemNum</th><th>     Mean</th><th>  Error</th><th> StdDev</th><th>  Median</th>
+</tr>
+</thead><tbody><tr><td>NaiveSum</td><td>100</td><td>134.00 ns</td><td>20.58 ns</td><td>60.67 ns</td><td>100.0 ns</td>
+</tr><tr><td>NaiveSumInt</td><td>100</td><td>71.91 ns</td><td>16.31 ns</td><td>45.20 ns</td><td>100.0 ns</td>
+</tr><tr><td>VectorSum</td><td>100</td><td>79.52 ns</td><td>15.21 ns</td><td>40.60 ns</td><td>100.0 ns</td>
+</tr><tr><td>Intrinsics</td><td>100</td><td>77.78 ns</td><td>19.82 ns</td><td>58.13 ns</td><td>100.0 ns</td>
+</tr><tr><td>IntrinsicsInt</td><td>100</td><td>80.00 ns</td><td>14.43 ns</td><td>40.22 ns</td><td>100.0 ns</td>
+</tr><tr><td>NaiveSum</td><td>1000</td><td>431.03 ns</td><td>23.84 ns</td><td>65.26 ns</td><td>400.0 ns</td>
+</tr><tr><td>NaiveSumInt</td><td>1000</td><td>380.61 ns</td><td>18.85 ns</td><td>54.98 ns</td><td>400.0 ns</td>
+</tr><tr><td>VectorSum</td><td>1000</td><td>277.53 ns</td><td>15.15 ns</td><td>41.98 ns</td><td>300.0 ns</td>
+</tr><tr><td>Intrinsics</td><td>1000</td><td>262.89 ns</td><td>19.47 ns</td><td>56.49 ns</td><td>300.0 ns</td>
+</tr><tr><td>IntrinsicsInt</td><td>1000</td><td>136.17 ns</td><td>17.69 ns</td><td>50.48 ns</td><td>100.0 ns</td>
+</tr><tr><td>NaiveSum</td><td>100000</td><td>36,107.69 ns</td><td>310.98 ns</td><td>259.68 ns</td><td>36,100.0 ns</td>
+</tr><tr><td>NaiveSumInt</td><td>100000</td><td>35,916.67 ns</td><td>91.93 ns</td><td>71.77 ns</td><td>35,900.0 ns</td>
+</tr><tr><td>VectorSum</td><td>100000</td><td>22,587.10 ns</td><td>501.04 ns</td><td>1,421.36 ns</td><td>22,200.0 ns</td>
+</tr><tr><td>Intrinsics</td><td>100000</td><td>17,138.46 ns</td><td>414.79 ns</td><td>1,163.12 ns</td><td>16,800.0 ns</td>
+</tr><tr><td>IntrinsicsInt</td><td>100000</td><td>7,907.87 ns</td><td>230.77 ns</td><td>639.46 ns</td><td>7,600.0 ns</td>
+</tr><tr><td>NaiveSum</td><td>1000000</td><td>750,662.00 ns</td><td>22,445.22 ns</td><td>66,180.24 ns</td><td>756,600.0 ns</td>
+</tr><tr><td>NaiveSumInt</td><td>1000000</td><td>440,271.11 ns</td><td>8,700.22 ns</td><td>16,553.06 ns</td><td>440,200.0 ns</td>
+</tr><tr><td>VectorSum</td><td>1000000</td><td>677,253.12 ns</td><td>20,858.98 ns</td><td>60,182.94 ns</td><td>674,050.0 ns</td>
+</tr><tr><td>Intrinsics</td><td>1000000</td><td>635,924.49 ns</td><td>20,296.74 ns</td><td>59,206.55 ns</td><td>638,800.0 ns</td>
+</tr><tr><td>IntrinsicsInt</td><td>1000000</td><td>305,287.00 ns</td><td>9,270.91 ns</td><td>27,335.48 ns</td><td>312,700.0 ns</td>
+</tr><tr><td>NaiveSum</td><td>10000000</td><td>5,363,800.00 ns</td><td>101,348.33 ns</td><td>79,126.11 ns</td><td>5,376,250.0 ns</td>
+</tr><tr><td>NaiveSumInt</td><td>10000000</td><td>4,007,873.68 ns</td><td>78,742.73 ns</td><td>87,522.34 ns</td><td>3,964,800.0 ns</td>
+</tr><tr><td>VectorSum</td><td>10000000</td><td>4,611,626.00 ns</td><td>124,039.84 ns</td><td>365,734.26 ns</td><td>4,440,600.0 ns</td>
+</tr><tr><td>Intrinsics</td><td>10000000</td><td>4,253,493.00 ns</td><td>104,953.45 ns</td><td>309,457.60 ns</td><td>4,070,400.0 ns</td>
+</tr><tr><td>IntrinsicsInt</td><td>10000000</td><td>2,199,654.55 ns</td><td>55,759.99 ns</td><td>163,534.41 ns</td><td>2,135,200.0 ns</td>
+</tr></tbody></table>
+</body>
+</html>
