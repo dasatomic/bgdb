@@ -64,5 +64,6 @@ Findings:
 5. For regular loop this degradation is smaller - it's not always linear but slowdown between 100k and 1M is ~13x.
 6. Memory becomes the bottleneck if we have larger arrays. SIMD gives 5X improvement < 100k elems. On 1M it is less than 2X.
 7. Manual loop unfolding somewhat helps (gives 1-2%). Not worth it.
+8. When added benchmark on SIMDs over bytes (32X potential), I get 10X - to even ~20X improvement. It is worthwhile to use the right type.
 
 I wanted to see near 8X improvement but got ~5x. Altough, it may be interesting to measure what we could get if we empoy all CPUs (8 x 5 => aim at 40x).

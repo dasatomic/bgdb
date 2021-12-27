@@ -18,17 +18,21 @@ namespace PerfExperiments
 
         public long[] ArrayItemsLong;
         public int[] ArrayItemsInt;
+        public byte[] ArrayItemsBytes;
 
         [IterationSetup]
         public void CreateArray()
         {
             this.ArrayItemsLong = new long[this.ItemNum];
             this.ArrayItemsInt = new int[this.ItemNum];
+            this.ArrayItemsBytes = new byte[this.ItemNum];
 
             for (int i = 0; i < this.ArrayItemsLong.Length; i++)
             {
                 this.ArrayItemsLong[i] = i * 2;
                 this.ArrayItemsInt[i] = i * 2;
+                // don't care about overflows.
+                this.ArrayItemsBytes[i] = (byte)(i * 2);
             }
         }
 
@@ -139,6 +143,34 @@ namespace PerfExperiments
 
             int result = 0;
             var temp = stackalloc int[vectorSize];
+
+            Avx2.Store(temp, accVector);
+
+            for (int i = 0; i < vectorSize; i++)
+            {
+                result += temp[i];
+            }
+
+            return result;
+        }
+
+        [Benchmark]
+        public unsafe int IntrinsicsByte()
+        {
+            int vectorSize = Vector256<byte>.Count;
+            var accVector = Vector256<byte>.Zero;
+
+            fixed (byte* ptr = this.ArrayItemsBytes)
+            {
+                for (int i = 0; i < this.ArrayItemsInt.Length; i += vectorSize)
+                {
+                    Vector256<byte> v = Avx2.LoadVector256(ptr + i);
+                    accVector = Avx2.Add(accVector, v);
+                }
+            }
+
+            int result = 0;
+            var temp = stackalloc byte[vectorSize];
 
             Avx2.Store(temp, accVector);
 
