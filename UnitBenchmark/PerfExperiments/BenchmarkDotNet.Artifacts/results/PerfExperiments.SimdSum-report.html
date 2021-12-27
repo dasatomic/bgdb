@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
 <meta charset='utf-8' />
-<title>PerfExperiments.SimdSum-20211224-171515</title>
+<title>PerfExperiments.SimdSum-20211227-142315</title>
 
 <style type="text/css">
 	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
@@ -24,23 +24,58 @@ UnrollFactor=1
 </code></pre>
 
 <table>
-<thead><tr><th> Method</th><th>ItemNum</th><th>  Mean</th><th>Error</th><th>StdDev</th><th>Median</th><th>Ratio</th><th>RatioSD</th>
+<thead><tr><th>           Method</th><th>ItemNum</th><th>     Mean</th><th> Error</th><th> StdDev</th><th>   Median</th><th>Ratio</th><th>RatioSD</th>
 </tr>
-</thead><tbody><tr><td>NaiveSum</td><td>100000</td><td>38.244 &mu;s</td><td>1.3006 &mu;s</td><td>3.4940 &mu;s</td><td>36.700 &mu;s</td><td>1.00</td><td>0.00</td>
-</tr><tr><td>NaiveSumInt</td><td>100000</td><td>35.900 &mu;s</td><td>0.1829 &mu;s</td><td>0.1528 &mu;s</td><td>35.900 &mu;s</td><td>0.96</td><td>0.05</td>
-</tr><tr><td>VectorSum</td><td>100000</td><td>22.963 &mu;s</td><td>0.6264 &mu;s</td><td>1.7042 &mu;s</td><td>22.350 &mu;s</td><td>0.61</td><td>0.07</td>
-</tr><tr><td>Intrinsics</td><td>100000</td><td>28.212 &mu;s</td><td>4.5077 &mu;s</td><td>12.7877 &mu;s</td><td>23.900 &mu;s</td><td>0.73</td><td>0.35</td>
-</tr><tr><td>IntrinsicsInt</td><td>100000</td><td>7.878 &mu;s</td><td>0.2413 &mu;s</td><td>0.6524 &mu;s</td><td>7.600 &mu;s</td><td>0.21</td><td>0.03</td>
-</tr><tr><td>NaiveSum</td><td>1000000</td><td>724.775 &mu;s</td><td>22.3143 &mu;s</td><td>65.4439 &mu;s</td><td>717.400 &mu;s</td><td>1.00</td><td>0.00</td>
-</tr><tr><td>NaiveSumInt</td><td>1000000</td><td>474.471 &mu;s</td><td>14.5889 &mu;s</td><td>42.5565 &mu;s</td><td>468.200 &mu;s</td><td>0.66</td><td>0.08</td>
-</tr><tr><td>VectorSum</td><td>1000000</td><td>676.879 &mu;s</td><td>23.9960 &mu;s</td><td>69.2339 &mu;s</td><td>681.100 &mu;s</td><td>0.94</td><td>0.11</td>
-</tr><tr><td>Intrinsics</td><td>1000000</td><td>635.367 &mu;s</td><td>22.3261 &mu;s</td><td>65.1262 &mu;s</td><td>640.950 &mu;s</td><td>0.88</td><td>0.11</td>
-</tr><tr><td>IntrinsicsInt</td><td>1000000</td><td>323.934 &mu;s</td><td>12.1546 &mu;s</td><td>35.4555 &mu;s</td><td>325.950 &mu;s</td><td>0.45</td><td>0.06</td>
-</tr><tr><td>NaiveSum</td><td>10000000</td><td>5,831.071 &mu;s</td><td>157.2013 &mu;s</td><td>461.0442 &mu;s</td><td>5,647.900 &mu;s</td><td>1.00</td><td>0.00</td>
-</tr><tr><td>NaiveSumInt</td><td>10000000</td><td>4,101.757 &mu;s</td><td>79.5378 &mu;s</td><td>167.7723 &mu;s</td><td>4,045.200 &mu;s</td><td>0.70</td><td>0.04</td>
-</tr><tr><td>VectorSum</td><td>10000000</td><td>4,898.201 &mu;s</td><td>179.1404 &mu;s</td><td>519.7189 &mu;s</td><td>4,792.500 &mu;s</td><td>0.85</td><td>0.12</td>
-</tr><tr><td>Intrinsics</td><td>10000000</td><td>4,400.153 &mu;s</td><td>145.7004 &mu;s</td><td>425.0148 &mu;s</td><td>4,193.600 &mu;s</td><td>0.76</td><td>0.09</td>
-</tr><tr><td>IntrinsicsInt</td><td>10000000</td><td>2,243.820 &mu;s</td><td>71.2150 &mu;s</td><td>209.9789 &mu;s</td><td>2,143.500 &mu;s</td><td>0.39</td><td>0.04</td>
+</thead><tbody><tr><td>NaiveSumLong</td><td>8000</td><td>2,968.8 ns</td><td>48.74 ns</td><td>47.87 ns</td><td>3,000.0 ns</td><td>1.00</td><td>0.02</td>
+</tr><tr><td>NaiveSumInt</td><td>8000</td><td>2,943.5 ns</td><td>62.29 ns</td><td>78.78 ns</td><td>2,900.0 ns</td><td>1.00</td><td>0.00</td>
+</tr><tr><td>LinqSumLong</td><td>8000</td><td>61,530.8 ns</td><td>294.90 ns</td><td>246.25 ns</td><td>61,500.0 ns</td><td>20.79</td><td>0.47</td>
+</tr><tr><td>LinqSumInt</td><td>8000</td><td>61,523.1 ns</td><td>321.16 ns</td><td>268.18 ns</td><td>61,500.0 ns</td><td>20.78</td><td>0.43</td>
+</tr><tr><td>VectorSumLong</td><td>8000</td><td>1,639.5 ns</td><td>55.61 ns</td><td>151.29 ns</td><td>1,700.0 ns</td><td>0.55</td><td>0.06</td>
+</tr><tr><td>VectorSumInt</td><td>8000</td><td>832.3 ns</td><td>29.48 ns</td><td>83.62 ns</td><td>900.0 ns</td><td>0.28</td><td>0.03</td>
+</tr><tr><td>IntrinsicsSumLong</td><td>8000</td><td>1,355.4 ns</td><td>31.10 ns</td><td>83.01 ns</td><td>1,400.0 ns</td><td>0.46</td><td>0.03</td>
+</tr><tr><td>IntrinsicsInt</td><td>8000</td><td>739.8 ns</td><td>23.90 ns</td><td>67.79 ns</td><td>700.0 ns</td><td>0.25</td><td>0.03</td>
+</tr><tr><td>IntrinsicsIntAligned</td><td>8000</td><td>672.2 ns</td><td>22.19 ns</td><td>61.86 ns</td><td>700.0 ns</td><td>0.22</td><td>0.02</td>
+</tr><tr><td>IntrinsicsIntLoopUnfold</td><td>8000</td><td>642.9 ns</td><td>20.69 ns</td><td>58.01 ns</td><td>600.0 ns</td><td>0.22</td><td>0.02</td>
+</tr><tr><td>NaiveSumLong</td><td>10000</td><td>3,707.7 ns</td><td>76.70 ns</td><td>64.05 ns</td><td>3,700.0 ns</td><td>1.01</td><td>0.03</td>
+</tr><tr><td>NaiveSumInt</td><td>10000</td><td>3,673.3 ns</td><td>75.23 ns</td><td>70.37 ns</td><td>3,700.0 ns</td><td>1.00</td><td>0.00</td>
+</tr><tr><td>LinqSumLong</td><td>10000</td><td>76,584.6 ns</td><td>659.27 ns</td><td>550.52 ns</td><td>76,400.0 ns</td><td>20.88</td><td>0.47</td>
+</tr><tr><td>LinqSumInt</td><td>10000</td><td>76,664.3 ns</td><td>252.66 ns</td><td>223.98 ns</td><td>76,700.0 ns</td><td>20.89</td><td>0.42</td>
+</tr><tr><td>VectorSumLong</td><td>10000</td><td>2,014.4 ns</td><td>71.58 ns</td><td>207.66 ns</td><td>2,100.0 ns</td><td>0.57</td><td>0.04</td>
+</tr><tr><td>VectorSumInt</td><td>10000</td><td>1,041.1 ns</td><td>43.58 ns</td><td>125.05 ns</td><td>1,100.0 ns</td><td>0.28</td><td>0.04</td>
+</tr><tr><td>IntrinsicsSumLong</td><td>10000</td><td>1,680.9 ns</td><td>46.62 ns</td><td>133.02 ns</td><td>1,700.0 ns</td><td>0.46</td><td>0.03</td>
+</tr><tr><td>IntrinsicsInt</td><td>10000</td><td>957.4 ns</td><td>26.83 ns</td><td>76.54 ns</td><td>950.0 ns</td><td>0.27</td><td>0.02</td>
+</tr><tr><td>IntrinsicsIntAligned</td><td>10000</td><td>838.9 ns</td><td>21.97 ns</td><td>61.25 ns</td><td>800.0 ns</td><td>0.23</td><td>0.01</td>
+</tr><tr><td>IntrinsicsIntLoopUnfold</td><td>10000</td><td>754.7 ns</td><td>20.82 ns</td><td>59.73 ns</td><td>700.0 ns</td><td>0.21</td><td>0.02</td>
+</tr><tr><td>NaiveSumLong</td><td>100000</td><td>36,235.7 ns</td><td>571.12 ns</td><td>506.28 ns</td><td>36,000.0 ns</td><td>1.01</td><td>0.02</td>
+</tr><tr><td>NaiveSumInt</td><td>100000</td><td>36,041.7 ns</td><td>275.57 ns</td><td>215.15 ns</td><td>36,000.0 ns</td><td>1.00</td><td>0.00</td>
+</tr><tr><td>LinqSumLong</td><td>100000</td><td>752,685.7 ns</td><td>1,917.89 ns</td><td>1,700.16 ns</td><td>753,200.0 ns</td><td>20.89</td><td>0.12</td>
+</tr><tr><td>LinqSumInt</td><td>100000</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>?</td><td>?</td>
+</tr><tr><td>VectorSumLong</td><td>100000</td><td>17,823.1 ns</td><td>492.06 ns</td><td>1,379.78 ns</td><td>17,900.0 ns</td><td>0.49</td><td>0.04</td>
+</tr><tr><td>VectorSumInt</td><td>100000</td><td>9,194.6 ns</td><td>410.43 ns</td><td>1,157.62 ns</td><td>9,200.0 ns</td><td>0.24</td><td>0.02</td>
+</tr><tr><td>IntrinsicsSumLong</td><td>100000</td><td>19,179.6 ns</td><td>978.18 ns</td><td>2,853.39 ns</td><td>18,750.0 ns</td><td>0.54</td><td>0.09</td>
+</tr><tr><td>IntrinsicsInt</td><td>100000</td><td>8,592.6 ns</td><td>413.55 ns</td><td>1,179.87 ns</td><td>8,350.0 ns</td><td>0.24</td><td>0.03</td>
+</tr><tr><td>IntrinsicsIntAligned</td><td>100000</td><td>8,056.5 ns</td><td>316.26 ns</td><td>892.00 ns</td><td>7,750.0 ns</td><td>0.23</td><td>0.03</td>
+</tr><tr><td>IntrinsicsIntLoopUnfold</td><td>100000</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>?</td><td>?</td>
+</tr><tr><td>NaiveSumLong</td><td>1000000</td><td>773,884.7 ns</td><td>21,603.99 ns</td><td>63,019.86 ns</td><td>798,050.0 ns</td><td>1.70</td><td>0.17</td>
+</tr><tr><td>NaiveSumInt</td><td>1000000</td><td>455,775.8 ns</td><td>10,957.14 ns</td><td>30,725.00 ns</td><td>451,700.0 ns</td><td>1.00</td><td>0.00</td>
+</tr><tr><td>LinqSumLong</td><td>1000000</td><td>4,328,846.1 ns</td><td>97,170.70 ns</td><td>269,259.56 ns</td><td>4,270,800.0 ns</td><td>9.53</td><td>0.92</td>
+</tr><tr><td>LinqSumInt</td><td>1000000</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>?</td><td>?</td>
+</tr><tr><td>VectorSumLong</td><td>1000000</td><td>657,319.4 ns</td><td>19,995.60 ns</td><td>58,328.11 ns</td><td>672,550.0 ns</td><td>1.45</td><td>0.15</td>
+</tr><tr><td>VectorSumInt</td><td>1000000</td><td>315,421.9 ns</td><td>9,567.91 ns</td><td>27,605.62 ns</td><td>314,650.0 ns</td><td>0.70</td><td>0.08</td>
+</tr><tr><td>IntrinsicsSumLong</td><td>1000000</td><td>638,812.0 ns</td><td>19,935.76 ns</td><td>58,781.05 ns</td><td>654,300.0 ns</td><td>1.40</td><td>0.16</td>
+</tr><tr><td>IntrinsicsInt</td><td>1000000</td><td>304,032.7 ns</td><td>10,703.94 ns</td><td>31,223.90 ns</td><td>302,200.0 ns</td><td>0.67</td><td>0.09</td>
+</tr><tr><td>IntrinsicsIntAligned</td><td>1000000</td><td>301,453.5 ns</td><td>9,863.19 ns</td><td>28,927.02 ns</td><td>299,600.0 ns</td><td>0.66</td><td>0.08</td>
+</tr><tr><td>IntrinsicsIntLoopUnfold</td><td>1000000</td><td>292,272.7 ns</td><td>8,450.70 ns</td><td>24,784.43 ns</td><td>294,200.0 ns</td><td>0.64</td><td>0.07</td>
+</tr><tr><td>NaiveSumLong</td><td>10000000</td><td>5,354,478.9 ns</td><td>99,199.57 ns</td><td>110,260.05 ns</td><td>5,343,200.0 ns</td><td>1.35</td><td>0.03</td>
+</tr><tr><td>NaiveSumInt</td><td>10000000</td><td>3,948,358.3 ns</td><td>50,021.50 ns</td><td>39,053.49 ns</td><td>3,936,450.0 ns</td><td>1.00</td><td>0.00</td>
+</tr><tr><td>LinqSumLong</td><td>10000000</td><td>42,487,961.5 ns</td><td>54,753.78 ns</td><td>45,721.89 ns</td><td>42,493,800.0 ns</td><td>10.76</td><td>0.11</td>
+</tr><tr><td>LinqSumInt</td><td>10000000</td><td>NA</td><td>NA</td><td>NA</td><td>NA</td><td>?</td><td>?</td>
+</tr><tr><td>VectorSumLong</td><td>10000000</td><td>4,032,097.2 ns</td><td>79,478.01 ns</td><td>132,789.90 ns</td><td>3,991,050.0 ns</td><td>1.03</td><td>0.04</td>
+</tr><tr><td>VectorSumInt</td><td>10000000</td><td>2,066,835.0 ns</td><td>41,003.76 ns</td><td>47,219.99 ns</td><td>2,066,200.0 ns</td><td>0.52</td><td>0.01</td>
+</tr><tr><td>IntrinsicsSumLong</td><td>10000000</td><td>3,900,585.7 ns</td><td>51,143.67 ns</td><td>45,337.54 ns</td><td>3,891,050.0 ns</td><td>0.99</td><td>0.01</td>
+</tr><tr><td>IntrinsicsInt</td><td>10000000</td><td>2,020,721.1 ns</td><td>37,865.03 ns</td><td>42,086.88 ns</td><td>2,030,000.0 ns</td><td>0.51</td><td>0.01</td>
+</tr><tr><td>IntrinsicsIntAligned</td><td>10000000</td><td>2,043,932.7 ns</td><td>39,462.22 ns</td><td>81,496.32 ns</td><td>2,024,550.0 ns</td><td>0.52</td><td>0.02</td>
+</tr><tr><td>IntrinsicsIntLoopUnfold</td><td>10000000</td><td>1,991,828.0 ns</td><td>39,609.40 ns</td><td>52,877.41 ns</td><td>1,995,600.0 ns</td><td>0.50</td><td>0.02</td>
 </tr></tbody></table>
 </body>
 </html>

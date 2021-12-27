@@ -1,115 +1,68 @@
-Starting with long measurements
+|                  Method |  ItemNum |            Mean |         Error |          StdDev |          Median | Ratio | RatioSD |
+|------------------------ |--------- |----------------:|--------------:|----------------:|----------------:|------:|--------:|
+|            NaiveSumLong |     8000 |      2,952.9 ns |      60.79 ns |        62.43 ns |      2,900.0 ns |  1.01 |    0.03 |
+|             NaiveSumInt |     8000 |      2,929.2 ns |      62.02 ns |        80.65 ns |      2,900.0 ns |  1.00 |    0.00 |
+|             LinqSumLong |     8000 |     61,278.6 ns |     198.76 ns |       176.19 ns |     61,250.0 ns | 20.84 |    0.59 |
+|              LinqSumInt |     8000 |     75,170.0 ns |   4,917.40 ns |    14,499.07 ns |     62,050.0 ns | 25.20 |    4.82 |
+|           VectorSumLong |     8000 |      1,682.0 ns |      37.52 ns |       103.97 ns |      1,700.0 ns |  0.56 |    0.04 |
+|            VectorSumInt |     8000 |        833.3 ns |      29.55 ns |        83.84 ns |        800.0 ns |  0.30 |    0.04 |
+|       IntrinsicsSumLong |     8000 |      1,360.8 ns |      31.06 ns |        80.73 ns |      1,400.0 ns |  0.47 |    0.04 |
+|           IntrinsicsInt |     8000 |        737.4 ns |      23.15 ns |        67.89 ns |        700.0 ns |  0.25 |    0.02 |
+|    IntrinsicsIntAligned |     8000 |        696.2 ns |       9.40 ns |        19.42 ns |        700.0 ns |  0.24 |    0.01 |
+| IntrinsicsIntLoopUnfold |     8000 |        677.6 ns |      18.76 ns |        54.74 ns |        700.0 ns |  0.23 |    0.02 |
+|                         |          |                 |               |                 |                 |       |         |
+|            NaiveSumLong |    10000 |      3,583.3 ns |      49.86 ns |        38.92 ns |      3,600.0 ns |  1.00 |    0.02 |
+|             NaiveSumInt |    10000 |      3,578.6 ns |      48.03 ns |        42.58 ns |      3,600.0 ns |  1.00 |    0.00 |
+|             LinqSumLong |    10000 |     76,321.4 ns |     230.67 ns |       204.48 ns |     76,300.0 ns | 21.33 |    0.25 |
+|              LinqSumInt |    10000 |     76,453.8 ns |     205.19 ns |       171.34 ns |     76,500.0 ns | 21.33 |    0.23 |
+|           VectorSumLong |    10000 |      1,952.6 ns |      70.02 ns |       203.15 ns |      2,000.0 ns |  0.55 |    0.05 |
+|            VectorSumInt |    10000 |        980.4 ns |      36.10 ns |       104.72 ns |      1,000.0 ns |  0.28 |    0.03 |
+|       IntrinsicsSumLong |    10000 |      1,667.7 ns |      36.24 ns |        82.53 ns |      1,700.0 ns |  0.48 |    0.03 |
+|           IntrinsicsInt |    10000 |        884.5 ns |      25.53 ns |        74.08 ns |        900.0 ns |  0.25 |    0.02 |
+|    IntrinsicsIntAligned |    10000 |        855.4 ns |      21.01 ns |        52.71 ns |        900.0 ns |  0.24 |    0.02 |
+| IntrinsicsIntLoopUnfold |    10000 |        835.4 ns |      24.11 ns |        69.55 ns |        800.0 ns |  0.24 |    0.02 |
+|                         |          |                 |               |                 |                 |       |         |
+|            NaiveSumLong |   100000 |     36,650.0 ns |     733.32 ns |       844.49 ns |     36,250.0 ns |  1.01 |    0.02 |
+|             NaiveSumInt |   100000 |     36,092.9 ns |     200.16 ns |       177.44 ns |     36,050.0 ns |  1.00 |    0.00 |
+|             LinqSumLong |   100000 |    752,585.7 ns |   1,959.30 ns |     1,736.87 ns |    752,700.0 ns | 20.85 |    0.10 |
+|              LinqSumInt |   100000 |              NA |            NA |              NA |              NA |     ? |       ? |
+|           VectorSumLong |   100000 |     18,005.3 ns |     701.07 ns |     2,000.18 ns |     17,850.0 ns |  0.52 |    0.07 |
+|            VectorSumInt |   100000 |      9,094.4 ns |     355.67 ns |       991.46 ns |      8,900.0 ns |  0.26 |    0.03 |
+|       IntrinsicsSumLong |   100000 |     17,433.3 ns |     527.24 ns |     1,521.20 ns |     17,050.0 ns |  0.49 |    0.05 |
+|           IntrinsicsInt |   100000 |      8,001.1 ns |     266.26 ns |       759.67 ns |      7,750.0 ns |  0.22 |    0.03 |
+|    IntrinsicsIntAligned |   100000 |      7,905.6 ns |     226.01 ns |       630.03 ns |      7,600.0 ns |  0.22 |    0.02 |
+| IntrinsicsIntLoopUnfold |   100000 |      7,240.0 ns |     324.19 ns |       930.16 ns |      6,700.0 ns |  0.20 |    0.02 |
+|                         |          |                 |               |                 |                 |       |         |
+|            NaiveSumLong |  1000000 |    784,767.3 ns |  16,012.76 ns |    46,709.97 ns |    792,850.0 ns |  1.76 |    0.14 |
+|             NaiveSumInt |  1000000 |    446,201.1 ns |   8,727.66 ns |    23,891.83 ns |    443,900.0 ns |  1.00 |    0.00 |
+|             LinqSumLong |  1000000 |  7,762,413.3 ns |  92,495.74 ns |    86,520.57 ns |  7,778,300.0 ns | 17.41 |    0.97 |
+|              LinqSumInt |  1000000 |              NA |            NA |              NA |              NA |     ? |       ? |
+|           VectorSumLong |  1000000 |    680,035.4 ns |  15,976.99 ns |    46,857.73 ns |    693,500.0 ns |  1.53 |    0.13 |
+|            VectorSumInt |  1000000 |    308,986.6 ns |   9,594.88 ns |    27,836.48 ns |    304,600.0 ns |  0.70 |    0.08 |
+|       IntrinsicsSumLong |  1000000 |    650,190.9 ns |  20,091.81 ns |    58,925.81 ns |    667,700.0 ns |  1.47 |    0.16 |
+|           IntrinsicsInt |  1000000 |    308,260.4 ns |   8,235.07 ns |    23,760.06 ns |    310,900.0 ns |  0.69 |    0.07 |
+|    IntrinsicsIntAligned |  1000000 |    302,336.8 ns |  10,240.86 ns |    29,382.95 ns |    303,000.0 ns |  0.68 |    0.07 |
+| IntrinsicsIntLoopUnfold |  1000000 |    285,735.4 ns |   8,668.44 ns |    25,423.04 ns |    280,400.0 ns |  0.64 |    0.06 |
+|                         |          |                 |               |                 |                 |       |         |
+|            NaiveSumLong | 10000000 |  5,457,819.0 ns | 108,532.79 ns |   129,200.56 ns |  5,453,100.0 ns |  1.36 |    0.05 |
+|             NaiveSumInt | 10000000 |  4,010,833.3 ns |  79,652.18 ns |    74,506.70 ns |  3,995,300.0 ns |  1.00 |    0.00 |
+|             LinqSumLong | 10000000 | 43,457,847.7 ns | 861,543.86 ns | 2,343,893.61 ns | 42,850,950.0 ns | 11.41 |    0.35 |
+|              LinqSumInt | 10000000 |              NA |            NA |              NA |              NA |     ? |       ? |
+|           VectorSumLong | 10000000 |  4,046,892.3 ns |  75,564.80 ns |    63,100.03 ns |  4,037,800.0 ns |  1.01 |    0.02 |
+|            VectorSumInt | 10000000 |  2,084,181.2 ns |  41,241.23 ns |    64,207.63 ns |  2,078,950.0 ns |  0.52 |    0.02 |
+|       IntrinsicsSumLong | 10000000 |  4,051,023.1 ns |  51,500.20 ns |    43,005.00 ns |  4,055,300.0 ns |  1.01 |    0.02 |
+|           IntrinsicsInt | 10000000 |  2,067,927.0 ns |  40,797.78 ns |    69,277.73 ns |  2,058,300.0 ns |  0.52 |    0.02 |
+|    IntrinsicsIntAligned | 10000000 |  2,051,221.2 ns |  40,815.61 ns |    64,737.88 ns |  2,036,700.0 ns |  0.51 |    0.02 |
+| IntrinsicsIntLoopUnfold | 10000000 |  2,048,394.6 ns |  36,936.36 ns |    62,720.75 ns |  2,051,100.0 ns |  0.52 |    0.02 |
 
-|    Method | ItemNum |            Mean |         Error |        StdDev |         Median |
-|---------- |-------- |----------------:|--------------:|--------------:|---------------:|
-|  NaiveSum |     100 |        84.95 ns |      12.67 ns |      35.95 ns |       100.0 ns |
-|   LinqSum |     100 |     2,169.79 ns |      95.96 ns |     276.87 ns |     2,100.0 ns |
-| VectorSum |     100 |        72.62 ns |      16.70 ns |      44.86 ns |       100.0 ns |
-|  NaiveSum |    1000 |       446.88 ns |      21.89 ns |      63.17 ns |       400.0 ns |
-|   LinqSum |    1000 |     8,826.32 ns |     174.46 ns |     193.91 ns |     8,800.0 ns |
-| VectorSum |    1000 |       276.84 ns |      22.42 ns |      64.33 ns |       300.0 ns |
-|  NaiveSum |  100000 |    36,637.50 ns |     712.05 ns |     925.87 ns |    36,200.0 ns |
-|   LinqSum |  100000 |   755,141.67 ns |   8,742.81 ns |   6,825.81 ns |   753,250.0 ns |
-| VectorSum |  100000 |    23,005.38 ns |   1,187.87 ns |   3,369.79 ns |    21,600.0 ns |
-|  NaiveSum | 1000000 |   725,492.55 ns |  16,969.80 ns |  48,415.80 ns |   723,300.0 ns |
-|   LinqSum | 1000000 | 4,620,065.91 ns | 113,800.63 ns | 313,439.98 ns | 4,706,950.0 ns |
-| VectorSum | 1000000 |   632,921.88 ns |  16,063.48 ns |  46,346.83 ns |   635,550.0 ns |
+Findings:
 
+1. LINQ is just so slow => 20x slower than simple for loop.
+2. SIMD over ints gives 4X-5X improvement if we keep hitting L1/L2 cache. Cpu I am using has 64kbs per core which means that ~8k of ints can fit it. For longs we see ~2x improvement. Avx2 can execute over 256 bits (4 longs, 8 ints) so I expected a bit better results.
+3. I expected to see bigger diff between 8k rows and 100k rows since 8k fits fully into L1 cache.
+4. Perf is stable < 100k elems. e.g. diff between 10k and 100k is ~10x. But 1M is 40X slower than 100k (for SIMD).
+5. For regular loop this degradation is smaller - it's not always linear but slowdown between 100k and 1M is ~13x.
+6. Memory becomes the bottleneck if we have larger arrays. SIMD gives 5X improvement < 100k elems. On 1M it is less than 2X.
+7. Manual loop unfolding somewhat helps (gives 1-2%). Not worth it.
 
-parallel count for long is 4.
-
-- [x] Understand what parallel count is.
-
-For now it doesn't seem that vector is providing much value at least not compared to pure sum.
-
-Also, it is interesting that this is all well below 1ms. So 1M sum is < 1ms.
-
-|     Method |   ItemNum |             Mean |            Error |           StdDev |          Median |
-|----------- |---------- |-----------------:|-----------------:|-----------------:|----------------:|
-|   NaiveSum |       100 |         85.56 ns |        12.681 ns |        35.351 ns |        100.0 ns |
-|  VectorSum |       100 |        142.86 ns |        22.014 ns |        64.216 ns |        100.0 ns |
-| Intrinsics |       100 |        100.00 ns |         0.000 ns |         0.000 ns |        100.0 ns |
-|   NaiveSum |      1000 |        384.21 ns |        14.421 ns |        36.707 ns |        400.0 ns |
-|  VectorSum |      1000 |        291.36 ns |        10.732 ns |        28.273 ns |        300.0 ns |
-| Intrinsics |      1000 |        300.00 ns |         0.000 ns |         0.000 ns |        300.0 ns |
-|   NaiveSum |    100000 |     36,066.67 ns |       310.557 ns |       242.462 ns |     36,000.0 ns |
-|  VectorSum |    100000 |     21,038.37 ns |       462.755 ns |     1,258.960 ns |     21,400.0 ns |
-| Intrinsics |    100000 |     15,976.47 ns |       323.423 ns |       522.267 ns |     16,200.0 ns |
-|   NaiveSum |   1000000 |    715,952.81 ns |    15,776.795 ns |    43,717.424 ns |    717,100.0 ns |
-|  VectorSum |   1000000 |    632,353.26 ns |    12,924.944 ns |    36,455.035 ns |    635,950.0 ns |
-| Intrinsics |   1000000 |    616,650.00 ns |    12,165.369 ns |    20,984.663 ns |    614,250.0 ns |
-|   NaiveSum | 100000000 | 59,280,030.61 ns | 1,826,978.729 ns | 5,329,382.705 ns | 58,779,900.0 ns |
-|  VectorSum | 100000000 | 44,970,254.00 ns | 1,205,260.638 ns | 3,553,738.184 ns | 42,771,000.0 ns |
-| Intrinsics | 100000000 | 42,602,139.00 ns | 1,128,095.514 ns | 3,326,215.076 ns | 41,719,550.0 ns |
-
-Still, improvement is pretty small (20%)...
-
-Nice thing is that we can do 100M in 40ms.
-
-Let's measure on Ints as well:
-
-|        Method |  ItemNum |            Mean |         Error |        StdDev |         Median |
-|-------------- |--------- |----------------:|--------------:|--------------:|---------------:|
-|      NaiveSum |      100 |       134.00 ns |      20.58 ns |      60.67 ns |       100.0 ns |
-|   NaiveSumInt |      100 |        71.91 ns |      16.31 ns |      45.20 ns |       100.0 ns |
-|     VectorSum |      100 |        79.52 ns |      15.21 ns |      40.60 ns |       100.0 ns |
-|    Intrinsics |      100 |        77.78 ns |      19.82 ns |      58.13 ns |       100.0 ns |
-| IntrinsicsInt |      100 |        80.00 ns |      14.43 ns |      40.22 ns |       100.0 ns |
-|      NaiveSum |     1000 |       431.03 ns |      23.84 ns |      65.26 ns |       400.0 ns |
-|   NaiveSumInt |     1000 |       380.61 ns |      18.85 ns |      54.98 ns |       400.0 ns |
-|     VectorSum |     1000 |       277.53 ns |      15.15 ns |      41.98 ns |       300.0 ns |
-|    Intrinsics |     1000 |       262.89 ns |      19.47 ns |      56.49 ns |       300.0 ns |
-| IntrinsicsInt |     1000 |       136.17 ns |      17.69 ns |      50.48 ns |       100.0 ns |
-|      NaiveSum |   100000 |    36,107.69 ns |     310.98 ns |     259.68 ns |    36,100.0 ns |
-|   NaiveSumInt |   100000 |    35,916.67 ns |      91.93 ns |      71.77 ns |    35,900.0 ns |
-|     VectorSum |   100000 |    22,587.10 ns |     501.04 ns |   1,421.36 ns |    22,200.0 ns |
-|    Intrinsics |   100000 |    17,138.46 ns |     414.79 ns |   1,163.12 ns |    16,800.0 ns |
-| IntrinsicsInt |   100000 |     7,907.87 ns |     230.77 ns |     639.46 ns |     7,600.0 ns |
-|      NaiveSum |  1000000 |   750,662.00 ns |  22,445.22 ns |  66,180.24 ns |   756,600.0 ns |
-|   NaiveSumInt |  1000000 |   440,271.11 ns |   8,700.22 ns |  16,553.06 ns |   440,200.0 ns |
-|     VectorSum |  1000000 |   677,253.12 ns |  20,858.98 ns |  60,182.94 ns |   674,050.0 ns |
-|    Intrinsics |  1000000 |   635,924.49 ns |  20,296.74 ns |  59,206.55 ns |   638,800.0 ns |
-| IntrinsicsInt |  1000000 |   305,287.00 ns |   9,270.91 ns |  27,335.48 ns |   312,700.0 ns |
-|      NaiveSum | 10000000 | 5,363,800.00 ns | 101,348.33 ns |  79,126.11 ns | 5,376,250.0 ns |
-|   NaiveSumInt | 10000000 | 4,007,873.68 ns |  78,742.73 ns |  87,522.34 ns | 3,964,800.0 ns |
-|     VectorSum | 10000000 | 4,611,626.00 ns | 124,039.84 ns | 365,734.26 ns | 4,440,600.0 ns |
-|    Intrinsics | 10000000 | 4,253,493.00 ns | 104,953.45 ns | 309,457.60 ns | 4,070,400.0 ns |
-| IntrinsicsInt | 10000000 | 2,199,654.55 ns |  55,759.99 ns | 163,534.41 ns | 2,135,200.0 ns |
-
-
-On int on 10M there is 2.5X improvement. Again, I expected more than this.
-Again, this on x1600 let's try something else...
-
-On work machine:
-|        Method |  ItemNum |            Mean |         Error |        StdDev |            Median |
-|-------------- |--------- |----------------:|--------------:|--------------:|------------------:|
-|      NaiveSum |      100 |        65.62 ns |      27.92 ns |      80.56 ns |         0.0000 ns |
-|   NaiveSumInt |      100 |        32.00 ns |      19.81 ns |      58.40 ns |         0.0000 ns |
-|     VectorSum |      100 |        49.00 ns |      23.86 ns |      70.35 ns |         0.0000 ns |
-|    Intrinsics |      100 |       155.00 ns |      23.80 ns |      70.17 ns |       100.0000 ns |
-| IntrinsicsInt |      100 |        39.39 ns |      19.37 ns |      56.82 ns |         0.0000 ns |
-|      NaiveSum |     1000 |       479.80 ns |      48.46 ns |     142.13 ns |       400.0000 ns |
-|   NaiveSumInt |     1000 |       334.44 ns |      20.94 ns |      58.37 ns |       300.0000 ns |
-|     VectorSum |     1000 |       364.89 ns |      50.02 ns |     142.71 ns |       300.0000 ns |
-|    Intrinsics |     1000 |       215.56 ns |      23.39 ns |      65.19 ns |       200.0000 ns |
-| IntrinsicsInt |     1000 |       173.40 ns |      29.16 ns |      83.18 ns |       200.0000 ns |
-|      NaiveSum |   100000 |    49,357.00 ns |   4,212.94 ns |  12,421.95 ns |    48,650.0000 ns |
-|   NaiveSumInt |   100000 |    42,801.00 ns |   2,557.41 ns |   7,540.59 ns |    44,900.0000 ns |
-|     VectorSum |   100000 |    40,921.00 ns |   3,688.42 ns |  10,875.38 ns |    42,800.0000 ns |
-|    Intrinsics |   100000 |    33,129.29 ns |   2,708.17 ns |   7,942.60 ns |    33,400.0000 ns |
-| IntrinsicsInt |   100000 |    17,464.00 ns |   2,204.31 ns |   6,499.46 ns |    20,400.0000 ns |
-|      NaiveSum |  1000000 |   652,201.00 ns |  30,937.31 ns |  91,219.37 ns |   702,900.0000 ns |
-|   NaiveSumInt |  1000000 |   413,126.00 ns |  17,299.21 ns |  51,007.12 ns |   420,050.0000 ns |
-|     VectorSum |  1000000 |   564,582.00 ns |  29,520.90 ns |  87,043.03 ns |   606,800.0000 ns |
-|    Intrinsics |  1000000 |   480,801.00 ns |  32,447.18 ns |  95,671.24 ns |   489,350.0000 ns |
-| IntrinsicsInt |  1000000 |   222,339.00 ns |  20,650.21 ns |  60,887.62 ns |   264,650.0000 ns |
-|      NaiveSum | 10000000 | 7,424,726.67 ns | 109,699.79 ns | 102,613.25 ns | 7,410,900.0000 ns |
-|   NaiveSumInt | 10000000 | 4,559,930.00 ns |  86,161.37 ns |  80,595.40 ns | 4,568,650.0000 ns |
-|     VectorSum | 10000000 | 6,603,115.38 ns |  47,076.08 ns |  39,310.66 ns | 6,607,600.0000 ns |
-|    Intrinsics | 10000000 | 6,249,561.54 ns |  74,947.06 ns |  62,584.19 ns | 6,255,800.0000 ns |
-| IntrinsicsInt | 10000000 | 3,001,692.31 ns |  26,720.73 ns |  22,313.02 ns | 3,004,200.0000 ns |
-
-
-Which is slower?
-
-I still can't say that I understand why do I get only 2x improvement.
+I wanted to see near 8X improvement but got ~5x. Altough, it may be interesting to measure what we could get if we empoy all CPUs (8 x 5 => aim at 40x).

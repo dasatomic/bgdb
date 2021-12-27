@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Running;
-using System.Management;
 using System.Numerics;
 using System.Text;
 
@@ -9,15 +8,6 @@ namespace PerfExperiments
     {
         static void Main(string[] args)
         {
-            /*
-            var ss = new SimdSum();
-            ss.ItemNum = 1000;
-            ss.CreateArray();
-            //ss.VectorSum();
-            ss.Intrinsics();
-            ss.IntrinsicsInt();
-            */
-
             var output = new StringBuilder();
             output.AppendLine($"Starting execution at {DateTime.Now} on {Environment.MachineName} running {Environment.OSVersion.VersionString}");
 
