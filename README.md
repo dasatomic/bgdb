@@ -265,7 +265,7 @@ Object_Classification_Result -> American lobster
 
 ## From code init
 
-Repl is currently pretty limited. There is also no support for transactions in parser layer (transactions are implicit and linked to single command, `BEGIN/COMMIT/ROLLBACK TRAN` support will be added). To get a feeling how things are working under the hood it is best to take a look at end to end tests.
+Repl is currently pretty limited. There is also no support for transactions in parser layer (transactions are implicit and to single command, `BEGIN/COMMIT/ROLLBACK TRAN` support will be added). To get a feeling how things are working under the hood it is best to take a look at end to end tests.
 
 For example:
 ```cs
@@ -340,7 +340,9 @@ public LogManager(BinaryWriter storage)
 [Lock Manager](https://github.com/dasatomic/bgdb/tree/master/LockManager/LockImplementation/AsyncReadWriterLock.cs) currently supports only Read and Write locks that prioritize Writers.
 
 ## Data Structures
-There is still no support for indexes so tables are currently organized as simple [linked list](https://github.com/dasatomic/bgdb/tree/master/DataStructures/PageListCollection.cs) of pages. This is hopefully going to change soon.
+Tables can be organized in two data structures:
+1) [linked list](https://github.com/dasatomic/bgdb/tree/master/DataStructures/PageListCollection.cs)
+2) [btree] (https://github.com/dasatomic/bgdb/blob/master/DataStructures/BTreeCollection.cs)
 
 ## Query Processing
 Query tree is currently assembled through a set of rules that can be found [here](https://github.com/dasatomic/bgdb/tree/master/QueryProcessing/AstToOpTreeBuilder.cs). When work on Query Optimizer starts this will have to change.
